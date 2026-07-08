@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>鑽石戒指／項鍊 價格試算</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:wght@500;600;700&family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>鑽石戒指／項鍊 價格試算</h1>
+
+<div class="layout">
+  <div class="main-content">
+
+    <div class="step">
+      <h2>選擇品項</h2>
+      <div class="btn-row">
+        <button class="cat-btn" data-cat="ring">戒指</button>
+        <button class="cat-btn" data-cat="necklace">項鍊</button>
+      </div>
+    </div>
+
+    <div class="step hidden" id="carat-step">
+      <h2>選擇克拉數</h2>
+      <div class="btn-row">
+        <button class="carat-btn" data-carat="0.1">0.1ct</button>
+        <button class="carat-btn" data-carat="0.3">0.3ct</button>
+        <button class="carat-btn" data-carat="0.5">0.5ct</button>
+        <button class="carat-btn" data-carat="1">1ct</button>
+      </div>
+    </div>
+
+    <div class="step hidden" id="type-step">
+      <h2>選擇款式</h2>
+      <div class="type-grid" id="type-grid"></div>
+    </div>
+
+    <div class="step hidden" id="gold-step">
+      <h2>選擇金屬成色</h2>
+      <div class="btn-row">
+        <button class="gold-btn" data-gold="18k">18K金</button>
+        <button class="gold-btn" data-gold="999">純金999</button>
+        <button class="gold-btn" data-gold="pt">鉑金 Pt</button>
+        <button class="gold-btn" data-gold="silver925">925銀</button>
+      </div>
+
+      <div id="ring-weight-block">
+        <h3 class="sub-heading">選擇戒圍（粗估金重）</h3>
+        <select id="ring-size-select">
+          <option value="">請選擇戒圍</option>
+        </select>
+        <p class="helper-text" id="ring-helper-text">依戒圍粗估金重，可於下方微調</p>
+      </div>
+
+      <div id="necklace-weight-block" class="hidden">
+        <h3 class="sub-heading">輸入金重</h3>
+      </div>
+
+      <label class="weight-label" for="weight-input">金重</label>
+      <div class="weight-row">
+        <input type="number" id="weight-input" min="0" step="0.01" placeholder="例如 3.5">
+        <select id="unit-select">
+          <option value="g">克</option>
+          <option value="chin">錢</option>
+          <option value="taijin">台斤</option>
+        </select>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="summary" id="summary">
+    <p>品項：<span id="sum-cat">-</span></p>
+    <p>克拉：<span id="sum-carat">-</span></p>
+    <p>款式：<span id="sum-type">-</span></p>
+    <p>成色：<span id="sum-gold">-</span></p>
+    <p>金重：<span id="sum-weight">-</span> <span id="sum-weight-unit">克</span></p>
+    <p>即時金價：<span id="sum-goldprice">讀取中...</span> / g</p>
+    <hr>
+    <p>鑽石價格：NT$ <span id="sum-diamond-price">0</span></p>
+    <p>金屬費用：NT$ <span id="sum-gold-cost">0</span></p>
+    <h2>總價：NT$ <span id="sum-total">0</span></h2>
+  </div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

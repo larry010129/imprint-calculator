@@ -1,0 +1,213 @@
+const translations = {
+  "zh": {
+    "nav_home": "系統首頁",
+    "nav_calc": "計算機",
+    "nav_history": "歷史紀錄",
+    "nav_admin": "管理後台",
+    "nav_login_as": "目前登入：",
+    "nav_logout": "登出",
+    "home_title": "鑽石與珠寶計算系統",
+    "home_desc": "歡迎使用鑽石戒指與項鍊價格試算系統。",
+    "home_btn_calc": "開始試算",
+    "home_btn_login": "登入",
+    "history_title": "歷史紀錄",
+    "history_subtitle": "您最近的送出紀錄",
+    "admin_title": "管理後台",
+    "admin_subtitle": "近期送出紀錄",
+    "table_id": "編號",
+    "table_date": "日期",
+    "table_store": "供應商 / 店家",
+    "table_item": "品項",
+    "table_carat": "克拉",
+    "table_style": "款式",
+    "table_purity": "成色",
+    "table_weight": "重量 (克)",
+    "table_size": "戒圍",
+    "table_price": "總價 (NT$)",
+    "table_status": "狀態",
+    "status_pending": "待處理",
+    "status_confirmed": "訂單確認",
+    "status_processing": "處理中",
+    "status_completed": "已完成",
+    "success_title": "訂單送出",
+    "success_desc": "您的訂單已經成功記錄。",
+    "success_btn_new": "新增另一筆",
+    "success_btn_history": "查看歷史紀錄",
+    "calc_title": "鑽石戒指／項鍊 價格試算",
+    "step_category": "選擇品項",
+    "cat_ring": "戒指",
+    "cat_necklace": "項鍊",
+    "step_carat": "選擇克拉數",
+    "step_type": "選擇款式",
+    "step_gold": "選擇金屬成色",
+    "step_ring_size": "選擇戒圍（粗估金重）",
+    "step_weight": "輸入金重",
+    "weight_label": "金重",
+    "ring_size_placeholder": "請選擇戒圍",
+    "ring_size_option": "台灣戒圍 ",
+    "helper_estimate": "依戒圍粗估金重，可於下方微調",
+    "helper_no_gold": "尚未選擇金屬成色，暫以18K密度估算，選擇金屬後將自動更新",
+    "sum_item": "品項",
+    "sum_carat": "克拉",
+    "sum_style": "款式",
+    "sum_gold": "成色",
+    "sum_weight": "金重",
+    "sum_goldprice": "即時金價",
+    "sum_diamond": "鑽石價格",
+    "sum_metal_cost": "金屬費用",
+    "sum_total": "總價",
+    "alert_pick_category": "請先選擇品項！",
+    "alert_pick_carat": "請選擇克拉數！",
+    "alert_pick_type": "請選擇款式！",
+    "alert_pick_gold": "請選擇金屬成色！",
+    "alert_pick_ring_size": "請選擇戒圍！",
+    "alert_enter_weight": "請輸入金重！",
+    "btn_confirm": "確認送出",
+    "btn_update": "更新訂單 (Update Order)",
+    "btn_submitting": "送出中...",
+    "save_failed": "儲存失敗: ",
+    "generic_error": "發生錯誤",
+    "price_unavailable": "無法取得金價",
+    "total_unavailable": "無法計算",
+    "goldprice_failed": "無法取得即時金價",
+    "goldprice_loading": "讀取中...",
+    "unit_g": "克",
+    "unit_chin": "錢",
+    "unit_taijin": "台斤"
+  },
+  "en": {
+    "nav_home": "Home",
+    "nav_calc": "Calculator",
+    "nav_history": "History",
+    "nav_admin": "Admin",
+    "nav_login_as": "Logged in as: ",
+    "nav_logout": "Logout",
+    "home_title": "Diamond & Jewelry Calculator",
+    "home_desc": "Welcome to the Diamond Ring & Necklace Pricing System.",
+    "home_btn_calc": "Start Calculating",
+    "home_btn_login": "Login",
+    "history_title": "History",
+    "history_subtitle": "Your Recent Submissions",
+    "admin_title": "Admin Dashboard",
+    "admin_subtitle": "Recent Submissions",
+    "table_id": "ID",
+    "table_date": "Date",
+    "table_store": "Store",
+    "table_item": "Item",
+    "table_carat": "Carat",
+    "table_style": "Style",
+    "table_purity": "Purity",
+    "table_weight": "Weight (g)",
+    "table_size": "Ring Size",
+    "table_price": "Total Price",
+    "table_status": "Status",
+    "status_pending": "Pending",
+    "status_confirmed": "Confirmed",
+    "status_processing": "Processing",
+    "status_completed": "Completed",
+    "success_title": "Order Submitted",
+    "success_desc": "Your order has been successfully recorded.",
+    "success_btn_new": "Create New Order",
+    "success_btn_history": "View History",
+    "calc_title": "Diamond Ring / Necklace Price Calculator",
+    "step_category": "Select Item",
+    "cat_ring": "Ring",
+    "cat_necklace": "Necklace",
+    "step_carat": "Select Carat",
+    "step_type": "Select Style",
+    "step_gold": "Select Metal",
+    "step_ring_size": "Select Ring Size (weight estimate)",
+    "step_weight": "Enter Metal Weight",
+    "weight_label": "Metal Weight",
+    "ring_size_placeholder": "Select ring size",
+    "ring_size_option": "TW ring size ",
+    "helper_estimate": "Estimated from ring size; fine-tune below",
+    "helper_no_gold": "No metal selected; estimating with 18K density, updates when chosen",
+    "sum_item": "Item",
+    "sum_carat": "Carat",
+    "sum_style": "Style",
+    "sum_gold": "Metal",
+    "sum_weight": "Weight",
+    "sum_goldprice": "Live Metal Price",
+    "sum_diamond": "Diamond Price",
+    "sum_metal_cost": "Metal Cost",
+    "sum_total": "Total",
+    "alert_pick_category": "Please select an item first!",
+    "alert_pick_carat": "Please select a carat!",
+    "alert_pick_type": "Please select a style!",
+    "alert_pick_gold": "Please select a metal!",
+    "alert_pick_ring_size": "Please select a ring size!",
+    "alert_enter_weight": "Please enter the metal weight!",
+    "btn_confirm": "Confirm & Submit",
+    "btn_update": "Update Order",
+    "btn_submitting": "Submitting...",
+    "save_failed": "Save failed: ",
+    "generic_error": "An error occurred",
+    "price_unavailable": "Metal price unavailable",
+    "total_unavailable": "Cannot compute",
+    "goldprice_failed": "Live metal price unavailable",
+    "goldprice_loading": "Loading...",
+    "unit_g": "g",
+    "unit_chin": "mace",
+    "unit_taijin": "catty"
+  }
+};
+
+let currentLang = localStorage.getItem('appLang') || 'zh';
+
+window.t = key => (translations[currentLang] && translations[currentLang][key]) || key;
+
+function applyLanguage(lang) {
+  currentLang = lang;
+  localStorage.setItem('appLang', lang);
+  
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (translations[lang][key]) {
+      el.textContent = translations[lang][key];
+    }
+  });
+
+  const langBtn = document.getElementById('lang-toggle');
+  if (langBtn) {
+    langBtn.textContent = lang === 'zh' ? 'EN' : '中文';
+  }
+
+  document.dispatchEvent(new CustomEvent('langchange'));
+}
+
+function toggleLanguage() {
+  const newLang = currentLang === 'zh' ? 'en' : 'zh';
+  applyLanguage(newLang);
+}
+
+// Dark Mode Logic
+function applyTheme(isDark) {
+  if (isDark) {
+    document.body.classList.add('dark-theme');
+  } else {
+    document.body.classList.remove('dark-theme');
+  }
+  localStorage.setItem('darkTheme', isDark ? 'true' : 'false');
+}
+
+function toggleTheme() {
+  const isDark = !document.body.classList.contains('dark-theme');
+  applyTheme(isDark);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Init Theme
+  const savedTheme = localStorage.getItem('darkTheme');
+  if (savedTheme === 'true') applyTheme(true);
+
+  // Init Lang
+  applyLanguage(currentLang);
+
+  // Bind events
+  const themeBtn = document.getElementById('theme-toggle');
+  if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
+
+  const langBtn = document.getElementById('lang-toggle');
+  if (langBtn) langBtn.addEventListener('click', toggleLanguage);
+});

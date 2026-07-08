@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}歷史紀錄 - 鑽石戒指／項鍊{% endblock %}
+{% block content %}
+<div style="margin-left: -56px; padding: 0 20px;">
+<h2 data-i18n="history_subtitle" style="text-align: center;">您最近的送出紀錄</h2>
+<table>
+  <thead>
+    <tr>
+      <th data-i18n="table_id">編號</th>
+      <th data-i18n="table_date">日期時間</th>
+      <th data-i18n="table_item">品項</th>
+      <th data-i18n="table_carat">克拉</th>
+      <th data-i18n="table_style">款式</th>
+      <th data-i18n="table_purity">成色</th>
+      <th data-i18n="table_weight">重量 (克)</th>
+      <th data-i18n="table_size">戒圍</th>
+      <th data-i18n="table_price">總價 (NT$)</th>
+      <th data-i18n="table_status">狀態</th>
+      <th data-i18n="table_actions">操作</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for sub in submissions %}
+    <tr id="row-{{ sub.id }}">
+      <td>{{ sub.id }}</td>
+      <td>{{ sub.created_at|tz_taiwan }}</td>
+      <td>{{ sub.category|label_category }}</td>
+      <td>{{ sub.carat }}</td>
+      <td>{{ sub.style_type|label_style }}</td>
+      <td>{{ sub.gold_purity|label_purity }}</td>
+      <td>{{ "{:.2f}".format(sub.weight) if sub.weight is not none else '-' }}</td>
+      <td>{{ sub.ring_size or '-' }}</td>
+      <td>{{ "{:,.0f}".format(sub.total_price) if sub.total_price is not none else '-' }}</td>
+      <td style="width: 320px; padding-top: 15px;">
+        <div class="progress-stepper" data-status="{{ sub.status }}">
+          <div class="progress-line"></div>
+          <div class="progress-step active">
+            <div class="progress-label" data-i18n="status_pending">待處理</div>
+          </div>
+          <div class="progress-step {% if sub.status in ['confirmed', 'processing', 'completed'] %}active{% endif %}">
+            <div class="progress-label" data-i18n="status_confirmed">訂單確認</div>
+          </div>
+          <div class="progress-step {% if sub.status in ['processing', 'completed'] %}active{% endif %}">
+            <div class="progress-label" data-i18n="status_processing">處理中</div>
+          </div>
+          <div class="progress-step {% if sub.status == 'completed' %}active{% endif %}">
+            <div class="progress-label" data-i18n="status_completed">已完成</div>
+          </div>
+        </div>
+      </td>
+      <td>
+        {% if sub.status == 'pending' %}
+        <a href="{{ url_for('calculator', edit_id=sub.id) }}" class="action-btn edit-btn" data-i18n="btn_edit" style="text-decoration:none; display:inline-block; margin-right: 4px;">編輯</a>
+        <button class="action-btn delete-btn" data-id="{{ sub.id }}" data-i18n="btn_delete">刪除</button>
+        {% else %}
+        -
+        {% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr>
+      <td colspan="11" style="text-align:center;">尚無任何紀錄。</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Handle Delete
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if(!confirm('確定要刪除這筆訂單嗎？ (Are you sure you want to delete this order?)')) return;
+      
+      const id = btn.getAttribute('data-id');
+      try {
+        const res = await fetch(`/delete/${id}`, { 
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+          }
+        });
+        if (res.status === 401) { window.location.href = "/login"; return; }
+        const data = await res.json();
+        if(data.success) {
+          document.getElementById(`row-${id}`).remove();
+        } else {
+          alert(data.message || 'Error deleting order');
+        }
+      } catch (err) {
+        alert('Network error');
+      }
+    });
+  });
+});
+</script>
+{% endblock %}

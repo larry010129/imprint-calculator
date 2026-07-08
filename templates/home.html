@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}系統首頁 - 鑽石戒指／項鍊{% endblock %}
+
+{% block content %}
+<div class="home-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; text-align: center;">
+  <h1 data-i18n="home_title" style="font-size: 3rem; margin-bottom: 20px;">鑽石與珠寶計算系統</h1>
+  <p data-i18n="home_desc" style="font-size: 1.2rem; color: var(--color-text-muted); margin-bottom: 40px; max-width: 600px;">
+    歡迎使用鑽石戒指與項鍊價格試算系統。
+  </p>
+  
+  {% if current_user.is_authenticated %}
+    <a href="{{ url_for('calculator') }}" data-i18n="home_btn_calc" style="display: inline-block; padding: 16px 40px; background-color: var(--color-brand); color: #1A1A1A; text-decoration: none; font-size: 1.2rem; font-weight: 600; border-radius: 4px; box-shadow: 0 4px 12px rgba(142, 237, 240, 0.3); transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='var(--color-brand-hover)'" onmouseout="this.style.backgroundColor='var(--color-brand)'">Start Calculating</a>
+  {% else %}
+    <a href="{{ url_for('login') }}" data-i18n="home_btn_login" style="display: inline-block; padding: 16px 40px; background-color: var(--color-brand); color: #1A1A1A; text-decoration: none; font-size: 1.2rem; font-weight: 600; border-radius: 4px; box-shadow: 0 4px 12px rgba(142, 237, 240, 0.3); transition: all 0.3s ease;" onmouseover="this.style.backgroundColor='var(--color-brand-hover)'" onmouseout="this.style.backgroundColor='var(--color-brand)'">Login</a>
+  {% endif %}
+</div>
+{% endblock %}

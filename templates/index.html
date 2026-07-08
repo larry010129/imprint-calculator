@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+
+{% if edit_sub %}
+<script>
+  window.editData = {
+    id: {{ edit_sub.id }},
+    category: "{{ edit_sub.category }}",
+    carat: "{{ edit_sub.carat }}",
+    type: "{{ edit_sub.style_type }}",
+    gold: "{{ edit_sub.gold_purity }}",
+    weight: {{ edit_sub.weight if edit_sub.weight is not none else 'null' }},
+    ringSize: {{ edit_sub.ring_size if edit_sub.ring_size is not none else 'null' }}
+  };
+</script>
+{% endif %}
+
+<h1><span data-i18n="calc_title">鑽石戒指／項鍊 價格試算</span>{% if edit_sub %} (編輯模式){% endif %}</h1>
+
+<div class="layout">
+  <div class="main-content">
+
+    <div class="step">
+      <h2 data-i18n="step_category">選擇品項</h2>
+      <div class="btn-row">
+        <button class="cat-btn" data-cat="ring" data-i18n="cat_ring">戒指</button>
+        <button class="cat-btn" data-cat="necklace" data-i18n="cat_necklace">項鍊</button>
+      </div>
+    </div>
+
+    <div class="step hidden" id="carat-step">
+      <h2 data-i18n="step_carat">選擇克拉數</h2>
+      <div class="btn-row">
+        <button class="carat-btn" data-carat="0.1">0.1ct</button>
+        <button class="carat-btn" data-carat="0.3">0.3ct</button>
+        <button class="carat-btn" data-carat="0.5">0.5ct</button>
+        <button class="carat-btn" data-carat="1">1ct</button>
+      </div>
+    </div>
+
+    <div class="step hidden" id="type-step">
+      <h2 data-i18n="step_type">選擇款式</h2>
+      <div class="type-grid" id="type-grid"></div>
+      <div id="large-image-container" class="hidden" style="margin-top: 24px;">
+        <img id="large-image" src="" alt="Selected Style">
+      </div>
+    </div>
+
+    <div class="step hidden" id="gold-step">
+      <h2 data-i18n="step_gold">選擇金屬成色</h2>
+      <div class="btn-row">
+        <button class="gold-btn" data-gold="18k">18K金</button>
+        <button class="gold-btn" data-gold="999">純金999</button>
+        <button class="gold-btn" data-gold="pt">鉑金 Pt</button>
+        <button class="gold-btn" data-gold="silver925">925銀</button>
+      </div>
+
+      <div id="ring-weight-block">
+        <h3 class="sub-heading" data-i18n="step_ring_size">選擇戒圍（粗估金重）</h3>
+        <select id="ring-size-select">
+          <option value="" data-i18n="ring_size_placeholder">請選擇戒圍</option>
+        </select>
+        <p class="helper-text" id="ring-helper-text" data-i18n="helper_estimate">依戒圍粗估金重，可於下方微調</p>
+      </div>
+
+      <div id="necklace-weight-block" class="hidden">
+        <h3 class="sub-heading" data-i18n="step_weight">輸入金重</h3>
+      </div>
+
+      <label class="weight-label" for="weight-input" data-i18n="weight_label">金重</label>
+      <div class="weight-row">
+        <input type="number" id="weight-input" min="0" step="0.01" placeholder="例如 3.5">
+        <select id="unit-select">
+          <option value="g" data-i18n="unit_g">克</option>
+          <option value="chin" data-i18n="unit_chin">錢</option>
+          <option value="taijin" data-i18n="unit_taijin">台斤</option>
+        </select>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="summary" id="summary">
+    <div class="summary-row"><span class="lbl" data-i18n="sum_item">品項</span><span class="colon">：</span><span class="val" id="sum-cat">-</span></div>
+    <div class="summary-row"><span class="lbl" data-i18n="sum_carat">克拉</span><span class="colon">：</span><span class="val" id="sum-carat">-</span></div>
+    <div class="summary-row"><span class="lbl" data-i18n="sum_style">款式</span><span class="colon">：</span><span class="val" id="sum-type">-</span></div>
+    <div class="summary-row"><span class="lbl" data-i18n="sum_gold">成色</span><span class="colon">：</span><span class="val" id="sum-gold">-</span></div>
+    <div class="summary-row"><span class="lbl" data-i18n="sum_weight">金重</span><span class="colon">：</span><span class="val"><span id="sum-weight">-</span> <span id="sum-weight-unit">克</span></span></div>
+    <div class="summary-row"><span class="lbl" data-i18n="sum_goldprice">即時金價</span><span class="colon">：</span><span class="val">NT$ <span id="sum-goldprice">讀取中...</span> / g</span></div>
+    <hr>
+    <div class="summary-row"><span class="lbl" data-i18n="sum_diamond">鑽石價格</span><span class="colon">：</span><span class="val">NT$ <span id="sum-diamond-price">0</span></span></div>
+    <div class="summary-row"><span class="lbl" data-i18n="sum_metal_cost">金屬費用</span><span class="colon">：</span><span class="val">NT$ <span id="sum-gold-cost">0</span></span></div>
+    <h2 class="summary-total"><span class="lbl" data-i18n="sum_total">總價</span><span class="colon">：</span><span class="val">NT$ <span id="sum-total">0</span></span></h2>
+    <button id="confirm-btn">確認送出</button>
+  </div>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+{% endblock %}
