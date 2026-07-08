@@ -21,6 +21,9 @@
 {% endif %}
 
 <h1><span data-i18n="calc_title">鑽石戒指／項鍊 價格試算</span>{% if edit_sub %} (編輯模式){% endif %}</h1>
+{% if edit_sub %}
+<p class="helper-text" data-i18n="edit_reprice_notice">儲存後將以目前金價重新計算總價。</p>
+{% endif %}
 
 <div class="layout">
   <div class="main-content">

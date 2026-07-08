@@ -1,12 +1,7 @@
 // --- Data ---
 function tr(k) { return window.t ? window.t(k) : k; }
 
-const diamondPrice = {
-  "0.1": 24000,
-  "0.3": 79000,
-  "0.5": 98000,
-  "1": 250000
-};
+let diamondPrice = { "0.1": null, "0.3": null, "0.5": null, "1": null };
 
 const types = [
   { id: "A", name: "款式 A" },
@@ -85,6 +80,7 @@ async function loadMetalPrices() {
     if (!res.ok) throw new Error(`API returned ${res.status}`);
     const data = await res.json();
     Object.keys(data.perGram).forEach(goldId => { pricePerGram[goldId] = data.perGram[goldId]; });
+    Object.keys(data.diamond).forEach(carat => { diamondPrice[carat] = data.diamond[carat]; });
     updateGoldPriceDisplay();
     updateTotal();
   } catch (err) {
@@ -269,15 +265,17 @@ function selectUnit(unit) {
 // --- Total calculation ---
 
 function updateTotal() {
-  const dPrice = state.carat ? diamondPrice[state.carat] : 0;
+  const diamondPriceUnavailable = state.carat && diamondPrice[state.carat] === null;
+  const dPrice = state.carat && diamondPrice[state.carat] ? diamondPrice[state.carat] : 0;
   const goldPriceUnavailable = state.gold && pricePerGram[state.gold] === null;
   const gRate = state.gold && pricePerGram[state.gold] ? pricePerGram[state.gold] : 0;
   const gCost = gRate * state.weight;
   const total = dPrice + gCost;
 
-  document.getElementById("sum-diamond-price").textContent = dPrice.toLocaleString();
+  document.getElementById("sum-diamond-price").textContent =
+    diamondPriceUnavailable ? tr('goldprice_loading') : dPrice.toLocaleString();
 
-  if (goldPriceUnavailable) {
+  if (goldPriceUnavailable || diamondPriceUnavailable) {
     document.getElementById("sum-gold-cost").textContent = tr('price_unavailable');
     document.getElementById("sum-total").textContent = tr('total_unavailable');
   } else {
@@ -365,7 +363,7 @@ document.getElementById("confirm-btn").addEventListener("click", async () => {
   btn.disabled = true;
   btn.textContent = tr('btn_submitting');
 
-  const dPrice = state.carat ? diamondPrice[state.carat] : 0;
+  const dPrice = state.carat && diamondPrice[state.carat] ? diamondPrice[state.carat] : 0;
   const gRate = state.gold && pricePerGram[state.gold] ? pricePerGram[state.gold] : 0;
   const gCost = gRate * state.weight;
   const total = dPrice + gCost;

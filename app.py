@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, jso
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_wtf.csrf import CSRFProtect
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import os, json, time, urllib.request
 from models import db, User, Submission
 
@@ -115,9 +115,10 @@ def api_prices():
     return jsonify({'diamond': DIAMOND_PRICE, 'perGram': per_gram, 'source': source})
 
 def compute_total(carat, gold, weight_grams):
-    raw, _ = get_metal_prices()
+    raw, source = get_metal_prices()
     per_gram = raw[METAL_SYMBOL[gold]] * PURITY_MULTIPLIER[gold]
-    return DIAMOND_PRICE[carat] + per_gram * weight_grams
+    total = DIAMOND_PRICE[carat] + per_gram * weight_grams
+    return total, per_gram, source
 
 VALID_CATEGORIES = {'ring', 'necklace'}
 VALID_CARATS = {'0.1', '0.3', '0.5', '1'}
@@ -259,7 +260,7 @@ def submit():
         return jsonify({'status': 'error', 'message': error}), 400
     
     try:
-        total_price = compute_total(cleaned['carat'], cleaned['gold'], cleaned['weight'])
+        total_price, rate_used, price_source = compute_total(cleaned['carat'], cleaned['gold'], cleaned['weight'])
     except Exception:
         return jsonify({'status': 'error', 'message': 'invalid selection'}), 400
 
@@ -271,7 +272,9 @@ def submit():
         gold_purity=cleaned['gold'],
         weight=cleaned['weight'],
         ring_size=cleaned.get('ringSize'),
-        total_price=total_price
+        total_price=total_price,
+        gold_rate_per_gram=rate_used,
+        price_source=price_source
     )
     db.session.add(submission)
     db.session.commit()
@@ -349,11 +352,11 @@ def edit_submission(id):
     sub.ring_size = cleaned.get('ringSize')
     
     try:
-        # ponytail: edit reprices at current metal rate; store rate-at-submit if order locking matters
-        sub.total_price = compute_total(sub.carat, sub.gold_purity, sub.weight)
+        sub.total_price, sub.gold_rate_per_gram, sub.price_source = compute_total(sub.carat, sub.gold_purity, sub.weight)
     except Exception:
         return jsonify({'success': False, 'message': 'invalid selection'}), 400
-        
+
+    sub.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
     db.session.commit()
     return jsonify({'success': True})
 
