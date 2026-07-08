@@ -85,6 +85,30 @@ TROY_OZ_GRAMS = 31.1034768
 _price_cache = {"prices": None, "fetched_at": 0, "source": "fallback"}
 PRICE_TTL_SECONDS = 600
 
+_login_attempts = {}  # username -> (fail_count, locked_until_timestamp)
+LOGIN_MAX_ATTEMPTS = 5
+LOGIN_LOCKOUT_SECONDS = 300  # 5 minutes
+
+def is_locked_out(username):
+    entry = _login_attempts.get(username)
+    if not entry:
+        return False
+    fail_count, locked_until = entry
+    if fail_count >= LOGIN_MAX_ATTEMPTS and time.time() < locked_until:
+        return True
+    if fail_count >= LOGIN_MAX_ATTEMPTS and time.time() >= locked_until:
+        _login_attempts.pop(username, None)
+    return False
+
+def record_login_failure(username):
+    fail_count, _ = _login_attempts.get(username, (0, 0))
+    fail_count += 1
+    locked_until = time.time() + LOGIN_LOCKOUT_SECONDS if fail_count >= LOGIN_MAX_ATTEMPTS else 0
+    _login_attempts[username] = (fail_count, locked_until)
+
+def record_login_success(username):
+    _login_attempts.pop(username, None)
+
 def get_metal_prices():
     """TWD per gram for XAU/XPT/XAG, cached. Never raises."""
     now = time.time()
@@ -126,6 +150,7 @@ VALID_TYPES = {'A', 'B', 'C'}
 VALID_GOLDS = {'18k', '999', 'pt', 'silver925'}
 MAX_WEIGHT_GRAMS = 10000
 RING_SIZE_MIN, RING_SIZE_MAX = 5, 25
+PAGE_SIZE = 25
 
 def validate_submission_fields(data, partial=False):
     errors = []
@@ -202,8 +227,14 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
+
+        if username and is_locked_out(username):
+            flash('登入失敗次數過多，請 5 分鐘後再試。 (Too many failed attempts, try again in 5 minutes.)')
+            return render_template('login.html')
+
         user = User.query.filter_by(username=username).first()
         if user and check_password_hash(user.password_hash, password):
+            record_login_success(username)
             login_user(user)
             next_page = request.args.get('next')
             if next_page and next_page.startswith('/') and not next_page.startswith('//'):
@@ -212,6 +243,8 @@ def login():
                 return redirect(url_for('admin'))
             return redirect(url_for('calculator'))
         else:
+            if username:
+                record_login_failure(username)
             flash('Invalid username or password')
     return render_template('login.html')
 
@@ -283,8 +316,11 @@ def submit():
 @app.route('/history')
 @login_required
 def history():
-    submissions = Submission.query.filter_by(user_id=current_user.id).order_by(Submission.created_at.desc()).all()
-    return render_template('history.html', submissions=submissions)
+    page = request.args.get('page', 1, type=int)
+    pagination = Submission.query.filter_by(user_id=current_user.id) \
+        .order_by(Submission.created_at.desc()) \
+        .paginate(page=page, per_page=PAGE_SIZE, error_out=False)
+    return render_template('history.html', submissions=pagination.items, pagination=pagination)
 
 @app.route('/admin')
 @login_required
@@ -292,8 +328,10 @@ def admin():
     if current_user.role != 'admin':
         flash('Access denied.')
         return redirect(url_for('calculator'))
-    submissions = Submission.query.order_by(Submission.created_at.desc()).all()
-    return render_template('admin.html', submissions=submissions)
+    page = request.args.get('page', 1, type=int)
+    pagination = Submission.query.order_by(Submission.created_at.desc()) \
+        .paginate(page=page, per_page=PAGE_SIZE, error_out=False)
+    return render_template('admin.html', submissions=pagination.items, pagination=pagination)
 
 @app.route('/admin/update_status/<int:id>', methods=['POST'])
 @login_required
