@@ -337,11 +337,11 @@ function selectCategory(cat) {
   document.querySelectorAll(".cat-btn").forEach(b =>
     b.classList.toggle("active", b.dataset.cat === cat));
 
-  renderTypeCards();
-  document.getElementById("type-step").classList.remove("hidden");
+  updateCaratButtons();
+  document.getElementById("carat-step").classList.remove("hidden");
+  document.getElementById("type-step").classList.add("hidden");
   document.getElementById("metal-step").classList.add("hidden");
   document.getElementById("color-step").classList.add("hidden");
-  document.getElementById("carat-step").classList.add("hidden");
   document.getElementById("ringsize-step").classList.add("hidden");
   document.getElementById("large-image-container").classList.add("hidden");
 
@@ -355,17 +355,16 @@ function selectType(typeId) {
   state.type = typeId;
   state.gold = null;
   state.color = null;
-  state.carat = null;
   state.ringSize = null;
+  // carat already set in step 2 — do not reset
 
   document.querySelectorAll(".type-card").forEach(c =>
     c.classList.toggle("active", c.dataset.type === typeId));
 
   document.getElementById("metal-step").classList.remove("hidden");
   document.getElementById("color-step").classList.add("hidden");
-  document.getElementById("carat-step").classList.add("hidden");
   document.getElementById("ringsize-step").classList.add("hidden");
-  document.querySelectorAll(".metal-btn, .color-btn, .carat-btn").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".metal-btn, .color-btn").forEach(b => b.classList.remove("active"));
   document.getElementById("ring-size-select").value = "";
 
   updateLargeImage();
@@ -375,33 +374,22 @@ function selectType(typeId) {
 function selectMetal(goldId) {
   state.gold = goldId;
   state.color = null;
-  state.carat = null;
   state.ringSize = null;
 
   document.querySelectorAll(".metal-btn").forEach(b =>
     b.classList.toggle("active", b.dataset.gold === goldId));
-  document.querySelectorAll(".color-btn, .carat-btn").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".color-btn").forEach(b => b.classList.remove("active"));
   document.getElementById("ring-size-select").value = "";
 
   updateColorStep();
-  updateCaratButtons();
 
   const colors = METAL_COLORS[goldId] || [];
-  if (colors.length <= 1) {
-    // skip color step — show carat step directly
-    document.getElementById("carat-step").classList.remove("hidden");
+  if (colors.length > 1) {
+    // color step shown by updateColorStep(); hide ringsize until color chosen
+    document.getElementById("ringsize-step").classList.add("hidden");
   } else {
-    document.getElementById("carat-step").classList.add("hidden");
-  }
-  document.getElementById("ringsize-step").classList.add("hidden");
-
-  // For bracelet, auto-select 0.1ct
-  if (state.category === 'bracelet') {
-    const carats = CATEGORY_CARATS.bracelet;
-    if (carats.length === 1) {
-      setTimeout(() => selectCarat(carats[0]), 0);
-      return;
-    }
+    // skip color step — show ringsize if ring, else summary ready
+    updateRingSizeStep();
   }
 
   updateSummary();
@@ -409,30 +397,35 @@ function selectMetal(goldId) {
 
 function selectColor(color) {
   state.color = color;
-  state.carat = null;
   state.ringSize = null;
 
   document.querySelectorAll(".color-btn").forEach(b =>
     b.classList.toggle("active", b.dataset.color === color));
-  document.querySelectorAll(".carat-btn").forEach(b => b.classList.remove("active"));
   document.getElementById("ring-size-select").value = "";
 
-  updateCaratButtons();
-  document.getElementById("carat-step").classList.remove("hidden");
-  document.getElementById("ringsize-step").classList.add("hidden");
+  updateRingSizeStep();
   updateLargeImage();
   updateSummary();
 }
 
 function selectCarat(carat) {
   state.carat = carat;
+  state.type = null;
+  state.gold = null;
+  state.color = null;
   state.ringSize = null;
 
   document.querySelectorAll(".carat-btn").forEach(b =>
     b.classList.toggle("active", b.dataset.carat === carat));
+  document.querySelectorAll(".type-card, .metal-btn, .color-btn").forEach(b => b.classList.remove("active"));
   document.getElementById("ring-size-select").value = "";
 
-  updateRingSizeStep();
+  renderTypeCards();
+  document.getElementById("type-step").classList.remove("hidden");
+  document.getElementById("metal-step").classList.add("hidden");
+  document.getElementById("color-step").classList.add("hidden");
+  document.getElementById("ringsize-step").classList.add("hidden");
+  document.getElementById("large-image-container").classList.add("hidden");
   updateSummary();
 }
 
@@ -485,23 +478,24 @@ if (window.editData) {
   if (catBtn) { catBtn.click(); }
 
   // Delay subsequent steps so DOM updates cascade
+  // New order: category → carat → type → metal → color → ringSize
   setTimeout(() => {
-    const card = document.querySelector(`.type-card[data-type="${window.editData.type}"]`);
-    if (card) { card.click(); }
+    const caratBtn = document.querySelector(`.carat-btn[data-carat="${window.editData.carat}"]`);
+    if (caratBtn) { caratBtn.click(); }
 
     setTimeout(() => {
-      const metalBtn = document.querySelector(`.metal-btn[data-gold="${window.editData.gold}"]`);
-      if (metalBtn) { metalBtn.click(); }
+      const card = document.querySelector(`.type-card[data-type="${window.editData.type}"]`);
+      if (card) { card.click(); }
 
       setTimeout(() => {
-        if (window.editData.color) {
-          const colorBtn = document.querySelector(`.color-btn[data-color="${window.editData.color}"]`);
-          if (colorBtn) colorBtn.click();
-        }
+        const metalBtn = document.querySelector(`.metal-btn[data-gold="${window.editData.gold}"]`);
+        if (metalBtn) { metalBtn.click(); }
 
         setTimeout(() => {
-          const caratBtn = document.querySelector(`.carat-btn[data-carat="${window.editData.carat}"]`);
-          if (caratBtn) caratBtn.click();
+          if (window.editData.color) {
+            const colorBtn = document.querySelector(`.color-btn[data-color="${window.editData.color}"]`);
+            if (colorBtn) colorBtn.click();
+          }
 
           if (window.editData.ringSize) {
             setTimeout(() => {
