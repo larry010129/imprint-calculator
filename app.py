@@ -8,7 +8,7 @@ from models import db, User, Submission
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-prod')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///database.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 csrf = CSRFProtect(app)
@@ -74,7 +74,7 @@ def label_purity(purity):
     if not purity: return ''
     return {'18k': '18K金', '999': '純金999', 'pt': '鉑金 Pt', 'silver925': '925銀'}.get(purity, purity)
 
-GOLDAPI_KEY = os.environ.get('GOLDAPI_KEY', 'goldapi-eb915d55941859c5bec9d3d1cbaff238-io')
+GOLDAPI_KEY = os.environ.get('GOLDAPI_KEY')
 
 DIAMOND_PRICE = {"0.1": 24000, "0.3": 79000, "0.5": 98000, "1": 250000}
 PURITY_MULTIPLIER = {"18k": 0.75, "999": 0.999, "pt": 1, "silver925": 0.925}
@@ -361,6 +361,11 @@ if __name__ == '__main__':
     if os.environ.get('FLASK_DEBUG') == '1':
         app.run(debug=True)
     else:
+        if os.environ.get('SECRET_KEY') is None:
+            raise SystemExit(
+                "Refusing to start in production mode without SECRET_KEY set. "
+                "Set FLASK_DEBUG=1 for local dev, or set SECRET_KEY for production."
+            )
         from waitress import serve
         port = int(os.environ.get('PORT', 8000))
         print(f"Serving on http://127.0.0.1:{port}")

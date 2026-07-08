@@ -17,11 +17,13 @@ pip install -r requirements.txt
 |---|---|---|
 | `SECRET_KEY` | production: yes | session signing; sessions reset when changed |
 | `ADMIN_PASSWORD` | first run only | seeds the `admin` account if it doesn't exist |
-| `GOLDAPI_KEY` | recommended | goldapi.io key for live metal prices; falls back to a built-in key, then to hardcoded fallback prices |
+| `GOLDAPI_KEY` | recommended | goldapi.io key for live metal prices; if unset, the app runs on hardcoded fallback prices (see FALLBACK_TWD_PER_GRAM in app.py) — there is no longer a built-in key |
 | `FLASK_DEBUG` | dev only | `1` = Flask dev server with debugger |
 | `PORT` | no | production port, default 8000 |
 
 *Note: Changing the `SECRET_KEY` will invalidate all active sessions and log everyone out.*
+
+Copy `.env.example` to `.env` and fill in real values for local dev (the app does not auto-load `.env` — use `set VAR=value` on Windows or export it in your shell before running, or install `python-dotenv` if you want auto-loading).
 
 ## Run
 **Development**:
@@ -55,7 +57,9 @@ sqlite3 instance/database.db ".backup backup.db"
 Images are located in `static/images/`. Refer to `static/images/README.md` for information on the 12 filename slots.
 
 ## Testing
-Run the validation tests with:
+Run the tests with:
 ```bash
 python test_validation.py
+python test_routes.py
 ```
+Both are plain assert-based scripts (no pytest). `test_routes.py` uses an in-memory SQLite database and never touches `instance/database.db`.
