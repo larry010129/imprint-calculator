@@ -11,7 +11,6 @@ os.environ.setdefault('SECRET_KEY', 'test-secret-key-not-for-production')
 
 from app import app, db
 from models import User, Submission
-from sqlalchemy import select
 from werkzeug.security import generate_password_hash
 
 app.config['TESTING'] = True
@@ -77,7 +76,7 @@ login(client, 'store_a', 'pass_a')
 with app.app_context():
     before_count = Submission.query.count()
 res = client.post('/submit', json={'category': 'sofa', 'carat': '99', 'type': 'Z',
-                                    'gold': 'tin', 'weight': -5})
+                                    'gold': 'tin'})
 assert res.status_code == 400, f"invalid /submit should 400, got {res.status_code}"
 with app.app_context():
     after_count = Submission.query.count()
@@ -87,7 +86,7 @@ assert after_count == before_count, "invalid /submit must not create a Submissio
 client = fresh_client()
 login(client, 'store_a', 'pass_a')
 res = client.post('/submit', json={
-    'category': 'ring', 'carat': '1', 'type': 'A', 'gold': '18k', 'weight': 3.5, 'ringSize': 12
+    'category': 'ring', 'carat': '1.0', 'type': 'A', 'gold': '18k', 'ringSize': 9
 })
 assert res.status_code == 200, f"valid /submit should 200, got {res.status_code} body={res.get_json()}"
 body = res.get_json()
@@ -99,12 +98,13 @@ with app.app_context():
     assert subs[0].user_id == User.query.filter_by(username='store_a').first().id
     assert subs[0].gold_rate_per_gram is not None, "gold_rate_per_gram should be recorded"
     assert subs[0].price_source in ('live', 'fallback'), "price_source must be 'live' or 'fallback'"
+    assert subs[0].weight is not None and subs[0].weight > 0, "weight should be auto-computed"
 
 # --- Test 7: ring without ringSize is rejected ---
 client = fresh_client()
 login(client, 'store_a', 'pass_a')
-res = client.post('/submit', json={'category': 'ring', 'carat': '1', 'type': 'A',
-                                    'gold': '18k', 'weight': 3.5})
+res = client.post('/submit', json={'category': 'ring', 'carat': '1.0', 'type': 'A',
+                                    'gold': '18k'})
 assert res.status_code == 400, "ring without ringSize must be rejected"
 assert 'ringSize' in res.get_json()['message']
 
@@ -112,7 +112,7 @@ assert 'ringSize' in res.get_json()['message']
 client = fresh_client()
 login(client, 'store_a', 'pass_a')
 client.post('/submit', json={
-    'category': 'necklace', 'carat': '0.5', 'type': 'B', 'gold': 'pt', 'weight': 5.0
+    'category': 'pendant', 'carat': '0.5', 'type': 'B', 'gold': 'pt950'
 })
 with app.app_context():
     target_id = Submission.query.filter_by(
@@ -136,31 +136,57 @@ assert res.status_code == 200 and res.get_json()['success'] is True, \
 with app.app_context():
     assert db.session.get(Submission, target_id) is None, "submission should be gone after owner deletes"
 
-# --- Test 10: weight and ring size boundary validation ---
-from app import validate_submission_fields, MAX_WEIGHT_GRAMS, RING_SIZE_MIN, RING_SIZE_MAX
+# --- Test 10: ring size boundary validation ---
+from app import validate_submission_fields, RING_SIZE_MIN, RING_SIZE_MAX
 
 _, err = validate_submission_fields({
-    'category': 'ring', 'carat': '1', 'type': 'A', 'gold': '18k',
-    'weight': MAX_WEIGHT_GRAMS + 0.01, 'ringSize': 12
-})
-assert err and 'weight' in err, "weight just above MAX_WEIGHT_GRAMS must be rejected"
-
-_, err = validate_submission_fields({
-    'category': 'ring', 'carat': '1', 'type': 'A', 'gold': '18k',
-    'weight': 3.5, 'ringSize': RING_SIZE_MIN - 1
+    'category': 'ring', 'carat': '1.0', 'type': 'A', 'gold': '18k',
+    'ringSize': RING_SIZE_MIN - 0.5
 })
 assert err and 'ringSize' in err, "ringSize below RING_SIZE_MIN must be rejected"
 
 _, err = validate_submission_fields({
-    'category': 'ring', 'carat': '1', 'type': 'A', 'gold': '18k',
-    'weight': 3.5, 'ringSize': RING_SIZE_MAX + 1
+    'category': 'ring', 'carat': '1.0', 'type': 'A', 'gold': '18k',
+    'ringSize': RING_SIZE_MAX + 0.5
 })
 assert err and 'ringSize' in err, "ringSize above RING_SIZE_MAX must be rejected"
 
 ok, err = validate_submission_fields({
-    'category': 'ring', 'carat': '1', 'type': 'A', 'gold': '18k',
-    'weight': 0.01, 'ringSize': RING_SIZE_MIN
+    'category': 'ring', 'carat': '1.0', 'type': 'A', 'gold': '18k',
+    'ringSize': RING_SIZE_MIN
 })
-assert err is None, f"boundary-minimum weight/ringSize should be accepted, got: {err}"
+assert err is None, f"minimum valid ringSize should be accepted, got: {err}"
+
+ok, err = validate_submission_fields({
+    'category': 'ring', 'carat': '1.0', 'type': 'A', 'gold': '18k',
+    'ringSize': RING_SIZE_MAX
+})
+assert err is None, f"maximum valid ringSize should be accepted, got: {err}"
+
+# --- Test 11: bracelet weight auto-lookup (0.1ct only) ---
+client = fresh_client()
+login(client, 'store_a', 'pass_a')
+res = client.post('/submit', json={
+    'category': 'bracelet', 'carat': '0.1', 'type': 'C', 'gold': 's925'
+})
+assert res.status_code == 200, f"bracelet submit should succeed, got {res.get_json()}"
+with app.app_context():
+    sub = Submission.query.first()
+    expected_weight = 0.28 * 3.75  # 單鑽手鍊 C s925 0.1ct = 0.28 chin
+    assert abs(sub.weight - expected_weight) < 0.001, \
+        f"bracelet weight should be {expected_weight}g from table, got {sub.weight}"
+
+# --- Test 12: chain submit (3fen, no ring size required) ---
+client = fresh_client()
+login(client, 'store_a', 'pass_a')
+res = client.post('/submit', json={
+    'category': 'chain', 'carat': '3fen', 'type': 'A', 'gold': '18k', 'color': 'white'
+})
+assert res.status_code == 200, f"chain submit should succeed, got {res.get_json()}"
+with app.app_context():
+    sub = Submission.query.first()
+    assert sub.category == 'chain'
+    assert sub.carat == '3fen'
+    assert abs(sub.weight - 0.3 * 3.75) < 0.001, "chain 3fen weight should be 1.125g"
 
 print("all route tests passed")

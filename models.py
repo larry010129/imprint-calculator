@@ -18,6 +18,7 @@ class Submission(db.Model):
     carat = db.Column(db.String(50), nullable=True)
     style_type = db.Column(db.String(50), nullable=True)
     gold_purity = db.Column(db.String(50), nullable=True)
+    color = db.Column(db.String(20), nullable=True)
     weight = db.Column(db.Float, nullable=True)
     ring_size = db.Column(db.Float, nullable=True)
     total_price = db.Column(db.Float, nullable=True)
