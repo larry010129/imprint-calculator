@@ -321,7 +321,7 @@ function updateSummary() {
   }
 
   document.getElementById("sum-total").textContent =
-    total != null ? Math.round(total).toLocaleString() : tr('total_unavailable');
+    total != null ? Math.round(total).toLocaleString() : '-';
 }
 
 // ── Selection handlers ────────────────────────────────────────────────────
