@@ -337,9 +337,9 @@ function selectCategory(cat) {
   document.querySelectorAll(".cat-btn").forEach(b =>
     b.classList.toggle("active", b.dataset.cat === cat));
 
-  updateCaratButtons();
-  document.getElementById("carat-step").classList.remove("hidden");
-  document.getElementById("type-step").classList.add("hidden");
+  renderTypeCards();
+  document.getElementById("type-step").classList.remove("hidden");
+  document.getElementById("carat-step").classList.add("hidden");
   document.getElementById("metal-step").classList.add("hidden");
   document.getElementById("color-step").classList.add("hidden");
   document.getElementById("ringsize-step").classList.add("hidden");
@@ -353,18 +353,20 @@ function selectCategory(cat) {
 
 function selectType(typeId) {
   state.type = typeId;
+  state.carat = null;
   state.gold = null;
   state.color = null;
   state.ringSize = null;
-  // carat already set in step 2 — do not reset
 
   document.querySelectorAll(".type-card").forEach(c =>
     c.classList.toggle("active", c.dataset.type === typeId));
 
-  document.getElementById("metal-step").classList.remove("hidden");
+  updateCaratButtons();
+  document.getElementById("carat-step").classList.remove("hidden");
+  document.getElementById("metal-step").classList.add("hidden");
   document.getElementById("color-step").classList.add("hidden");
   document.getElementById("ringsize-step").classList.add("hidden");
-  document.querySelectorAll(".metal-btn, .color-btn").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".carat-btn, .metal-btn, .color-btn").forEach(b => b.classList.remove("active"));
   document.getElementById("ring-size-select").value = "";
 
   updateLargeImage();
@@ -410,22 +412,18 @@ function selectColor(color) {
 
 function selectCarat(carat) {
   state.carat = carat;
-  state.type = null;
   state.gold = null;
   state.color = null;
   state.ringSize = null;
 
   document.querySelectorAll(".carat-btn").forEach(b =>
     b.classList.toggle("active", b.dataset.carat === carat));
-  document.querySelectorAll(".type-card, .metal-btn, .color-btn").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".metal-btn, .color-btn").forEach(b => b.classList.remove("active"));
   document.getElementById("ring-size-select").value = "";
 
-  renderTypeCards();
-  document.getElementById("type-step").classList.remove("hidden");
-  document.getElementById("metal-step").classList.add("hidden");
+  document.getElementById("metal-step").classList.remove("hidden");
   document.getElementById("color-step").classList.add("hidden");
   document.getElementById("ringsize-step").classList.add("hidden");
-  document.getElementById("large-image-container").classList.add("hidden");
   updateSummary();
 }
 
@@ -478,14 +476,14 @@ if (window.editData) {
   if (catBtn) { catBtn.click(); }
 
   // Delay subsequent steps so DOM updates cascade
-  // New order: category → carat → type → metal → color → ringSize
+  // Order: category → type → carat → metal → color → ringSize
   setTimeout(() => {
-    const caratBtn = document.querySelector(`.carat-btn[data-carat="${window.editData.carat}"]`);
-    if (caratBtn) { caratBtn.click(); }
+    const card = document.querySelector(`.type-card[data-type="${window.editData.type}"]`);
+    if (card) { card.click(); }
 
     setTimeout(() => {
-      const card = document.querySelector(`.type-card[data-type="${window.editData.type}"]`);
-      if (card) { card.click(); }
+      const caratBtn = document.querySelector(`.carat-btn[data-carat="${window.editData.carat}"]`);
+      if (caratBtn) { caratBtn.click(); }
 
       setTimeout(() => {
         const metalBtn = document.querySelector(`.metal-btn[data-gold="${window.editData.gold}"]`);
