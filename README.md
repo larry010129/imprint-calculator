@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Diamond Calculator
 
 ## What this is
@@ -127,3 +128,6 @@ python tests/test_routes.py
 python tests/test_bot_metal_feed.py
 ```
 All three are plain assert-based scripts (no pytest). `test_routes.py` uses an in-memory SQLite database and never touches `instance/database.db`.
+=======
+# imprint-calculator
+>>>>>>> bd5c5e5631418b6b55b0e5f6b3ac35f9b1bad145
