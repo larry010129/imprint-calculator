@@ -14,5 +14,4 @@ if os.path.isfile(env_file):
     from dotenv import load_dotenv
     load_dotenv(env_file, override=True)
 
-# Matches PythonAnywhere's default WSGI import line — see flask_app.py in this repo.
-from flask_app import app as application  # noqa: F401
+from app import app as application  # noqa: F401
