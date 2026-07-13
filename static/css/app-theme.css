@@ -1087,6 +1087,66 @@ body.app-shell .notify-panel-item--unread {
     display: block;
   }
 
+  /* Submenus expand inline (accordion), not as floating desktop popups */
+  body.app-shell .nav-dropdown {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  body.app-shell .nav-dropdown-menu {
+    position: static;
+    width: 100%;
+    min-width: 0;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    pointer-events: auto;
+    background: transparent;
+    border: none;
+    border-left: 2px solid var(--color-border);
+    border-radius: 0;
+    box-shadow: none;
+    margin: 0 0 0.25rem 0.9rem;
+    padding: 0.15rem 0 0.15rem 0.35rem;
+  }
+
+  body.app-shell .nav-dropdown-item {
+    padding: 0.6rem 0.75rem;
+    font-size: 0.875rem;
+  }
+
+  /* Kill the desktop hover-bridge strip below triggers */
+  body.app-shell .nav-dropdown::after,
+  body.app-shell .nav-user-dropdown::after {
+    display: none;
+  }
+
+  /* Notifications panel behaves like the cart panel: inline, full width */
+  body.app-shell .nav-notify-wrap {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  body.app-shell .notify-panel {
+    position: static;
+    width: 100%;
+    max-height: none;
+    margin-top: 0.35rem;
+    visibility: visible;
+    pointer-events: auto;
+    display: none;
+    box-shadow: none;
+  }
+
+  body.app-shell .notify-panel.is-open {
+    display: flex;
+  }
+
+  body.app-shell .cart-panel {
+    box-shadow: none;
+  }
+
   body.app-shell .app-nav-cta {
     width: 100%;
     justify-content: center;

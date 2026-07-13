@@ -292,8 +292,8 @@
   });
 
   // Open the form section automatically in create/edit mode (server also
-  // adds the is-open class, this just handles smooth-scrolling to it).
-  if (opts.editMode) {
+  // adds the is-open class). Skip auto-scroll on phones — it leaves odd gaps.
+  if (opts.editMode && window.innerWidth > 900) {
     document.getElementById('ap-form-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
@@ -312,16 +312,28 @@
   const form = document.getElementById('ap-form');
   const formErrors = document.getElementById('ap-form-errors');
   const submitBtn = document.getElementById('ap-submit-btn');
-  const publishToggle = document.getElementById('ap-publish-toggle');
+  const draftToggle = document.getElementById('ap-draft-toggle');
+  const publishedField = document.getElementById('ap-is-published');
   const publishHelp = document.getElementById('ap-publish-help');
   const submitNote = document.querySelector('#ap-submit-note span');
   const editorStatus = document.getElementById('ap-editor-status');
   const editorStatusText = document.getElementById('ap-editor-status-text');
 
-  function updatePublishAction() {
-    if (!submitBtn || !publishToggle) return;
+  function willPublish() {
+    return !draftToggle?.checked;
+  }
 
-    const willPublish = publishToggle.checked;
+  function syncPublishedField() {
+    if (publishedField) {
+      publishedField.value = willPublish() ? '1' : '0';
+    }
+  }
+
+  function updatePublishAction() {
+    if (!submitBtn) return;
+
+    syncPublishedField();
+    const publish = willPublish();
     const isCreate = submitBtn.dataset.mode === 'create';
     const wasPublished = submitBtn.dataset.initialPublished === 'true';
     let buttonText;
@@ -330,42 +342,42 @@
     let statusText;
 
     if (isCreate) {
-      buttonText = willPublish ? '建立並上架' : '建立草稿';
-      helpText = willPublish
-        ? '建立後商品將立即顯示於訂製頁面。'
-        : '目前將儲存為草稿，不會顯示於訂製頁面。';
-      noteText = willPublish
-        ? '提交後將建立商品並立即上架。'
+      buttonText = publish ? '建立並上架' : '儲存草稿';
+      helpText = publish
+        ? '關閉時提交後會直接上架。'
+        : '開啟時只儲存草稿，不會顯示於訂製頁面。';
+      noteText = publish
+        ? '提交後會直接上架並顯示於訂製頁面。'
         : '商品將儲存為草稿，不會立即上架。';
-      statusText = willPublish ? '將上架' : '新商品';
-    } else if (willPublish) {
+      statusText = publish ? '將上架' : '草稿';
+    } else if (publish) {
       buttonText = wasPublished ? '儲存變更' : '儲存並上架';
-      helpText = '儲存後商品將保持上架。';
+      helpText = '關閉時提交後會直接上架。';
       noteText = wasPublished
         ? '儲存後變更會套用至已上架商品。'
         : '儲存後商品將立即上架。';
       statusText = wasPublished ? '已上架' : '將上架';
     } else {
       buttonText = wasPublished ? '儲存並下架' : '儲存草稿';
-      helpText = '儲存後商品不會顯示於訂製頁面。';
+      helpText = '開啟時只儲存草稿，不會顯示於訂製頁面。';
       noteText = wasPublished
         ? '儲存後商品將從訂製頁面下架。'
         : '商品將保持草稿狀態。';
-      statusText = wasPublished ? '將下架' : '未上架';
+      statusText = wasPublished ? '將下架' : '草稿';
     }
 
     submitBtn.textContent = buttonText;
     if (publishHelp) publishHelp.textContent = helpText;
     if (submitNote) submitNote.textContent = noteText;
     if (editorStatus && editorStatusText) {
-      editorStatus.classList.toggle('ap-editor-status--live', willPublish);
-      editorStatus.classList.toggle('ap-editor-status--draft', !willPublish);
+      editorStatus.classList.toggle('ap-editor-status--live', publish);
+      editorStatus.classList.toggle('ap-editor-status--draft', !publish);
       editorStatus.classList.remove('ap-editor-status--new');
       editorStatusText.textContent = statusText;
     }
   }
 
-  publishToggle?.addEventListener('change', updatePublishAction);
+  draftToggle?.addEventListener('change', updatePublishAction);
   updatePublishAction();
 
   function clearFormErrors() {
@@ -394,6 +406,7 @@
   form?.addEventListener('submit', async event => {
     event.preventDefault();
     clearFormErrors();
+    syncPublishedField();
     if (submitBtn) {
       submitBtn.disabled = true;
       submitBtn.classList.add('is-loading');

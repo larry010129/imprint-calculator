@@ -2,7 +2,7 @@
 {% block title %}{{ '編輯商品' if product else '新增商品' }} - 鑽石珠寶{% endblock %}
 {% block admin_page_class %} records-page ap-form-page{% endblock %}
 {% block admin_head %}
-<link rel="stylesheet" href="{{ module_static('admin', 'css/admin_products.css') }}?v=6">
+<link rel="stylesheet" href="{{ module_static('admin', 'css/admin_products.css') }}?v=7">
 {% endblock %}
 {% block admin_content %}
 <header class="ap-editor-header">
@@ -78,12 +78,13 @@
           <span class="ap-field__label">英文描述 <small>選填</small></span>
           <textarea name="description_en" rows="3">{{ (product.description_en or '') if product else '' }}</textarea>
         </label>
+        <input type="hidden" name="is_published" id="ap-is-published" value="{{ '1' if (not product) or product.is_published else '0' }}">
         <label class="ap-publish-toggle">
-          <input type="checkbox" name="is_published" id="ap-publish-toggle" value="1"{% if product and product.is_published %} checked{% endif %}>
+          <input type="checkbox" id="ap-draft-toggle"{% if product and not product.is_published %} checked{% endif %}>
           <span class="ap-publish-toggle__control" aria-hidden="true"><i></i></span>
-          <span>
-            <strong>商品上架</strong>
-            <small id="ap-publish-help">{{ '儲存後商品將保持上架。' if product and product.is_published else '目前將儲存為草稿，不會顯示於訂製頁面。' }}</small>
+          <span class="ap-publish-toggle__copy">
+            <strong>僅儲存草稿</strong>
+            <small id="ap-publish-help">{{ '關閉時提交後會直接上架。' if not product or product.is_published else '開啟時只儲存草稿，不會顯示於訂製頁面。' }}</small>
           </span>
         </label>
       </div>
@@ -190,7 +191,7 @@
     <div class="ap-form-actions">
       <div class="ap-form-actions__note" id="ap-submit-note">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-        <span>{{ '儲存後商品將保持上架。' if product and product.is_published else '商品將儲存為草稿，不會立即上架。' }}</span>
+        <span>{{ '提交後會直接上架並顯示於訂製頁面。' if not product or product.is_published else '目前為草稿模式，提交後不會上架。' }}</span>
       </div>
       <div class="ap-form-actions__buttons">
         <a href="{{ url_for('main.admin_products') }}" class="ap-btn ap-btn--secondary">取消</a>
@@ -199,7 +200,7 @@
                 id="ap-submit-btn"
                 data-mode="{{ 'edit' if product else 'create' }}"
                 data-initial-published="{{ 'true' if product and product.is_published else 'false' }}">
-          {{ '儲存變更' if product and product.is_published else ('儲存草稿' if product else '建立草稿') }}
+          {{ '儲存變更' if product and product.is_published else ('儲存草稿' if product else '建立並上架') }}
         </button>
       </div>
     </div>
@@ -217,5 +218,5 @@ window.AP_OPTIONS = {
   defaultCategory: {{ (product.category if product else request.args.get('category', categories[0]))|tojson }},
 };
 </script>
-<script src="{{ module_static('admin', 'js/admin_products.js') }}?v=4"></script>
+<script src="{{ module_static('admin', 'js/admin_products.js') }}?v=5"></script>
 {% endblock %}

@@ -2350,7 +2350,8 @@ body.app-shell:not(.dark-theme) .shop-fit {
     overflow: visible;
   }
 
-  .shop-fit .shop-body {
+  .shop-fit .shop-body,
+  .shop-fit.shop-view--product .shop-body {
     grid-template-columns: minmax(0, 1fr) 240px;
     align-items: start;
   }
@@ -2398,7 +2399,8 @@ body.app-shell:not(.dark-theme) .shop-fit {
 /* Tablet portrait / phone (≤900px): single column, price panel collapses
    into the fixed buy bar. */
 @media (max-width: 900px) {
-  .shop-fit .shop-body {
+  .shop-fit .shop-body,
+  .shop-fit.shop-view--product .shop-body {
     grid-template-columns: 1fr;
   }
 

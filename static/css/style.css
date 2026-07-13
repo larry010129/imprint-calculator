@@ -3716,6 +3716,114 @@ body.dark-theme .order-detail-btn:hover {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
+   Narrow screens (≤900px): order/admin tables keep their natural width and
+   scroll horizontally inside the wrapper. Forcing them to 100% squashes
+   every column and wraps CJK text one character per line.
+   ══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .records-table--compact,
+  .records-page table.records-table--history,
+  body.app-shell .cms-admin-shell .records-table-wrap > table,
+  body.app-shell .cms-admin-shell .records-table-wrap .admin-table,
+  .records-table-wrap--accounts .admin-accounts-table {
+    width: max-content !important;
+    max-width: none !important;
+    min-width: 100%;
+  }
+
+  .records-page .records-table--compact th,
+  .records-page .records-table--compact td,
+  .records-page .admin-accounts-table th,
+  .records-page .admin-accounts-table td {
+    white-space: nowrap;
+    word-break: keep-all;
+  }
+
+  /* Accounts table: drop fixed layout so action buttons don't overlap */
+  .records-page .admin-accounts-table {
+    table-layout: auto !important;
+  }
+
+  .records-page .admin-accounts-table th,
+  .records-page .admin-accounts-table td {
+    width: auto !important;
+    max-width: none !important;
+  }
+
+  .records-page .admin-accounts-table th:nth-child(8),
+  .records-page .admin-accounts-table td:nth-child(8) {
+    min-width: 12.5rem;
+  }
+
+  .records-page .admin-accounts-table th:nth-child(9),
+  .records-page .admin-accounts-table td:nth-child(9) {
+    min-width: 22rem;
+  }
+
+  .records-page .admin-accounts-table .admin-reset-form {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+  }
+
+  .records-page .admin-accounts-table .admin-actions-inner {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 0.35rem;
+  }
+
+  .records-page .admin-accounts-table .admin-reset-input {
+    width: 7.5rem;
+    max-width: none;
+  }
+
+  /* Invite codes table: horizontal scroll, no vertical stacking in cells */
+  .records-page .records-table-wrap--scroll {
+    align-items: stretch;
+  }
+
+  .records-page .records-table-wrap--scroll > table {
+    table-layout: auto !important;
+  }
+
+  .records-page .records-table-wrap--scroll th,
+  .records-page .records-table-wrap--scroll td {
+    white-space: nowrap;
+    word-break: keep-all;
+  }
+
+  body.app-shell .records-page .admin-invite-code-cell {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    min-width: 13rem;
+  }
+
+  body.app-shell .records-page .admin-invite-code {
+    white-space: nowrap;
+    word-break: keep-all;
+  }
+
+  body.app-shell .records-page .admin-invite-actions {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    min-width: 9.5rem;
+  }
+
+  .records-page .records-table-wrap--scroll td:nth-child(4) {
+    min-width: 9.5rem;
+  }
+
+  /* Keep expandable detail panels readable: wrap inside the panel and cap
+     its width to the visible screen rather than the full table width */
+  .records-page .order-detail-panel {
+    max-width: calc(100vw - 48px);
+  }
+
+  .records-page .order-detail-panel * {
+    white-space: normal;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
    Phone layout (≤640px) — every app page must fit a 360–430px viewport
    ══════════════════════════════════════════════════════════════════════ */
 @media (max-width: 640px) {

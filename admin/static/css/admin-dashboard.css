@@ -1269,6 +1269,80 @@ body.app-shell .cms-admin-shell .admin-invite-copy-btn.is-copied {
     padding: 0.6rem 0.65rem;
     font-size: 0.72rem;
   }
+
+  /* Accounts: horizontal scroll + room for reset/actions columns */
+  body.app-shell .cms-admin-shell .records-table-wrap--accounts .admin-accounts-table {
+    width: max-content !important;
+    min-width: 100%;
+    table-layout: auto !important;
+  }
+
+  body.app-shell .cms-admin-shell .admin-accounts-table th,
+  body.app-shell .cms-admin-shell .admin-accounts-table td {
+    width: auto !important;
+    max-width: none !important;
+    white-space: nowrap;
+  }
+
+  body.app-shell .cms-admin-shell .admin-accounts-table th:nth-child(8),
+  body.app-shell .cms-admin-shell .admin-accounts-table td:nth-child(8) {
+    min-width: 12.5rem;
+  }
+
+  body.app-shell .cms-admin-shell .admin-accounts-table th:nth-child(9),
+  body.app-shell .cms-admin-shell .admin-accounts-table td:nth-child(9) {
+    min-width: 22rem;
+  }
+
+  body.app-shell .cms-admin-shell .admin-accounts-table .admin-actions-inner {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 0.35rem;
+  }
+
+  body.app-shell .cms-admin-shell .admin-accounts-table .admin-reset-form {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+  }
+
+  body.app-shell .cms-admin-shell .admin-accounts-table .admin-reset-input {
+    width: 7.5rem;
+    max-width: none;
+  }
+
+  /* Invite codes: same horizontal-scroll pattern as accounts/orders */
+  body.app-shell .cms-admin-shell .records-table-wrap--scroll > table {
+    width: max-content !important;
+    min-width: 100%;
+    table-layout: auto !important;
+  }
+
+  body.app-shell .cms-admin-shell .records-table-wrap--scroll {
+    align-items: stretch;
+  }
+
+  body.app-shell .cms-admin-shell .records-table-wrap--scroll th,
+  body.app-shell .cms-admin-shell .records-table-wrap--scroll td {
+    white-space: nowrap;
+    word-break: keep-all;
+  }
+
+  body.app-shell .cms-admin-shell .admin-invite-code-cell {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    min-width: 13rem;
+  }
+
+  body.app-shell .cms-admin-shell .admin-invite-code {
+    white-space: nowrap;
+    word-break: keep-all;
+  }
+
+  body.app-shell .cms-admin-shell .admin-invite-actions {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    min-width: 9.5rem;
+  }
 }
 
 @media (max-width: 480px) {

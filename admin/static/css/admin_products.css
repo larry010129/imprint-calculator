@@ -964,6 +964,11 @@ body.app-shell .cms-admin-shell .ap-field textarea {
   display: block;
 }
 
+.cms-admin-shell .ap-publish-toggle__copy {
+  flex: 1;
+  min-width: 0;
+}
+
 .cms-admin-shell .ap-publish-toggle strong {
   color: var(--ops-text);
   font-size: 0.8rem;
@@ -1290,6 +1295,28 @@ body.app-shell .cms-admin-shell .ap-variant-row input {
     flex-direction: column;
     align-items: stretch;
     gap: 0.65rem;
+    position: static;
+    margin-top: 1rem;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .cms-admin-shell .ap-form-page {
+    padding-bottom: 1.5rem;
+  }
+
+  .cms-admin-shell .ap-publish-toggle {
+    align-items: flex-start;
+  }
+
+  .cms-admin-shell .ap-publish-toggle small,
+  .cms-admin-shell .ap-form-actions__note span {
+    min-height: 2.6em;
+    line-height: 1.45;
+  }
+
+  .cms-admin-shell .ap-editor-status {
+    align-self: flex-start;
   }
 
   .cms-admin-shell .ap-form-actions__note {
