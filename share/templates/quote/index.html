@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>珠寶報價單 - {{ product.name_zh }}</title>
+  <link rel="stylesheet" href="{{ module_static('share', 'css/share.css') }}?v=2">
+</head>
+<body class="quote-sheet-body">
+  <main class="quote-sheet">
+    <header class="quote-sheet-header">
+      <div>
+        <h1>珠寶訂製報價單</h1>
+      </div>
+      <div class="quote-sheet-meta">
+        {% if store_name %}<span>{{ store_name }}</span>{% endif %}
+        <time>{{ generated_at.strftime('%Y-%m-%d %H:%M') }}</time>
+      </div>
+    </header>
+
+    <section class="share-product">
+      {% if image_url %}<img src="{{ image_url }}" alt="{{ product.name_zh }}">{% endif %}
+      <div>
+        <p>{{ config.category|label_category }}</p>
+        <h2>{{ product.name_zh }}</h2>
+        {% if product.description_zh %}<p>{{ product.description_zh }}</p>{% endif %}
+      </div>
+    </section>
+
+    <dl class="share-specs">
+      <div><dt>成色</dt><dd>{{ config.gold|label_purity }}</dd></div>
+      <div><dt>顏色</dt><dd>{{ config.color|label_color if config.color else '—' }}</dd></div>
+      <div><dt>克拉</dt><dd>{{ config.carat }}</dd></div>
+      {% if config.ringSize %}<div><dt>戒圍</dt><dd>{{ config.ringSize }}</dd></div>{% endif %}
+      {% if config.lengthCm %}<div><dt>長度</dt><dd>{{ config.lengthCm }} cm</dd></div>{% endif %}
+      {% if config.engravingBand %}<div><dt>戒圈刻字</dt><dd>{{ config.engravingBand }}</dd></div>{% endif %}
+    </dl>
+
+    <section class="quote-breakdown">
+      {% if not quote.manualOverride %}
+      <p><span>鑽石價格</span><strong>NT$ {{ "{:,.0f}".format(quote.diamondPrice or 0) }}</strong></p>
+      <p><span>台金價格</span><strong>NT$ {{ "{:,.0f}".format(quote.taijinPrice or 0) }}</strong></p>
+      <p><span>金工費</span><strong>NT$ {{ "{:,.0f}".format(quote.laborPrice or 0) }}</strong></p>
+      {% if quote.chainPrice %}<p><span>搭配鏈條</span><strong>NT$ {{ "{:,.0f}".format(quote.chainPrice) }}</strong></p>{% endif %}
+      {% endif %}
+      <p class="quote-total"><span>含稅預估總價</span><strong>NT$ {{ "{:,.0f}".format(quote.total) }}</strong></p>
+    </section>
+
+    <p class="quote-disclaimer">本報價為當下金價之預估結果；實際金額可能因市場價格與最終規格調整。</p>
+    <p class="quote-sheet-footnote">鈺梓燒 Indy Dev</p>
+    <footer>
+      <button type="button" id="quote-print-btn">列印 / 儲存 PDF</button>
+    </footer>
+  </main>
+  <script src="{{ module_static('share', 'js/quote-sheet.js') }}"></script>
+</body>
+</html>

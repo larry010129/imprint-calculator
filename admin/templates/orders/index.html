@@ -1,0 +1,639 @@
+{% extends "admin/base.html" %}
+{% from "macros/order_rows.html" import admin_order_rows %}
+{% block title %}管理後台 - 鑽石珠寶{% endblock %}
+{% block admin_page_class %} adx-orders-page records-page{% endblock %}
+{% block admin_content %}
+
+{# ── Macro: shared compact table header row ── #}
+{% macro render_thead() %}
+<thead>
+  <tr>
+    <th class="admin-check-th">
+      <input type="checkbox" class="admin-select-all" title="全選 / 取消全選">
+    </th>
+    <th class="admin-sort-th" data-sort-col="1" data-sort-type="num">
+      <span data-i18n="table_id">編號</span><span class="admin-sort-icon" aria-hidden="true"></span>
+    </th>
+    <th class="admin-sort-th" data-sort-col="2" data-sort-type="str">
+      <span data-i18n="table_date">日期</span><span class="admin-sort-icon" aria-hidden="true"></span>
+    </th>
+    <th class="admin-sort-th" data-sort-col="3" data-sort-type="str">
+      <span data-i18n="table_store">供應商 / 店家</span><span class="admin-sort-icon" aria-hidden="true"></span>
+    </th>
+    <th data-i18n="table_item">品項</th>
+    <th class="col-image" data-i18n="table_image">商品圖</th>
+    <th class="admin-sort-th" data-sort-col="6" data-sort-type="str">
+      <span data-i18n="table_style">款式</span><span class="admin-sort-icon" aria-hidden="true"></span>
+    </th>
+    <th class="admin-sort-th" data-sort-col="7" data-sort-type="num">
+      <span data-i18n="table_price_taxed">含稅總計 (NT$)</span><span class="admin-sort-icon" aria-hidden="true"></span>
+    </th>
+    <th data-i18n="table_status">狀態</th>
+    <th data-i18n="table_actions">操作</th>
+    <th data-i18n="table_detail">詳情</th>
+  </tr>
+</thead>
+{% endmacro %}
+
+{% macro render_pagination(key) %}
+<div class="admin-list-controls" data-pagination-for="{{ key }}">
+  <div class="admin-per-page">
+    <label for="page-size-{{ key }}" data-i18n="admin_pagination_per_page">每頁顯示</label>
+    <select id="page-size-{{ key }}" class="admin-per-page-select" data-page-size-for="{{ key }}">
+      <option value="5">5</option>
+      <option value="10">10</option>
+      <option value="20" selected>20</option>
+      <option value="50">50</option>
+      <option value="100">100</option>
+      <option value="all" data-i18n="admin_pagination_all">全部</option>
+    </select>
+  </div>
+  <nav class="admin-pagination" data-page-links-for="{{ key }}" aria-label="分頁"></nav>
+</div>
+{% endmacro %}
+
+{# Split orders by status (loaded separately so every tab shows all matching orders) #}
+
+<header class="adx-page-header">
+  <div class="adx-page-header__copy">
+    <p class="app-page-eyebrow"><span class="app-page-eyebrow-line"></span><span data-i18n="nav_admin">管理後台</span></p>
+    <h1 class="adx-page-header__title" data-i18n="admin_title">管理後台</h1>
+    <p class="adx-page-header__desc" data-i18n="admin_subtitle">近期送出紀錄</p>
+  </div>
+</header>
+
+{% set search_action = url_for('main.admin') %}
+{% set search_clear_url = url_for('main.admin') %}
+{% include 'orders/partials/search_bar.html' %}
+
+<section class="adx-panel--tabs">
+
+{# ── Tabs: switch between incomplete / completed / cancelled orders ── #}
+<div class="admin-tabs" role="tablist">
+  <button type="button" class="admin-tab-btn{% if active_tab == 'incomplete' %} is-active{% endif %}" data-tab="incomplete" role="tab" aria-selected="{{ 'true' if active_tab == 'incomplete' else 'false' }}" aria-controls="panel-incomplete">
+    <span data-i18n="admin_tab_incomplete">未完成訂單</span>
+    <span class="admin-tab-count" id="tabcount-incomplete">{{ incomplete_subs|length }}</span>
+  </button>
+  <button type="button" class="admin-tab-btn{% if active_tab == 'complete' %} is-active{% endif %}" data-tab="complete" role="tab" aria-selected="{{ 'true' if active_tab == 'complete' else 'false' }}" aria-controls="panel-complete">
+    <span data-i18n="admin_tab_complete">已完成訂單</span>
+    <span class="admin-tab-count admin-tab-count--complete" id="tabcount-complete">{{ complete_subs|length }}</span>
+  </button>
+</div>
+
+{# Bulk actions toolbar #}
+<div id="admin-bulk-bar" class="admin-bulk-bar" hidden>
+  <span class="admin-bulk-info">
+    已選取 <strong id="admin-bulk-count">0</strong> 個訂單
+  </span>
+  <div class="admin-bulk-actions">
+    <div class="admin-bulk-status-group">
+      <select id="admin-bulk-status-select" class="admin-bulk-status-select">
+        <option value="">── 批量改狀態 ──</option>
+        <option value="pending">待處理</option>
+        <option value="confirmed" data-i18n="status_confirmed">訂單成立</option>
+        <option value="processing" data-i18n="status_processing">處理中</option>
+        <option value="completed" data-i18n="status_completed">已完成</option>
+        <option value="shipped" data-i18n="status_shipped">已出貨</option>
+      </select>
+      <button type="button" id="admin-bulk-status-btn" class="admin-bulk-action-btn admin-bulk-action-btn--primary">套用</button>
+    </div>
+    <button type="button" id="admin-bulk-delete-btn" class="admin-bulk-action-btn admin-bulk-action-btn--danger">批量刪除</button>
+    <button type="button" id="admin-bulk-clear-btn" class="admin-bulk-action-btn admin-bulk-action-btn--secondary">取消選取</button>
+  </div>
+</div>
+
+{# ── Panel 1: Incomplete orders ── #}
+<div class="admin-tab-panel" id="panel-incomplete" data-tab-panel="incomplete" role="tabpanel"{% if active_tab != 'incomplete' %} hidden{% endif %}>
+  <div class="records-table-wrap records-table-wrap--compact">
+  <table id="admin-table-incomplete" class="admin-table records-table--compact">
+    {{ render_thead() }}
+    <tbody id="tbody-incomplete">
+      {% for sub in incomplete_subs %}{{ admin_order_rows(sub, tax_rate) }}{% endfor %}
+      <tr class="admin-section-empty-row" id="empty-incomplete"{% if incomplete_subs %} hidden{% endif %}>
+        <td colspan="11" style="text-align:center;padding:14px 0;color:var(--color-text-muted);" data-i18n="history_empty_incomplete">目前沒有未完成訂單。</td>
+      </tr>
+      <tr class="order-search-empty-row" id="search-empty-incomplete" hidden>
+        <td colspan="11" style="text-align:center;padding:14px 0;color:var(--color-text-muted);" data-i18n="search_no_results">找不到符合的訂單。</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+  {{ render_pagination('incomplete') }}
+</div>
+
+{# ── Panel 2: Completed orders ── #}
+<div class="admin-tab-panel" id="panel-complete" data-tab-panel="complete" role="tabpanel"{% if active_tab != 'complete' %} hidden{% endif %}>
+  <div class="records-table-wrap records-table-wrap--compact">
+  <table id="admin-table-complete" class="admin-table records-table--compact">
+    {{ render_thead() }}
+    <tbody id="tbody-complete">
+      {% for sub in complete_subs %}{{ admin_order_rows(sub, tax_rate) }}{% endfor %}
+      <tr class="admin-section-empty-row" id="empty-complete"{% if complete_subs %} hidden{% endif %}>
+        <td colspan="11" style="text-align:center;padding:14px 0;color:var(--color-text-muted);" data-i18n="history_empty_complete">目前沒有已完成訂單。</td>
+      </tr>
+      <tr class="order-search-empty-row" id="search-empty-complete" hidden>
+        <td colspan="11" style="text-align:center;padding:14px 0;color:var(--color-text-muted);" data-i18n="search_no_results">找不到符合的訂單。</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+  {{ render_pagination('complete') }}
+</div>
+
+{# Price summary — at the end of the order list (scroll to view) #}
+<div class="admin-price-summary">
+  <div class="admin-price-stat">
+    <span class="admin-price-label">訂單總價（全部）</span>
+    <span class="admin-price-value" id="stat-all-total">NT$ {{ "{:,.0f}".format(all_total) }}</span>
+  </div>
+  <div class="admin-price-divider"></div>
+  <div class="admin-price-stat">
+    <span class="admin-price-label">完成價格（全部）</span>
+    <span class="admin-price-value admin-price-value--completed" id="stat-completed-total">NT$ {{ "{:,.0f}".format(completed_total_all) }}</span>
+  </div>
+</div>
+</section>
+{% endblock %}
+{% block admin_foot %}
+
+<script src="{{ module_static('orders', 'js/order-detail.js') }}"></script>
+<script nonce="{{ csp_nonce }}">
+window.orderSearchConfig = {
+  sections: [
+    { key: 'incomplete', tbodyId: 'tbody-incomplete', countId: 'tabcount-incomplete', emptyId: 'empty-incomplete', searchEmptyId: 'search-empty-incomplete' },
+    { key: 'complete', tbodyId: 'tbody-complete', countId: 'tabcount-complete', emptyId: 'empty-complete', searchEmptyId: 'search-empty-complete' },
+  ],
+  onFilterChange: () => window.AdminOrderPagination?.refreshAll(),
+};
+</script>
+<script src="{{ module_static('orders', 'js/order-search.js') }}"></script>
+<script src="{{ module_static('orders', 'js/order-pagination.js') }}"></script>
+
+<dialog id="admin-cancel-dialog" class="admin-delete-dialog">
+  <form method="dialog" id="admin-cancel-form">
+    <h3 class="admin-delete-title" data-i18n="admin_cancel_title">取消訂單</h3>
+    <p class="admin-delete-target" id="admin-cancel-target"></p>
+    <label class="admin-delete-label" for="admin-cancel-message" data-i18n="admin_cancel_reason">取消原因（會通知店家）</label>
+    <textarea id="admin-cancel-message" class="admin-delete-message" rows="3" maxlength="500" required></textarea>
+    <div class="admin-delete-actions">
+      <button type="button" id="admin-cancel-back" class="admin-bulk-action-btn admin-bulk-action-btn--secondary" data-i18n="btn_cancel">取消</button>
+      <button type="submit" class="admin-bulk-action-btn admin-bulk-action-btn--primary" data-i18n="admin_cancel_confirm">確認取消</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="admin-delete-dialog" class="admin-delete-dialog">
+  <form method="dialog" id="admin-delete-form">
+    <h3 class="admin-delete-title" data-i18n="admin_delete_title">刪除訂單</h3>
+    <p class="admin-delete-target" id="admin-delete-target"></p>
+    <label class="admin-delete-label" for="admin-delete-preset">選擇原因範本</label>
+    <select id="admin-delete-preset" class="admin-delete-preset">
+      <option value="">── 選擇範本（或自行填寫）──</option>
+      <option value="很抱歉，您的訂單因規格不符合目前庫存條件，無法完成製作，已予以刪除。如有疑問請重新送出訂單或聯繫我們。">庫存不符 / 無法製作</option>
+      <option value="您的訂單資訊填寫不完整或有誤，無法進行後續處理，已予以刪除。請重新填寫並確認所有欄位後再送出。">資料填寫錯誤 / 不完整</option>
+      <option value="此訂單為重複送出，系統已保留最新一筆，舊訂單已刪除。如有疑問請查看最新訂單或聯繫我們。">重複訂單</option>
+      <option value="此訂單已依您的要求取消並刪除。若需重新訂購，歡迎再次送出訂單。">依客戶要求取消</option>
+      <option value="目前該款式暫時停產或斷貨，訂單已刪除。恢復供貨時將另行通知，造成不便敬請見諒。">款式暫停供應</option>
+      <option value="custom">✏️ 自行輸入原因…</option>
+    </select>
+    <label class="admin-delete-label" for="admin-delete-message" style="margin-top:10px;">通知店家原因（必填）</label>
+    <textarea id="admin-delete-message" class="admin-delete-message" rows="3" maxlength="500" required
+              placeholder="請簡短說明刪除原因，店家會在通知頁看到此訊息。"></textarea>
+    <div class="admin-delete-actions">
+      <button type="button" class="admin-delete-cancel" id="admin-delete-cancel" data-i18n="btn_cancel">取消</button>
+      <button type="submit" class="admin-delete-confirm" data-i18n="admin_delete_confirm">刪除並通知</button>
+    </div>
+  </form>
+</dialog>
+
+<script nonce="{{ csp_nonce }}">
+document.getElementById('admin-cancel-back')?.addEventListener('click', () => {
+  document.getElementById('admin-cancel-dialog')?.close();
+});
+document.getElementById('admin-cancel-form')?.addEventListener('submit', e => {
+  e.preventDefault();
+  const msg = document.getElementById('admin-cancel-message')?.value?.trim();
+  if (!msg) return;
+  const dlg = document.getElementById('admin-cancel-dialog');
+  if (dlg) { dlg.returnValue = 'ok'; dlg.close(); }
+});
+
+/* All-time totals seeded from server; updated via deltas as rows change */
+let summaryAllTotal       = {{ all_total | int }};
+let summaryCompletedTotal = {{ completed_total_all | int }};
+
+function updateSummaryDisplay() {
+  const fmt = n => 'NT$ ' + Math.round(n).toLocaleString('zh-TW');
+  document.getElementById('stat-all-total').textContent      = fmt(summaryAllTotal);
+  document.getElementById('stat-completed-total').textContent = fmt(summaryCompletedTotal);
+}
+
+/* Move a row (and its detail row) between tabs and keep tab counts fresh */
+function getDetailRowFor(mainRow) {
+  const targetId = mainRow?.querySelector('.order-detail-btn')?.dataset.target;
+  return targetId ? document.getElementById(targetId) : null;
+}
+
+function sectionTbodyForStatus(status) {
+  if (['completed', 'shipped'].includes(status)) return 'tbody-complete';
+  return 'tbody-incomplete';
+}
+
+function relocateRowByStatus(row, prevStatus, newStatus) {
+  const prevSection = sectionTbodyForStatus(prevStatus);
+  const newSection = sectionTbodyForStatus(newStatus);
+  if (prevSection === newSection) return;
+  if (['completed', 'shipped'].includes(newStatus)) {
+    row.classList.add('admin-row-completing');
+    setTimeout(() => {
+      row.classList.remove('admin-row-completing');
+      moveRowToSection(row, newSection);
+    }, 380);
+  } else {
+    moveRowToSection(row, newSection);
+  }
+}
+
+function moveRowToSection(row, targetTbodyId) {
+  const tbody = document.getElementById(targetTbodyId);
+  if (!tbody || !row) return;
+  const sourceKey = row.parentElement?.id?.replace('tbody-', '');
+  const detailRow = getDetailRowFor(row);
+  const emptyRow = tbody.querySelector('.admin-section-empty-row');
+  if (emptyRow) {
+    tbody.insertBefore(row, emptyRow);
+    if (detailRow) tbody.insertBefore(detailRow, emptyRow);
+  } else {
+    tbody.appendChild(row);
+    if (detailRow) tbody.appendChild(detailRow);
+  }
+  updateSectionCounts();
+  const targetKey = targetTbodyId.replace('tbody-', '');
+  window.AdminOrderPagination?.refresh(sourceKey);
+  window.AdminOrderPagination?.refresh(targetKey);
+}
+
+function updateSectionCounts() {
+  const sections = window.orderSearchConfig?.sections || [];
+  sections.forEach(section => {
+    const tbody = document.getElementById(section.tbodyId);
+    const countEl = document.getElementById(section.countId);
+    const emptyRow = document.getElementById(section.emptyId);
+    const searchEmpty = document.getElementById(section.searchEmptyId);
+    if (!tbody) return;
+    const q = (document.getElementById('order-search-input')?.value || '').trim();
+    const allRows = [...tbody.querySelectorAll('tr[data-id]')];
+    /* Use the search-match flag (not `hidden`) so pagination hiding extra
+       rows doesn't shrink these counts. */
+    const visibleRows = allRows.filter(r => r.dataset.searchMatch !== '0');
+    const n = q ? visibleRows.length : allRows.length;
+    if (countEl) countEl.textContent = n;
+    if (emptyRow) emptyRow.hidden = allRows.length > 0;
+    if (searchEmpty) searchEmpty.hidden = !(allRows.length > 0 && visibleRows.length === 0 && q);
+  });
+}
+
+const STATUS_BADGE_META = {
+  pending:    { mod: 'pending',    i18n: 'status_pending',    fallback: '待處理' },
+  confirmed:  { mod: 'confirmed',  i18n: 'status_confirmed',  fallback: '訂單成立' },
+  processing: { mod: 'processing', i18n: 'status_processing', fallback: '處理中' },
+  completed:  { mod: 'completed',  i18n: 'status_completed',  fallback: '已完成' },
+  shipped:    { mod: 'shipped',    i18n: 'status_shipped',    fallback: '已出貨' },
+  cancelled:  { mod: 'cancelled',  i18n: 'status_cancelled',  fallback: '已取消' },
+};
+
+function statusLabel(status) {
+  const meta = STATUS_BADGE_META[status] || STATUS_BADGE_META.pending;
+  return (typeof window.t === 'function') ? window.t(meta.i18n) : meta.fallback;
+}
+
+function renderStatusBadge(status) {
+  const meta = STATUS_BADGE_META[status] || STATUS_BADGE_META.pending;
+  return `<span class="order-status-badge order-status-badge--${meta.mod}" data-i18n="${meta.i18n}">${statusLabel(status)}</span>`;
+}
+
+function syncProgressStepper(stepper, status) {
+  if (!stepper) return;
+  stepper.dataset.status = status;
+  const steps = [...stepper.querySelectorAll('.progress-step')];
+  if (steps.length < 5) return;
+  steps[0].classList.add('active');
+  steps[1].classList.toggle('active', ['confirmed', 'processing', 'completed', 'shipped'].includes(status));
+  steps[2].classList.toggle('active', ['processing', 'completed', 'shipped'].includes(status));
+  steps[3].classList.toggle('active', ['completed', 'shipped'].includes(status));
+  steps[4].classList.toggle('active', status === 'shipped');
+}
+
+function updateOrderRowStatusUI(row, newStatus, reason) {
+  if (!row) return;
+  const badgeCell = row.querySelector('td.col-status');
+  if (badgeCell) badgeCell.innerHTML = renderStatusBadge(newStatus);
+
+  const detailRow = getDetailRowFor(row);
+  if (!detailRow) return;
+
+  const statusWrap = detailRow.querySelector('.order-detail-status');
+  let cancelEl = detailRow.querySelector('.order-detail-cancel');
+
+  if (newStatus === 'cancelled') {
+    if (statusWrap) statusWrap.hidden = true;
+    if (reason) {
+      if (!cancelEl) {
+        cancelEl = document.createElement('p');
+        cancelEl.className = 'order-detail-cancel';
+        statusWrap?.parentElement?.appendChild(cancelEl);
+      }
+      cancelEl.textContent = `${statusLabel('cancelled')} — ${reason}`;
+      cancelEl.hidden = false;
+    }
+    return;
+  }
+
+  if (statusWrap) statusWrap.hidden = false;
+  if (cancelEl) cancelEl.remove();
+  syncProgressStepper(detailRow.querySelector('.progress-stepper--table'), newStatus);
+}
+
+/* ── Status select (single row) ── */
+document.querySelectorAll('.status-select').forEach(sel => {
+  sel.addEventListener('change', async e => {
+    const id = e.target.getAttribute('data-id');
+    const newStatus = e.target.value;
+    const row = document.getElementById('admin-row-' + id);
+    const prevStatus = row?.dataset.status || '';
+    let reason = '';
+    if (newStatus === 'cancelled') {
+      const cancelDialog = document.getElementById('admin-cancel-dialog');
+      const cancelMsg = document.getElementById('admin-cancel-message');
+      const cancelTarget = document.getElementById('admin-cancel-target');
+      if (cancelDialog && cancelMsg) {
+        cancelMsg.value = '';
+        if (cancelTarget) cancelTarget.textContent = '#' + id;
+        cancelDialog.returnValue = '';
+        cancelDialog.showModal();
+        await new Promise(resolve => {
+          cancelDialog.addEventListener('close', resolve, { once: true });
+        });
+        if (cancelDialog.returnValue !== 'ok') {
+          e.target.value = prevStatus;
+          return;
+        }
+        reason = cancelMsg.value.trim();
+        if (!reason) {
+          e.target.value = prevStatus;
+          return;
+        }
+      }
+    }
+    try {
+      const res = await fetch(`/admin/update_status/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content },
+        body: JSON.stringify({ status: newStatus, reason })
+      });
+      if (res.status === 401) { window.location.href = '/login'; return; }
+      const data = await res.json();
+      if (data.success) {
+        e.target.value = newStatus;
+        e.target.className = `status-select ${newStatus}`;
+        if (row) {
+          const price = parseFloat(row.dataset.price) || 0;
+          if (['completed', 'shipped'].includes(prevStatus)) summaryCompletedTotal -= price;
+          if (['completed', 'shipped'].includes(newStatus)) summaryCompletedTotal += price;
+          updateSummaryDisplay();
+          row.dataset.status = newStatus;
+          updateOrderRowStatusUI(row, newStatus, reason);
+          relocateRowByStatus(row, prevStatus, newStatus);
+        }
+      } else {
+        e.target.value = prevStatus;
+        alert(data.message || 'Failed to update status.');
+      }
+    } catch(err) {
+      console.error(err);
+      e.target.value = prevStatus;
+      alert('Error updating status.');
+    }
+  });
+});
+
+/* ── Column sorting (each tab's table sorts independently) ── */
+document.querySelectorAll('table.admin-table').forEach(table => {
+  let sortCol = null, sortAsc = true;
+  table.querySelectorAll('.admin-sort-th').forEach(th => {
+    th.addEventListener('click', () => {
+      const col  = parseInt(th.dataset.sortCol);
+      const type = th.dataset.sortType || 'str';
+      sortAsc = (sortCol === col) ? !sortAsc : true;
+      sortCol = col;
+      table.querySelectorAll('.admin-sort-th').forEach(t => t.classList.remove('sort-asc','sort-desc'));
+      th.classList.add(sortAsc ? 'sort-asc' : 'sort-desc');
+      const tb = table.querySelector('tbody');
+      if (!tb) return;
+      const rows = [...tb.querySelectorAll('tr.order-row-main')];
+      rows.sort((a,b) => {
+        const av = a.querySelectorAll('td')[col]?.dataset.val ?? '';
+        const bv = b.querySelectorAll('td')[col]?.dataset.val ?? '';
+        const cmp = type==='num' ? (parseFloat(av)||0)-(parseFloat(bv)||0) : av.localeCompare(bv,'zh-Hant');
+        return sortAsc ? cmp : -cmp;
+      });
+      const emptyRow = tb.querySelector('.admin-section-empty-row');
+      rows.forEach(r => {
+        const detailRow = getDetailRowFor(r);
+        if (emptyRow) {
+          tb.insertBefore(r, emptyRow);
+          if (detailRow) tb.insertBefore(detailRow, emptyRow);
+        } else {
+          tb.appendChild(r);
+          if (detailRow) tb.appendChild(detailRow);
+        }
+      });
+      window.AdminOrderPagination?.refresh(tb.id.replace('tbody-', ''));
+    });
+  });
+});
+
+/* ── Checkbox + bulk actions + delete dialog ── */
+(function () {
+  const selectAlls    = [...document.querySelectorAll('.admin-select-all')];
+  const bulkBar       = document.getElementById('admin-bulk-bar');
+  const bulkCount     = document.getElementById('admin-bulk-count');
+  const bulkDelBtn    = document.getElementById('admin-bulk-delete-btn');
+  const bulkStatusSel = document.getElementById('admin-bulk-status-select');
+  const bulkStatusBtn = document.getElementById('admin-bulk-status-btn');
+  const bulkClearBtn  = document.getElementById('admin-bulk-clear-btn');
+  const dialog        = document.getElementById('admin-delete-dialog');
+  const form          = document.getElementById('admin-delete-form');
+  const targetEl      = document.getElementById('admin-delete-target');
+  const messageEl     = document.getElementById('admin-delete-message');
+  const presetEl      = document.getElementById('admin-delete-preset');
+  const cancelBtn     = document.getElementById('admin-delete-cancel');
+  const csrf = () => document.querySelector('meta[name="csrf-token"]').content;
+  let deleteId = null, bulkIds = [];
+
+  /* Bulk actions only ever act on the currently visible tab — mirrors separate pages */
+  const getChecked = () => [...document.querySelectorAll('.admin-tab-panel:not([hidden]) .admin-row-check:checked')];
+
+  function updateBulkBar() {
+    const checked = getChecked();
+    bulkBar.hidden = checked.length === 0;
+    bulkCount.textContent = checked.length;
+    selectAlls.forEach(sa => {
+      const table = sa.closest('table');
+      const all = [...table.querySelectorAll('.admin-row-check')];
+      const checkedInTable = all.filter(cb => cb.checked);
+      sa.indeterminate = checkedInTable.length > 0 && checkedInTable.length < all.length;
+      sa.checked = all.length > 0 && checkedInTable.length === all.length;
+    });
+  }
+
+  selectAlls.forEach(sa => {
+    sa.addEventListener('change', () => {
+      sa.closest('table').querySelectorAll('.admin-row-check').forEach(cb => { cb.checked = sa.checked; });
+      updateBulkBar();
+    });
+  });
+  document.querySelectorAll('.admin-row-check').forEach(cb => cb.addEventListener('change', updateBulkBar));
+
+  bulkClearBtn.addEventListener('click', () => {
+    document.querySelectorAll('.admin-row-check').forEach(cb => { cb.checked = false; });
+    selectAlls.forEach(sa => { sa.checked = false; sa.indeterminate = false; });
+    bulkBar.hidden = true;
+  });
+
+  /* ── Tabs: switch between incomplete / completed panels ── */
+  const tabBtns = document.querySelectorAll('.admin-tab-btn');
+  const panels  = document.querySelectorAll('.admin-tab-panel');
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.tab;
+      tabBtns.forEach(b => {
+        b.classList.toggle('is-active', b === btn);
+        b.setAttribute('aria-selected', b === btn ? 'true' : 'false');
+      });
+      panels.forEach(p => { p.hidden = p.dataset.tabPanel !== target; });
+      /* Selections don't carry across tabs — reset like a fresh page */
+      document.querySelectorAll('.admin-row-check:checked').forEach(cb => { cb.checked = false; });
+      updateBulkBar();
+    });
+  });
+
+  /* Bulk status change */
+  bulkStatusBtn.addEventListener('click', async () => {
+    const newStatus = bulkStatusSel.value;
+    if (!newStatus) { alert('請先選擇要套用的狀態'); return; }
+    let reason = '';
+    if (newStatus === 'cancelled') {
+      reason = (prompt('請輸入批量取消原因（店家會收到通知）') || '').trim();
+      if (!reason) return;
+    }
+    const checked = getChecked();
+    if (!checked.length) return;
+    const ids = checked.map(cb => Number(cb.value));
+    try {
+      const res = await fetch('/admin/bulk-update-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf() },
+        body: JSON.stringify({ ids, status: newStatus, reason }),
+      });
+      if (res.status === 401) { window.location.href = '/login'; return; }
+      const data = await res.json();
+      if (data.success) {
+        (data.updated_ids || ids).forEach(id => {
+          const row = document.getElementById('admin-row-' + id); if (!row) return;
+          const prevStatus = row.dataset.status;
+          const price = parseFloat(row.dataset.price) || 0;
+          if (['completed', 'shipped'].includes(prevStatus)) summaryCompletedTotal -= price;
+          if (['completed', 'shipped'].includes(newStatus)) summaryCompletedTotal += price;
+          row.dataset.status = newStatus;
+          const sel = row.querySelector('.status-select');
+          if (sel) { sel.value = newStatus; sel.className = `status-select ${newStatus}`; }
+          updateOrderRowStatusUI(row, newStatus, reason);
+          relocateRowByStatus(row, prevStatus, newStatus);
+        });
+        updateSummaryDisplay(); bulkStatusSel.value = '';
+      } else { alert(data.message || 'Failed to update status.'); }
+    } catch(err) { console.error(err); alert('Error updating status.'); }
+  });
+
+  /* Open delete dialog */
+  const openDialog = txt => {
+    targetEl.textContent = txt; messageEl.value = '';
+    if (presetEl) presetEl.value = '';
+    dialog.showModal();
+    presetEl ? presetEl.focus() : messageEl.focus();
+  };
+
+  document.querySelectorAll('.admin-delete-btn').forEach(btn => {
+    btn.addEventListener('click', () => { deleteId = btn.dataset.id; bulkIds = []; openDialog(btn.dataset.label || ('#'+deleteId)); });
+  });
+  bulkDelBtn.addEventListener('click', () => {
+    const checked = getChecked(); if (!checked.length) return;
+    deleteId = null; bulkIds = checked.map(cb => cb.value);
+    openDialog(`批量刪除 ${bulkIds.length} 個訂單`);
+  });
+
+  presetEl?.addEventListener('change', () => {
+    const v = presetEl.value;
+    messageEl.value = (v && v !== 'custom') ? v : '';
+    if (!v || v === 'custom') messageEl.focus();
+  });
+  cancelBtn?.addEventListener('click', () => dialog.close());
+
+  /* Delete a row and update delta totals */
+  function removeRow(id) {
+    const row = document.getElementById('admin-row-' + id); if (!row) return;
+    const key = row.parentElement?.id?.replace('tbody-', '');
+    summaryAllTotal -= (parseFloat(row.dataset.price) || 0);
+    if (['completed', 'shipped'].includes(row.dataset.status)) summaryCompletedTotal -= (parseFloat(row.dataset.price) || 0);
+    getDetailRowFor(row)?.remove();
+    row.remove();
+    updateSectionCounts();
+    window.AdminOrderPagination?.refresh(key);
+  }
+
+  form?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const message = messageEl.value.trim();
+    if (!message) { alert('請填寫通知訊息'); return; }
+
+    if (deleteId) {
+      try {
+        const res = await fetch(`/admin/delete/${deleteId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf() },
+          body: JSON.stringify({ message }),
+        });
+        if (res.status === 401) { window.location.href = '/login'; return; }
+        const data = await res.json();
+        if (data.success) {
+          removeRow(deleteId); dialog.close(); deleteId = null;
+          updateSummaryDisplay();
+          alert('訂單已刪除，店家可在「通知」頁面查看您的訊息。');
+        } else { alert(data.message || 'Delete failed'); }
+      } catch(err) { console.error(err); alert('Error deleting order.'); }
+
+    } else if (bulkIds.length) {
+      try {
+        const res = await fetch('/admin/bulk-delete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf() },
+          body: JSON.stringify({ ids: bulkIds.map(Number), message }),
+        });
+        if (res.status === 401) { window.location.href = '/login'; return; }
+        const data = await res.json();
+        if (data.success) {
+          (data.deleted_ids || bulkIds).forEach(removeRow);
+          dialog.close(); bulkIds = [];
+          document.querySelectorAll('.admin-row-check').forEach(cb => { cb.checked = false; });
+          selectAlls.forEach(sa => { sa.checked = false; sa.indeterminate = false; });
+          bulkBar.hidden = true;
+          updateSummaryDisplay();
+          alert(`${(data.deleted_ids||[]).length} 個訂單已刪除。`);
+        } else { alert(data.message || 'Delete failed'); }
+      } catch(err) { console.error(err); alert('Error deleting orders.'); }
+    }
+  });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "layout/base.html" %}
+{% block title %}收藏款式 - 鑽石珠寶{% endblock %}
+{% block content %}
+<main class="favorites-page">
+  <header class="app-page-header">
+    <p class="app-page-eyebrow"><span class="app-page-eyebrow-line"></span>常用配置</p>
+    <h1 class="app-page-title">收藏款式</h1>
+    <p class="app-page-sub">快速載入常用配置，並以目前金價重新試算。</p>
+  </header>
+
+  <div class="favorites-grid" id="favorites-grid">
+    {% for favorite in favorites %}
+    <article class="favorite-card" data-id="{{ favorite.id }}">
+      {% if favorite.image_url %}<img src="{{ favorite.image_url }}" alt="" loading="lazy">{% endif %}
+      <div class="favorite-card-body">
+        <h2>{{ favorite.summary }}</h2>
+        <div class="favorite-actions">
+          <a href="{{ favorite.load_url }}">帶入試算</a>
+          <button type="button" class="favorite-remove" data-id="{{ favorite.id }}">移除</button>
+        </div>
+      </div>
+    </article>
+    {% else %}
+    <div class="favorites-empty">
+      <p>尚未收藏任何款式。</p>
+      <a href="{{ url_for('main.calculator') }}">前往選擇款式</a>
+    </div>
+    {% endfor %}
+  </div>
+</main>
+<script nonce="{{ csp_nonce }}">
+document.querySelectorAll('.favorite-remove').forEach(button => {
+  button.addEventListener('click', async () => {
+    if (!confirm('確定移除此收藏？')) return;
+    const response = await fetch(`/api/favorites/${button.dataset.id}`, {
+      method: 'DELETE',
+      headers: { 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content },
+    });
+    if (response.ok) button.closest('.favorite-card')?.remove();
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,88 @@
+{% extends "layout/base.html" %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ module_static('shop', 'css/shop.css') }}?v=10">
+{% endblock %}
+
+{% block title %}購物車 - 珠寶線上訂製{% endblock %}
+
+{% block content %}
+<div class="records-page cart-page">
+  <header class="app-page-header">
+    <p class="app-page-eyebrow"><span class="app-page-eyebrow-line"></span><span data-i18n="nav_cart">購物車</span></p>
+    <h1 class="app-page-title records-title" data-i18n="cart_title">購物車</h1>
+    <p class="app-page-sub records-subtitle" data-i18n="cart_subtitle">勾選品項後送出訂單，未勾選的品項會保留在購物車</p>
+  </header>
+
+  {% if items %}
+  <div class="cart-list-wrap">
+    <div class="cart-toolbar">
+      <label class="cart-select-all">
+        <input type="checkbox" id="cart-select-all" checked>
+        <span data-i18n="cart_select_all">全選</span>
+      </label>
+    </div>
+    <ul class="cart-list" id="cart-list">
+      {% for row in cart_rows %}
+      {% set item = row.item %}
+      <li class="cart-item-row" id="cart-item-{{ item.id }}" data-id="{{ item.id }}" data-price="{{ item.total_price or 0 }}">
+        <label class="cart-item-check">
+          <input type="checkbox" class="cart-item-checkbox" value="{{ item.id }}" checked>
+        </label>
+        <div class="cart-item-thumb-wrap">
+          {% if row.image_url %}
+          <img class="cart-item-thumb" src="{{ row.image_url }}" alt="" loading="lazy">
+          {% else %}
+          <span class="cart-item-thumb cart-item-thumb--empty" aria-hidden="true">💎</span>
+          {% endif %}
+        </div>
+        <div class="cart-item-info">
+          <strong class="cart-item-title">{{ item.summary_zh or ('#' ~ item.id) }}</strong>
+          <p class="cart-item-meta">
+            {{ row.specs.category }}
+            {% if row.specs.carat %} · {{ row.specs.carat }} ct{% endif %}
+            {% if row.specs.gold %} · {{ row.specs.gold }}{% endif %}
+            {% if row.specs.color %} · {{ row.specs.color }}{% endif %}
+          </p>
+        </div>
+        <div class="cart-item-price">NT$ {{ "{:,.0f}".format(item.total_price) if item.total_price is not none else '—' }}</div>
+        <div class="cart-item-actions">
+          <button type="button" class="cart-action-btn cart-detail-btn" data-id="{{ item.id }}" data-i18n="cart_detail">明細</button>
+          <a href="{{ url_for('main.cart_edit', item_id=item.id) }}" class="cart-action-btn cart-edit-link" data-i18n="cart_edit">編輯</a>
+          <button type="button" class="cart-action-btn cart-item-remove" data-id="{{ item.id }}" data-i18n="cart_remove">移除</button>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    <div class="cart-summary">
+      <div class="cart-summary-row">
+        <span id="cart-selected-label" data-i18n="cart_selected_count" data-i18n-args='{"count":{{ items|length }}}'>已選 {{ items|length }} 件</span>
+        <strong id="cart-selected-total">NT$ {{ "{:,.0f}".format(cart_total) }}</strong>
+      </div>
+      <button type="button" class="shop-cta" id="cart-checkout-btn" data-i18n="cart_checkout_selected">訂購已選品項</button>
+      <a href="{{ url_for('main.calculator') }}" class="cart-continue-link" data-i18n="cart_continue">繼續選購</a>
+    </div>
+  </div>
+  {% else %}
+  <div class="cart-empty">
+    <p data-i18n="cart_empty">購物車目前是空的。</p>
+    <a href="{{ url_for('main.calculator') }}" class="shop-cta shop-cta--inline" data-i18n="cart_continue">前往樣式選擇</a>
+  </div>
+  {% endif %}
+</div>
+
+<dialog class="cart-detail-dialog" id="cart-detail-dialog" aria-labelledby="cart-detail-title">
+  <div class="cart-detail-dialog-inner">
+    <header class="cart-detail-dialog-header">
+      <h2 id="cart-detail-title" data-i18n="cart_detail_title">品項明細</h2>
+      <button type="button" class="cart-detail-close" id="cart-detail-close" aria-label="關閉">&times;</button>
+    </header>
+    <div class="cart-detail-dialog-body" id="cart-detail-body">
+      <p class="cart-detail-loading" data-i18n="notifications_loading">載入中…</p>
+    </div>
+  </div>
+</dialog>
+
+<script src="{{ module_static('cart', 'js/cart-page.js') }}?v=1"></script>
+<script src="{{ url_for('static', filename='js/cart-badge.js') }}?v=3"></script>
+{% endblock %}

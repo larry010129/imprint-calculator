@@ -1,0 +1,92 @@
+{# Vertical sidebar — SalesOps-style admin navigation #}
+{% set ep = request.endpoint or '' %}
+{% set nav_section = admin_section|default('') %}
+{% if not nav_section %}
+  {% if ep == 'main.admin_dashboard' %}
+    {% set nav_section = 'dashboard' %}
+  {% elif ep == 'main.admin' %}
+    {% set nav_section = 'orders' %}
+  {% elif ep in ('main.admin_products', 'main.admin_product_new', 'main.admin_product_edit') %}
+    {% set nav_section = 'products' %}
+  {% elif ep == 'main.admin_accounts' %}
+    {% set nav_section = 'accounts' %}
+  {% elif ep in ('main.admin_invites', 'main.admin_invite_create', 'main.admin_invite_revoke', 'main.admin_invite_delete') %}
+    {% set nav_section = 'invites' %}
+  {% endif %}
+{% endif %}
+
+<aside class="adx-admin-sidebar" id="adx-admin-sidebar" aria-label="管理後台導覽">
+  <div class="adx-admin-sidebar__brand">
+    <a href="{{ url_for('main.admin_dashboard') }}" class="adx-admin-sidebar__logo" aria-label="營運儀表板">
+      <span class="adx-admin-sidebar__logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      </span>
+      <span class="adx-admin-sidebar__logo-text" data-i18n="nav_admin">管理後台</span>
+    </a>
+  </div>
+
+  <nav class="adx-admin-sidebar__nav">
+    <a href="{{ url_for('main.admin_dashboard') }}"
+       class="adx-admin-sidebar__link{% if nav_section == 'dashboard' %} is-active{% endif %}"
+       {% if nav_section == 'dashboard' %}aria-current="page"{% endif %}
+       data-i18n="admin_nav_dashboard">
+      <span class="adx-admin-sidebar__indicator" aria-hidden="true"></span>
+      <span class="adx-admin-sidebar__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      </span>
+      <span class="adx-admin-sidebar__label">儀表板</span>
+    </a>
+
+    <a href="{{ url_for('main.admin') }}"
+       class="adx-admin-sidebar__link{% if nav_section == 'orders' %} is-active{% endif %}"
+       {% if nav_section == 'orders' %}aria-current="page"{% endif %}
+       data-i18n="admin_section_orders">
+      <span class="adx-admin-sidebar__indicator" aria-hidden="true"></span>
+      <span class="adx-admin-sidebar__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+      </span>
+      <span class="adx-admin-sidebar__label">訂單管理</span>
+    </a>
+
+    <a href="{{ url_for('main.admin_products') }}"
+       class="adx-admin-sidebar__link{% if nav_section == 'products' %} is-active{% endif %}"
+       {% if nav_section == 'products' %}aria-current="page"{% endif %}
+       data-i18n="admin_section_products">
+      <span class="adx-admin-sidebar__indicator" aria-hidden="true"></span>
+      <span class="adx-admin-sidebar__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+      </span>
+      <span class="adx-admin-sidebar__label">商品上架</span>
+    </a>
+
+    <a href="{{ url_for('main.admin_accounts') }}"
+       class="adx-admin-sidebar__link{% if nav_section == 'accounts' %} is-active{% endif %}"
+       {% if nav_section == 'accounts' %}aria-current="page"{% endif %}
+       data-i18n="admin_section_accounts">
+      <span class="adx-admin-sidebar__indicator" aria-hidden="true"></span>
+      <span class="adx-admin-sidebar__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </span>
+      <span class="adx-admin-sidebar__label">帳戶管理</span>
+    </a>
+
+    <a href="{{ url_for('main.admin_invites') }}"
+       class="adx-admin-sidebar__link{% if nav_section == 'invites' %} is-active{% endif %}"
+       {% if nav_section == 'invites' %}aria-current="page"{% endif %}
+       data-i18n="admin_section_invites">
+      <span class="adx-admin-sidebar__indicator" aria-hidden="true"></span>
+      <span class="adx-admin-sidebar__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 5v2"/><path d="M15 11v2"/><path d="M15 17v2"/><path d="M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4V7a2 2 0 0 1 2-2z"/></svg>
+      </span>
+      <span class="adx-admin-sidebar__label">邀請碼</span>
+    </a>
+  </nav>
+
+  <div class="adx-admin-sidebar__footer">
+    <button type="button" class="adx-admin-sidebar__collapse" id="adx-sidebar-collapse" aria-expanded="true" aria-controls="adx-admin-sidebar">
+      <svg class="adx-admin-sidebar__collapse-icon adx-admin-sidebar__collapse-icon--open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+      <svg class="adx-admin-sidebar__collapse-icon adx-admin-sidebar__collapse-icon--closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+      <span class="adx-admin-sidebar__collapse-label" data-i18n="admin_sidebar_collapse">收合</span>
+    </button>
+  </div>
+</aside>

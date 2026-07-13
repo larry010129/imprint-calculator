@@ -1,263 +1,251 @@
 # PLAN: Route-level test coverage (auth, ownership, CSRF, validation boundaries)
 
-## Rank: 4 of 5
+## Rank: 1 of 5 — do this first
+
+## Status (as of 2026-07-08)
+
+**Already done:**
+
+- `DATABASE_URL` override in `app.py` line 14
+- `test_routes.py` exists with 12 passing tests (auth, submit, delete isolation, bracelet/chain submit, ring size boundaries)
+- Tests use in-memory SQLite — do not touch `instance/database.db`
+- README documents both test files
+
+**Broken / missing:**
+
+- **`python test_validation.py` currently FAILS** — still tests removed `weight` field, obsolete carat `'1'` (valid is `'1.0'`), obsolete ring size `12` (valid range is 7.0–11.0 per `app.py` lines 310, 358). Any CI or human running "all tests" gets a false failure.
+- **No test for `/edit/<id>` cross-tenant isolation** — delete is tested (Test 8) but edit is not. A regression in `edit_submission()` ownership check would not be caught.
+- **No test for `/admin/update_status/<id>`** — provider could potentially change order status if auth check regresses.
+- **No test for login lockout** — implemented in `app.py` lines 150–172 but untested.
 
 ## Goal
 
-`test_validation.py` is the only test file in this project, and it only tests `validate_submission_fields()` — a pure function. Nothing tests the actual Flask routes: whether unauthenticated users are correctly blocked, whether one store can see or modify another store's orders, whether the admin-only route is actually admin-only, or whether the CSRF/JSON error paths behave as intended. This is an app that computes and stores real money amounts for real business customers (multiple jewelry stores) — a regression in the ownership checks (`sub.user_id != current_user.id`) in `edit_submission()` or `delete_submission()` would let one store see or tamper with another store's data, and nothing would catch it before a human noticed.
-
-This plan adds a `test_routes.py` that exercises the real Flask app through its test client, covering auth, cross-tenant isolation, and input validation boundaries at the HTTP layer.
+Restore a trustworthy test suite that matches the current 5-category app schema, then add the highest-risk missing route tests before doing pricing refactors (PLAN-price-source-of-truth) or asset deploys.
 
 ## Files to touch
 
-- `Efforts/diamond-calculator/app.py` (one small, backward-compatible change — see Part 1)
-- `Efforts/diamond-calculator/test_routes.py` (new file)
+- `test_validation.py` (rewrite)
+- `test_routes.py` (append tests)
+- `README.md` (minor clarification only if needed)
 
 ## Step-by-step
 
-### Part 1 — Make `app.py` testable without touching the real database
+### Part 1 — Rewrite `test_validation.py`
 
-**This is the step a weaker model is most likely to skip, and skipping it means every test run corrupts your real production data.**
-
-`app.py` currently has, near the top:
-
-```python
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
-```
-
-...and, further down, still at module level (runs the instant `app.py` is imported by anything, including a test file):
-
-```python
-with app.app_context():
-    db.create_all()
-    create_initial_users()
-```
-
-Because this all happens at **import time**, and because the database URI is a hardcoded string with no override hook, there is no way for an external test file to say "use a different database" after the fact — by the time `import app` returns, `db.create_all()` has already run against `instance/database.db`, the real file. Running tests as-is would create test users and test submissions directly in your production data, mixed in with real store orders.
-
-Fix this first. Find:
-
-```python
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
-```
-
-Replace with:
-
-```python
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///database.db')
-```
-
-This is a one-line, fully backward-compatible change: if `DATABASE_URL` is not set (the normal case, in dev and production), behavior is identical to today. It only matters when something sets `DATABASE_URL` before importing `app` — which is exactly what the test file will do.
-
-### Part 2 — Write `test_routes.py`
-
-Match the existing style of `test_validation.py`: a plain script using `assert`, no `pytest`, no new dependency (there is currently no test framework in `requirements.txt` and this plan does not add one — Flask's built-in `app.test_client()` is sufficient for everything needed here). Run with `python test_routes.py`.
-
-Create `Efforts/diamond-calculator/test_routes.py`:
+Replace entire file content with:
 
 ```python
 """
-Route-level tests. Run with: python test_routes.py
+Validation unit tests. Run with: python test_validation.py
 
-IMPORTANT: this sets DATABASE_URL to an in-memory sqlite database BEFORE
-importing app, so it never touches instance/database.db. Do not remove
-or reorder the os.environ line below the import.
+Does not import app routes — only validate_submission_fields().
 """
 import os
-os.environ['DATABASE_URL'] = 'sqlite:///:memory:'
-os.environ.setdefault('SECRET_KEY', 'test-secret-key-not-for-production')
+os.environ.setdefault('SECRET_KEY', 'test-secret-key')
+os.environ.setdefault('DATABASE_URL', 'sqlite:///:memory:')
 
-from app import app, db
-from models import User, Submission
-from werkzeug.security import generate_password_hash
+from app import validate_submission_fields, RING_SIZE_MIN, RING_SIZE_MAX
 
-app.config['TESTING'] = True
-app.config['WTF_CSRF_ENABLED'] = False  # tests exercise route logic, not CSRF machinery
-
-def fresh_client():
-    """Returns a fresh test client with a clean in-memory DB and two seeded users."""
-    with app.app_context():
-        db.drop_all()
-        db.create_all()
-        admin = User(username='admin_test', password_hash=generate_password_hash('adminpass'),
-                     role='admin', store_name='Admin HQ')
-        store_a = User(username='store_a', password_hash=generate_password_hash('pass_a'),
-                       role='provider', store_name='Store A')
-        store_b = User(username='store_b', password_hash=generate_password_hash('pass_b'),
-                       role='provider', store_name='Store B')
-        db.session.add_all([admin, store_a, store_b])
-        db.session.commit()
-    return app.test_client()
-
-def login(client, username, password):
-    return client.post('/login', data={'username': username, 'password': password}, follow_redirects=False)
-
-# --- Test 1: unauthenticated access to a protected route is blocked ---
-client = fresh_client()
-res = client.get('/calculator', follow_redirects=False)
-assert res.status_code == 302, f"expected redirect for anon /calculator, got {res.status_code}"
-assert '/login' in res.headers.get('Location', ''), "anon /calculator should redirect to /login"
-
-res = client.get('/api/prices')
-assert res.status_code == 401, f"expected 401 JSON for anon /api/prices, got {res.status_code}"
-
-# --- Test 2: login works and redirects providers to /calculator, admin to /admin ---
-client = fresh_client()
-res = login(client, 'store_a', 'pass_a')
-assert res.status_code == 302 and res.headers['Location'].endswith('/calculator'), \
-    f"provider login should redirect to /calculator, got {res.headers.get('Location')}"
-
-client = fresh_client()
-res = login(client, 'admin_test', 'adminpass')
-assert res.status_code == 302 and res.headers['Location'].endswith('/admin'), \
-    f"admin login should redirect to /admin, got {res.headers.get('Location')}"
-
-# --- Test 3: wrong password is rejected ---
-client = fresh_client()
-res = login(client, 'store_a', 'wrong-password')
-assert res.status_code == 200, "failed login should re-render the login page, not redirect"
-
-# --- Test 4: a provider cannot view /admin ---
-client = fresh_client()
-login(client, 'store_a', 'pass_a')
-res = client.get('/admin', follow_redirects=False)
-assert res.status_code == 302, f"provider hitting /admin should be redirected away, got {res.status_code}"
-assert '/admin' not in res.headers.get('Location', ''), "must not redirect back into /admin"
-
-# --- Test 5: /submit rejects invalid data and does not create a row ---
-client = fresh_client()
-login(client, 'store_a', 'pass_a')
-with app.app_context():
-    before_count = Submission.query.count()
-res = client.post('/submit', json={'category': 'sofa', 'carat': '99', 'type': 'Z', 'gold': 'tin', 'weight': -5})
-assert res.status_code == 400, f"invalid /submit should 400, got {res.status_code}"
-with app.app_context():
-    after_count = Submission.query.count()
-assert after_count == before_count, "invalid /submit must not create a Submission row"
-
-# --- Test 6: /submit with valid ring data creates exactly one row with a positive total ---
-client = fresh_client()
-login(client, 'store_a', 'pass_a')
-res = client.post('/submit', json={
-    'category': 'ring', 'carat': '1', 'type': 'A', 'gold': '18k', 'weight': 3.5, 'ringSize': 12
+# Valid ring submission (weight comes from server table, not client payload)
+ok, err = validate_submission_fields({
+    'category': 'ring', 'carat': '1.0', 'type': 'A', 'gold': '18k', 'ringSize': 9.0
 })
-assert res.status_code == 200, f"valid /submit should 200, got {res.status_code} body={res.get_json()}"
-body = res.get_json()
-assert body['status'] == 'success', f"expected success status, got {body}"
-assert body['total_price'] > 0, "total_price should be a positive number"
-with app.app_context():
-    subs = Submission.query.all()
-    assert len(subs) == 1, f"expected exactly 1 submission, found {len(subs)}"
-    assert subs[0].user_id == User.query.filter_by(username='store_a').first().id
+assert err is None, err
+assert ok['category'] == 'ring' and ok['carat'] == '1.0' and ok['ringSize'] == 9.0
 
-# --- Test 7: ring category without ringSize is rejected ---
-client = fresh_client()
-login(client, 'store_a', 'pass_a')
-res = client.post('/submit', json={'category': 'ring', 'carat': '1', 'type': 'A', 'gold': '18k', 'weight': 3.5})
-assert res.status_code == 400, "ring submission without ringSize must be rejected"
-assert 'ringSize' in res.get_json()['message']
-
-# --- Test 8: cross-tenant isolation — store B cannot delete store A's submission ---
-client_a = fresh_client()
-login(client_a, 'store_a', 'pass_a')
-res = client_a.post('/submit', json={
-    'category': 'necklace', 'carat': '0.5', 'type': 'B', 'gold': 'pt', 'weight': 5.0
+# Ring without ringSize rejected
+_, err = validate_submission_fields({
+    'category': 'ring', 'carat': '1.0', 'type': 'A', 'gold': '18k'
 })
-sub_id = res.get_json()  # note: /submit does not currently return the new row's id — see Edge Cases below
-with app.app_context():
-    real_sub_id = Submission.query.filter_by(user_id=User.query.filter_by(username='store_a').first().id).first().id
+assert err and 'ringSize' in err
 
-client_b = fresh_client()
-# fresh_client() wipes the DB, so re-create the submission in a shared client session instead:
-client = fresh_client()
-login(client, 'store_a', 'pass_a')
-res = client.post('/submit', json={
-    'category': 'necklace', 'carat': '0.5', 'type': 'B', 'gold': 'pt', 'weight': 5.0
+# Invalid category/carat/gold rejected
+_, err = validate_submission_fields({
+    'category': 'sofa', 'carat': '2', 'type': 'Z', 'gold': 'tin'
 })
-with app.app_context():
-    target = Submission.query.filter_by(user_id=User.query.filter_by(username='store_a').first().id).first()
-    target_id = target.id
-client.get('/logout')
-login(client, 'store_b', 'pass_b')
-res = client.post(f'/delete/{target_id}')
-assert res.status_code == 403, f"store_b deleting store_a's order should 403, got {res.status_code}"
-with app.app_context():
-    assert Submission.query.get(target_id) is not None, "store_a's submission must still exist after store_b's blocked delete attempt"
+assert err
 
-# --- Test 9: owner CAN delete their own pending submission ---
-client.get('/logout')
-login(client, 'store_a', 'pass_a')
-res = client.post(f'/delete/{target_id}')
-assert res.status_code == 200 and res.get_json()['success'] is True, "owner should be able to delete their own pending order"
-with app.app_context():
-    assert Submission.query.get(target_id) is None, "submission should be gone after owner deletes it"
-
-# --- Test 10: weight and ring size boundary validation ---
-from app import validate_submission_fields, MAX_WEIGHT_GRAMS, RING_SIZE_MIN, RING_SIZE_MAX
+# Ring size boundaries
+_, err = validate_submission_fields({
+    'category': 'ring', 'carat': '0.5', 'type': 'B', 'gold': '14k',
+    'ringSize': RING_SIZE_MIN - 0.5
+})
+assert err and 'ringSize' in err
 
 _, err = validate_submission_fields({
-    'category': 'ring', 'carat': '1', 'type': 'A', 'gold': '18k',
-    'weight': MAX_WEIGHT_GRAMS + 0.01, 'ringSize': 12
+    'category': 'ring', 'carat': '0.5', 'type': 'B', 'gold': '14k',
+    'ringSize': RING_SIZE_MAX + 0.5
 })
-assert err and 'weight' in err, "weight just above MAX_WEIGHT_GRAMS must be rejected"
-
-_, err = validate_submission_fields({
-    'category': 'ring', 'carat': '1', 'type': 'A', 'gold': '18k',
-    'weight': 3.5, 'ringSize': RING_SIZE_MIN - 1
-})
-assert err and 'ringSize' in err, "ringSize below RING_SIZE_MIN must be rejected"
-
-_, err = validate_submission_fields({
-    'category': 'ring', 'carat': '1', 'type': 'A', 'gold': '18k',
-    'weight': 3.5, 'ringSize': RING_SIZE_MAX + 1
-})
-assert err and 'ringSize' in err, "ringSize above RING_SIZE_MAX must be rejected"
+assert err and 'ringSize' in err
 
 ok, err = validate_submission_fields({
-    'category': 'ring', 'carat': '1', 'type': 'A', 'gold': '18k',
-    'weight': 0.01, 'ringSize': RING_SIZE_MIN
+    'category': 'ring', 'carat': '0.5', 'type': 'B', 'gold': '14k',
+    'ringSize': RING_SIZE_MIN
 })
-assert err is None, f"boundary-minimum weight/ringSize should be accepted, got error: {err}"
+assert err is None, err
 
-print("all route tests passed")
+# Chain uses 3fen/4fen carats, not ct sizes
+ok, err = validate_submission_fields({
+    'category': 'chain', 'carat': '3fen', 'type': 'A', 'gold': '18k', 'color': 'white'
+})
+assert err is None, err
+
+_, err = validate_submission_fields({
+    'category': 'chain', 'carat': '0.5', 'type': 'A', 'gold': '18k'
+})
+assert err and 'carat' in err
+
+# Partial edit mode — only sent fields validated
+ok, err = validate_submission_fields({'category': 'pendant'}, partial=True)
+assert err is None and ok == {'category': 'pendant'}
+
+_, err = validate_submission_fields({'gold': 'invalid'}, partial=True)
+assert err and 'gold' in err
+
+# Optional color
+ok, err = validate_submission_fields({
+    'category': 'ring', 'carat': '0.3', 'type': 'A', 'gold': '14k',
+    'ringSize': 8.0, 'color': 'rose'
+})
+assert err is None and ok['color'] == 'rose'
+
+_, err = validate_submission_fields({
+    'category': 'ring', 'carat': '0.3', 'type': 'A', 'gold': '14k',
+    'ringSize': 8.0, 'color': 'purple'
+})
+assert err and 'color' in err
+
+print("all validation checks passed")
 ```
 
-### Part 3 — Update the README's testing section
+**Edge case:** This file imports `app`, which triggers `db.create_all()` at import. `DATABASE_URL=sqlite:///:memory:` must be set **before** `from app import ...`. The `os.environ.setdefault` lines at top handle this.
 
-Find in `README.md`:
+**Edge case:** Do not test `weight` in validation — client no longer sends weight; server computes via `lookup_weight()` in `submit()`.
 
-```
-## Testing
-Run the validation tests with:
-```bash
+Run:
+
+```powershell
 python test_validation.py
 ```
+
+Must print `all validation checks passed`.
+
+### Part 2 — Append tests to `test_routes.py`
+
+Add after Test 12 (before `print("all route tests passed")`):
+
+```python
+# --- Test 13: cross-tenant isolation — store_b cannot edit store_a's submission ---
+client = fresh_client()
+login(client, 'store_a', 'pass_a')
+client.post('/submit', json={
+    'category': 'pendant', 'carat': '0.3', 'type': 'A', 'gold': '14k', 'color': 'white'
+})
+with app.app_context():
+    target_id = Submission.query.filter_by(
+        user_id=User.query.filter_by(username='store_a').first().id
+    ).first().id
+
+client.get('/logout')
+login(client, 'store_b', 'pass_b')
+res = client.post(f'/edit/{target_id}', json={
+    'category': 'pendant', 'carat': '0.5', 'type': 'B', 'gold': '18k', 'color': 'yellow'
+})
+assert res.status_code == 403, f"store_b editing store_a's order should 403, got {res.status_code}"
+
+# --- Test 14: provider cannot call admin update_status ---
+client = fresh_client()
+login(client, 'store_a', 'pass_a')
+client.post('/submit', json={
+    'category': 'earring', 'carat': '0.1', 'type': 'A', 'gold': '18k'
+})
+with app.app_context():
+    sub_id = Submission.query.first().id
+
+res = client.post(f'/admin/update_status/{sub_id}', json={'status': 'completed'})
+assert res.status_code == 403, f"provider update_status should 403, got {res.status_code}"
+
+# --- Test 15: admin CAN update status ---
+client = fresh_client()
+login(client, 'admin_test', 'adminpass')
+# create submission as store_a in same DB
+with app.app_context():
+    store_a_id = User.query.filter_by(username='store_a').first().id
+    sub = Submission(user_id=store_a_id, category='bracelet', carat='0.1',
+                     style_type='A', gold_purity='s925', total_price=50000, status='pending')
+    db.session.add(sub)
+    db.session.commit()
+    sub_id = sub.id
+
+res = client.post(f'/admin/update_status/{sub_id}', json={'status': 'confirmed'})
+assert res.status_code == 200 and res.get_json()['success'] is True
+with app.app_context():
+    assert db.session.get(Submission, sub_id).status == 'confirmed'
+
+# --- Test 16: login lockout after 5 failures ---
+client = fresh_client()
+for _ in range(5):
+    login(client, 'store_a', 'wrong')
+res = login(client, 'store_a', 'pass_a')
+assert res.status_code == 200, "6th attempt during lockout should re-render login, not redirect"
+assert 'Too many failed attempts' in res.get_data(as_text=True) or \
+       '登入失敗次數過多' in res.get_data(as_text=True)
 ```
 
-Change to:
+**Edge case for Test 15:** `fresh_client()` wipes DB and reseeds users but Test 15 needs a submission. Creating it directly via SQLAlchemy in test (as shown) avoids needing to logout/login as store_a.
 
-```
-## Testing
-Run the tests with:
-```bash
+**Edge case for Test 16:** Lockout is in-memory — resets on process restart. Test runs in same process, so counter persists on `client` session... Actually each `login()` POST is stateless for lockout (server-side dict keyed by username). Same `client` cookie does not matter. After 5 wrong passwords for `store_a`, 6th with correct password must fail with lockout message.
+
+**Edge case:** Test 16 does not wait 5 minutes — it verifies lockout triggers, not expiry. Expiry testing is manual (see PLAN-operational-hardening acceptance criteria).
+
+### Part 3 — Run full suite
+
+```powershell
+cd "c:\Users\user\Documents\second brain\Efforts\diamond-calculator"
 python test_validation.py
 python test_routes.py
 ```
-Both are plain assert-based scripts (no pytest). `test_routes.py` uses an in-memory SQLite database and never touches `instance/database.db`.
+
+Both must exit 0.
+
+### Part 4 — Prove tests catch real bugs (sanity check)
+
+Temporarily comment out ownership check in `app.py` `edit_submission()`:
+
+```python
+# if sub.user_id != current_user.id:
+#     return jsonify({'success': False, 'message': 'Unauthorized'}), 403
 ```
 
-## Edge cases found while exploring that a weaker model would miss
+Run `python test_routes.py` — Test 13 must fail. Revert comment. Run again — must pass.
 
-- **`/submit` does not return the new submission's `id` in its JSON response** — only `{'status': 'success', 'message': ..., 'total_price': ...}` (confirmed by reading `submit()` in `app.py`). Test 8 above works around this by querying the database directly for the row instead of relying on a response field that doesn't exist. Do not write a test that assumes `/submit`'s response contains an `id` — it doesn't, and "fixing" that in this test-coverage plan is out of scope (it would be a real API change affecting the frontend too; flag it as a candidate for a future plan if you notice the frontend ever needs it, but the frontend currently doesn't — it always reloads `/history` to see the new row).
-- **`fresh_client()` calls `db.drop_all(); db.create_all()` inside `app.app_context()` every time it's called**, which means each "section" of the test file that calls `fresh_client()` starts from a completely empty database with only the 3 seeded users. Do not assume state persists between one `fresh_client()` call and another — this is deliberate isolation, not a bug. Test 8's first two `client_a`/`client_b` lines are dead code left over from an earlier draft in this plan's own writing — when you write the file, use the corrected version at the bottom of Test 8's block (the one that logs out and back in on a single shared `client`), which is what's already reflected in the code block above. Re-read Test 8 carefully before transcribing it: the first `client_a = fresh_client()` / `client_b = fresh_client()` lines are intentionally unused placeholders replaced by the `client = fresh_client()` line further down — simplify by deleting the first four lines of Test 8's block (`client_a = fresh_client()` through `real_sub_id = ...`) if you want to clean it up, they don't affect correctness either way since they're just orphaned local variables, but they're confusing. The version that matters is everything from `client = fresh_client()` onward.
-- **`db.create_all()` inside `app.app_context()` at module level in `app.py` still runs once at import time**, against whatever `DATABASE_URL` was set to at that moment. Because `test_routes.py` sets `os.environ['DATABASE_URL'] = 'sqlite:///:memory:'` **before** `from app import app, db`, that first `db.create_all()` call (inside `app.py` itself) already targets the in-memory DB — good. But Python's in-memory SQLite databases are connection-scoped: a fresh `:memory:` database is created per connection, and Flask-SQLAlchemy typically holds one engine/connection pool for the app's lifetime, so this works *as long as `test_routes.py` runs as a single process/single `import app`* (which it does — it's a plain script, not something that re-imports `app` mid-run). Do not try to parallelize these tests across multiple processes without switching to a real temp file-based sqlite DB (`sqlite:///test.db` with cleanup) instead of `:memory:`.
-- **`login()` in the test file does not send a CSRF token**, because `app.config['WTF_CSRF_ENABLED'] = False` is set before any request is made. This must be set on the `app` object before the test client makes its first request — verify it's set right after `app.config['TESTING'] = True` and before any `fresh_client()` call, exactly as shown above. If you accidentally move it after the first request, Flask-WTF may have already cached CSRF enforcement for that request cycle and you'll get confusing 400s.
-- **The admin-blocked test (Test 4) checks that the redirect does NOT go back to `/admin`**, not just that it's a 302. This matters because `admin()` in `app.py` flashes a message and redirects to `calculator`, not to an error page — a weaker test might only check `status_code == 302` and miss a future regression where someone changes the redirect target to something that leaks data.
+Same for `delete_submission()` — Test 8 already catches delete regression.
+
+### Part 5 — README (only if needed)
+
+README already lists both test files. Optionally add:
+
+```
+Run both before committing pricing or auth changes.
+```
+
+No other README changes required.
+
+## Edge cases found while exploring (do not skip these)
+
+- **`test_validation.py` importing `app` touches in-memory DB**, not `instance/database.db` — same as test_routes. Always set `DATABASE_URL` before import.
+- **`/api/prices` requires login** — Test 1 already sends `X-CSRFToken: dummy` header to trigger JSON unauthorized path via `wants_json()`. New tests do not need prices endpoint unless PLAN-price adds Test 6b there.
+- **`Submission.query.get()` deprecated in SQLAlchemy 2.x** — existing tests use `db.session.get(Submission, id)` (Test 8). Match that style in new tests.
+- **Do not add pytest** — project uses plain assert scripts per README. Adding pytest is out of scope.
+- **Test 8 dead code removed** — older plan draft had unused `client_a`/`client_b` variables. Current `test_routes.py` is clean; keep it that way when appending.
+- **Earring submit has no ringSize or color required** — Test 14 uses minimal valid earring payload (9k/14k/18k only in weight table).
 
 ## Acceptance criteria
 
-1. `python test_routes.py` exits with code 0 and prints `all route tests passed`, with no assertion errors.
-2. Running `python test_routes.py` does not modify `instance/database.db` — verify by checking the file's modification timestamp (`ls -la instance/database.db`) before and after running the test; it must be unchanged (or the file may not even exist yet if you haven't run the real app — that's fine too, the test must not create it).
-3. `python test_validation.py` still passes unchanged (this plan does not touch that file).
-4. Deliberately reintroduce the bug this plan is meant to catch — comment out the `if sub.user_id != current_user.id:` check in `delete_submission()` in `app.py` — and confirm `python test_routes.py` now fails on Test 8, proving the test actually exercises the ownership check rather than trivially passing. Revert the comment-out after confirming.
-5. `README.md`'s Testing section lists both test files.
+1. `python test_validation.py` exits 0 with `all validation checks passed`.
+2. `python test_routes.py` exits 0 with `all route tests passed` (16 tests total after append).
+3. `instance/database.db` modification time unchanged after running both test files (or file absent if never run app — either is fine).
+4. Commenting out `edit_submission` ownership check causes Test 13 to fail; restored code passes.
+5. Commenting out `delete_submission` ownership check causes Test 8 to fail; restored code passes.
+6. No test references client-sent `weight` field or carat value `'1'` (without `.0`).
+7. All ring size test values fall within `RING_SIZE_MIN`–`RING_SIZE_MAX` (7.0–11.0) unless explicitly testing rejection outside range.

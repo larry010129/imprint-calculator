@@ -1,0 +1,88 @@
+{% extends "layout/base.html" %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{{ module_static('shop', 'css/shop.css') }}?v=14">
+{% endblock %}
+
+{% block content %}
+{% set shop_mode = shop_mode|default('order') %}
+
+{% if edit_sub %}
+<script nonce="{{ csp_nonce }}">
+  window.editData = {
+    id: {{ edit_sub.id }},
+    category: "{{ edit_sub.category }}",
+    carat: "{{ edit_sub.carat }}",
+    type: "{{ edit_sub.style_type }}",
+    gold: "{{ edit_sub.gold_purity }}",
+    color: {{ edit_sub.color|tojson if edit_sub.color else 'null' }},
+    ringSize: {{ edit_sub.ring_size if edit_sub.ring_size is not none else 'null' }},
+    engravingBand: {{ edit_sub.engraving_band|tojson if edit_sub.engraving_band else '""' }},
+    engravingGirdle: {{ edit_sub.engraving_girdle|tojson if edit_sub.engraving_girdle else '""' }},
+    lengthCm: {{ edit_sub.chain_length_cm if edit_sub.chain_length_cm is not none else 'null' }},
+    includeChain: {{ edit_sub.include_chain|tojson }},
+    chainProductId: {{ edit_sub.chain_product_id if edit_sub.chain_product_id is not none else 'null' }},
+    chainGold: {{ edit_sub.chain_gold|tojson if edit_sub.chain_gold else 'null' }},
+    chainColor: {{ edit_sub.chain_color|tojson if edit_sub.chain_color else 'null' }},
+    chainLength: {{ edit_sub.chain_length_cm if edit_sub.chain_length_cm is not none else 'null' }},
+    diamondKind: {{ edit_sub.diamond_kind|tojson if edit_sub.diamond_kind else '"white"' }},
+    fancyColor: {{ edit_sub.fancy_color|tojson if edit_sub.fancy_color else 'null' }},
+    stoneCount: {{ edit_sub.stone_count if edit_sub.stone_count is not none else 'null' }},
+    diamondShape: {{ edit_sub.diamond_shape|tojson if edit_sub.diamond_shape else '"round"' }}
+  };
+</script>
+{% elif cart_edit_config %}
+<script nonce="{{ csp_nonce }}">
+  window.cartEditData = {
+    id: {{ cart_edit_item.id }},
+    category: {{ cart_edit_config.get('category')|tojson }},
+    carat: {{ cart_edit_config.get('carat')|tojson }},
+    type: {{ cart_edit_config.get('type')|tojson }},
+    gold: {{ cart_edit_config.get('gold')|tojson }},
+    color: {{ cart_edit_config.get('color')|tojson }},
+    ringSize: {{ cart_edit_config.get('ringSize')|tojson }},
+    engravingBand: {{ cart_edit_config.get('engravingBand', '')|tojson }},
+    engravingGirdle: {{ cart_edit_config.get('engravingGirdle', '')|tojson }},
+    lengthCm: {{ cart_edit_config.get('lengthCm')|tojson }},
+    includeChain: {{ cart_edit_config.get('includeChain', false)|tojson }},
+    chainProductId: {{ cart_edit_config.get('chainProductId')|tojson }},
+    chainGold: {{ cart_edit_config.get('chainGold')|tojson }},
+    chainColor: {{ cart_edit_config.get('chainColor')|tojson }},
+    chainLength: {{ cart_edit_config.get('chainLength')|tojson }},
+    diamondKind: {{ cart_edit_config.get('diamondKind', 'white')|tojson }},
+    fancyColor: {{ cart_edit_config.get('fancyColor')|tojson }},
+    stoneCount: {{ cart_edit_config.get('stoneCount')|tojson }},
+    diamondShape: {{ cart_edit_config.get('diamondShape', 'round')|tojson }}
+  };
+</script>
+{% endif %}
+
+{% if prefill_config %}
+<script nonce="{{ csp_nonce }}">
+  window.prefillData = {{ prefill_config|tojson }};
+</script>
+{% endif %}
+
+{% if preview_mode %}
+<div class="shop-preview-banner">
+  <a href="{{ url_for('main.admin_products') }}" class="shop-preview-back">← 返回商品管理</a>
+  <span>管理員預覽模式：草稿商品僅你可見，無法下單或加入購物車。</span>
+</div>
+{% endif %}
+{% include 'shop/partials/shop_markup.html' %}
+
+<script nonce="{{ csp_nonce }}">
+  window.shopConfig = {
+    mode: {{ shop_mode|tojson }},
+    preview: {{ preview_mode|default(false)|tojson }},
+    loginUrl: {{ url_for('main.login', next=url_for('main.calculator'))|tojson }},
+    cartUrl: {{ url_for('main.cart')|tojson }},
+    quoteSheetUrl: {{ url_for('main.quote_sheet')|tojson }},
+    shareBaseUrl: {{ url_for('main.shared_summary', token='TOKEN')|tojson }},
+  };
+</script>
+<script src="{{ module_static('shop', 'js/script.js') }}?v=45"></script>
+{% if shop_mode == 'order' %}
+<script src="{{ url_for('static', filename='js/cart-badge.js') }}?v=1"></script>
+{% endif %}
+{% endblock %}

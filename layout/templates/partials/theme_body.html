@@ -1,0 +1,8 @@
+{# Sync body.dark-theme before any visible chrome paints. #}
+<script nonce="{{ csp_nonce }}">
+(function () {
+  if (localStorage.getItem('darkTheme') !== 'false') {
+    document.body.classList.add('dark-theme');
+  }
+})();
+</script>

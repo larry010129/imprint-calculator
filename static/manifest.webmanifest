@@ -1,0 +1,18 @@
+{
+  "name": "珠寶線上訂製",
+  "short_name": "珠寶訂製",
+  "description": "鑽石珠寶試算與訂單管理",
+  "start_url": "/calculator",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#10191b",
+  "theme_color": "#91d6d9",
+  "icons": [
+    {
+      "src": "/static/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

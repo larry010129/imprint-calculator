@@ -1,0 +1,156 @@
+{% extends "layout/auth_base.html" %}
+
+{% block title %}{% if auth_mode == 'register' %}註冊{% else %}登入{% endif %} - 鑽石珠寶{% endblock %}
+
+{% block body %}
+<div class="auth-split-page">
+  <div class="auth-split-card" id="auth-split-card">
+    <aside class="auth-split-visual" aria-hidden="false">
+      <div class="auth-split-visual-header auth-animate auth-animate--1">
+        <a href="{{ url_for('main.home') }}" class="auth-brand">
+          <span class="auth-brand-text" data-i18n="landing_brand">珠寶線上訂製</span>
+        </a>
+        <a href="{{ url_for('main.home') }}" class="auth-back-link">
+          <span data-i18n="auth_back_home">返回首頁</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+
+      <div class="auth-carousel auth-animate auth-animate--2" id="auth-carousel">
+        <div class="auth-carousel-track">
+          <figure class="auth-carousel-slide is-active" data-slide="0">
+            <img src="{{ url_for('static', filename='images/white/ring-A.png') }}" alt="">
+            <figcaption class="auth-carousel-caption">
+              <span data-i18n="auth_slide1_line1">精準試算，</span><br>
+              <span data-i18n="auth_slide1_line2">每一款都清晰報價</span>
+            </figcaption>
+          </figure>
+          <figure class="auth-carousel-slide" data-slide="1">
+            <img src="{{ url_for('static', filename='images/white/pendant-A.png') }}" alt="">
+            <figcaption class="auth-carousel-caption">
+              <span data-i18n="auth_slide2_line1">鑽石與金工，</span><br>
+              <span data-i18n="auth_slide2_line2">明細一目了然</span>
+            </figcaption>
+          </figure>
+          <figure class="auth-carousel-slide" data-slide="2">
+            <img src="{{ url_for('static', filename='images/yellow/bracelet-A.png') }}" alt="">
+            <figcaption class="auth-carousel-caption">
+              <span data-i18n="auth_slide3_line1">整合台銀金價，</span><br>
+              <span data-i18n="auth_slide3_line2">K 金成本即時換算</span>
+            </figcaption>
+          </figure>
+        </div>
+        <div class="auth-carousel-fade"></div>
+      </div>
+
+      <div class="auth-carousel-dots auth-animate auth-animate--3" id="auth-carousel-dots" role="tablist" aria-label="Slide indicators">
+        <button type="button" class="auth-dot is-active" data-index="0" role="tab" aria-selected="true" aria-label="1"></button>
+        <button type="button" class="auth-dot" data-index="1" role="tab" aria-selected="false" aria-label="2"></button>
+        <button type="button" class="auth-dot" data-index="2" role="tab" aria-selected="false" aria-label="3"></button>
+      </div>
+    </aside>
+
+    <section class="auth-split-form">
+      <div class="auth-form-head auth-animate auth-animate--3">
+        {% if auth_mode == 'register' %}
+        <h1 class="auth-form-title" data-i18n="register_title">店家註冊</h1>
+        <p class="auth-form-switch">
+          <span data-i18n="auth_have_account">已有帳號？</span>
+          <a href="{{ url_for('main.login') }}" data-i18n="home_btn_login">登入</a>
+        </p>
+        {% else %}
+        <h1 class="auth-form-title" data-i18n="auth_welcome_back">歡迎回來</h1>
+        <p class="auth-form-switch">
+          <span data-i18n="auth_no_account">還沒有帳號？</span>
+          <a href="{{ url_for('main.register') }}" data-i18n="login_register_link">註冊新帳號</a>
+        </p>
+        {% endif %}
+      </div>
+
+      {% if auth_mode == 'register' %}
+      <form method="POST" action="{{ url_for('main.register') }}" class="auth-form" id="auth-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        {% if invite_required %}
+        <div class="auth-field auth-animate auth-animate--4">
+          <input class="auth-input" type="text" name="invite_code" id="invite_code"
+                 data-i18n-placeholder="register_invite_code" placeholder="邀請碼"
+                 autocomplete="off" required>
+          <p class="auth-hint" data-i18n="register_invite_hint">請向管理員索取邀請碼後才能註冊。</p>
+        </div>
+        {% endif %}
+
+        <div class="auth-field auth-animate auth-animate--4">
+          <input class="auth-input" type="text" name="store_name" id="store_name"
+                 data-i18n-placeholder="register_store_name" placeholder="店家名稱"
+                 autocomplete="organization" required>
+        </div>
+
+        <div class="auth-field auth-animate auth-animate--5">
+          <input class="auth-input" type="text" name="username" id="username"
+                 data-i18n-placeholder="register_username" placeholder="登入帳號"
+                 autocomplete="username" required>
+        </div>
+
+        <div class="auth-field auth-animate auth-animate--6">
+          <div class="auth-password-wrap">
+            <input class="auth-input auth-input--password" type="password" name="password" id="password"
+                   data-i18n-placeholder="register_password" placeholder="密碼"
+                   data-password-strength autocomplete="new-password" required>
+            <button type="button" class="auth-password-toggle" aria-label="顯示密碼" data-password-toggle>
+              <svg class="icon-eye" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg class="icon-eye-off" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            </button>
+          </div>
+          <div class="auth-password-strength" id="password-strength" aria-live="polite">
+            <div class="auth-password-strength-bars" aria-hidden="true">
+              <span class="auth-password-strength-bar"></span>
+              <span class="auth-password-strength-bar"></span>
+              <span class="auth-password-strength-bar"></span>
+              <span class="auth-password-strength-bar"></span>
+            </div>
+            <span class="auth-password-strength-label" id="password-strength-label"></span>
+          </div>
+        </div>
+
+        <div class="auth-submit-wrap auth-animate auth-animate--7">
+          <button type="submit" class="auth-submit" data-i18n="register_submit">註冊</button>
+        </div>
+      </form>
+      {% else %}
+      <form method="POST" action="{{ url_for('main.login', next=request.args.get('next')) }}" class="auth-form" id="auth-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="auth-field auth-animate auth-animate--4">
+          <input class="auth-input" type="text" name="username" id="username"
+                 data-i18n-placeholder="login_username" placeholder="帳號"
+                 autocomplete="username" required>
+        </div>
+
+        <div class="auth-field auth-animate auth-animate--5">
+          <div class="auth-password-wrap">
+            <input class="auth-input auth-input--password" type="password" name="password" id="password"
+                   data-i18n-placeholder="login_password" placeholder="密碼"
+                   autocomplete="current-password" required>
+            <button type="button" class="auth-password-toggle" aria-label="顯示密碼" data-password-toggle>
+              <svg class="icon-eye" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg class="icon-eye-off" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="auth-submit-wrap auth-animate auth-animate--6">
+          <button type="submit" class="auth-submit" data-i18n="login_submit">登入</button>
+        </div>
+      </form>
+      {% endif %}
+
+      <div class="auth-form-footer auth-animate auth-animate--8">
+        <button type="button" id="lang-toggle" class="auth-lang-btn" aria-label="切換語言">EN</button>
+      </div>
+      {% set studio_credit_modifier = 'auth' %}
+      {% include 'layout/studio_credit.html' %}
+    </section>
+  </div>
+</div>
+{% endblock %}

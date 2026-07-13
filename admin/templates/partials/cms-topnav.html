@@ -1,0 +1,67 @@
+{# CMSFullForm-style admin top bar #}
+{% set section_i18n = {
+  'dashboard': 'admin_dashboard_title',
+  'orders': 'admin_section_orders',
+  'products': 'admin_section_products',
+  'accounts': 'admin_section_accounts',
+  'invites': 'admin_section_invites'
+} %}
+{% set nav_section = admin_section|default('') %}
+{% set section_key = section_i18n.get(nav_section, 'nav_admin') %}
+
+<div class="flex items-center justify-between h-full px-4 lg:px-6">
+  <div class="flex items-center gap-3 min-w-0">
+    <button type="button" class="hidden lg:flex items-center justify-center p-2 rounded-md hover:bg-gray-100 dark:hover:bg-[#1F1F23] border-0 bg-transparent cursor-pointer" id="cms-menu-toggle-desktop" aria-label="切換側欄">
+      <svg class="w-4 h-4 text-gray-600 dark:text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <button type="button" class="lg:hidden flex items-center justify-center p-2 rounded-md hover:bg-gray-100 dark:hover:bg-[#1F1F23] border-0 bg-transparent cursor-pointer" id="cms-menu-toggle-mobile" aria-label="開啟選單">
+      <svg class="w-4 h-4 text-gray-600 dark:text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <nav class="hidden sm:flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 min-w-0" aria-label="麵包屑">
+      {% if nav_section == 'dashboard' %}
+      <a href="{{ url_for('main.admin') }}" class="hover:text-gray-900 dark:hover:text-white no-underline text-inherit font-medium" data-i18n="admin_section_orders">訂單管理</a>
+      <span class="text-gray-400" aria-hidden="true">/</span>
+      <span class="text-gray-900 dark:text-white font-medium truncate" data-i18n="{{ section_key }}">營運儀表板</span>
+      {% else %}
+      <a href="{{ url_for('main.admin_dashboard') }}" class="hover:text-gray-900 dark:hover:text-white no-underline text-inherit font-medium" data-i18n="admin_nav_dashboard">儀表板</a>
+      <span class="text-gray-400" aria-hidden="true">/</span>
+      <span class="text-gray-900 dark:text-white font-medium truncate" data-i18n="{{ section_key }}">管理後台</span>
+      {% endif %}
+    </nav>
+  </div>
+
+  <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+    {% if bot_gold and bot_gold.available %}
+    <a href="{{ url_for('main.gold_price') }}" class="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#1F1F23] no-underline" title="台銀金價">
+      <span class="text-emerald-500">●</span>
+      NT$ {{ "{:,.0f}".format(bot_gold.sell) }}
+    </a>
+    {% endif %}
+    <button id="theme-toggle" type="button" class="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-gray-100 dark:hover:bg-[#1F1F23] border-0 bg-transparent cursor-pointer text-base" aria-label="切換深色模式">☀️</button>
+    <button id="lang-toggle" type="button" class="cms-lang-toggle inline-flex items-center justify-center min-w-[2.75rem] h-9 px-2 rounded-lg hover:bg-gray-100 dark:hover:bg-[#1F1F23] border border-gray-200 dark:border-[#1F1F23] bg-transparent cursor-pointer text-xs font-semibold text-gray-700 dark:text-gray-200" data-i18n-aria="nav_switch_lang" aria-label="切換語言">EN</button>
+    <a href="{{ url_for('main.calculator') }}" class="hidden sm:inline-flex items-center px-3 py-1.5 rounded-lg bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium no-underline hover:opacity-90" data-i18n="home_btn_calc">開始訂製</a>
+    <a href="{{ url_for('main.notifications') }}" class="relative inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-gray-100 dark:hover:bg-[#1F1F23] no-underline text-gray-600 dark:text-gray-300" aria-label="通知">
+      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+      {% if notification_unread_count %}
+      <span class="absolute -top-0.5 -right-0.5 min-w-[1.1rem] h-[1.1rem] px-1 flex items-center justify-center rounded-full bg-teal-500 text-white text-[10px] font-semibold">{{ notification_unread_count }}</span>
+      {% endif %}
+    </a>
+    <div class="nav-dropdown relative" data-nav-dropdown>
+      <button type="button" class="flex items-center gap-2 pl-1 pr-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-[#1F1F23] border-0 bg-transparent cursor-pointer" id="cms-user-trigger" aria-expanded="false" aria-haspopup="true">
+        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-teal-500/15 text-teal-700 dark:text-teal-300 text-sm font-semibold">{{ current_user.store_name[:1] }}</span>
+        <span class="hidden md:inline text-sm text-gray-900 dark:text-white max-w-[8rem] truncate">{{ current_user.store_name }}</span>
+        <svg class="w-3 h-3 text-gray-500 hidden md:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="nav-dropdown-menu nav-dropdown-menu--end absolute right-0 top-full mt-1 min-w-[12rem] z-[100]" role="menu" aria-labelledby="cms-user-trigger">
+        <p class="nav-user-menu-meta px-3 py-2 text-xs text-gray-500 border-b border-gray-200 dark:border-[#1F1F23]"><span data-i18n="nav_login_as">目前登入：</span>{{ current_user.store_name }}</p>
+        <a href="{{ url_for('main.profile') }}" class="nav-dropdown-item block px-3 py-2 text-sm no-underline" role="menuitem" data-i18n="nav_profile">帳戶</a>
+        <a href="{{ url_for('main.home') }}" class="nav-dropdown-item block px-3 py-2 text-sm no-underline" role="menuitem" data-i18n="nav_home">系統首頁</a>
+        <div class="nav-dropdown-divider border-t border-gray-200 dark:border-[#1F1F23] my-1"></div>
+        <form method="POST" action="{{ url_for('main.logout') }}" class="nav-user-logout-form" role="none">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="nav-dropdown-item nav-dropdown-item--action w-full text-left px-3 py-2 text-sm border-0 bg-transparent cursor-pointer" role="menuitem" data-i18n="nav_logout">登出</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

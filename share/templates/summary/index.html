@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ product.name_zh }} - 珠寶配置摘要</title>
+  <link rel="stylesheet" href="{{ module_static('share', 'css/share.css') }}">
+</head>
+<body class="share-page">
+  <main class="share-card">
+    <p class="share-brand">鈺梓燒 Indy Dev</p>
+    {% if image_url %}<img class="share-image" src="{{ image_url }}" alt="{{ product.name_zh }}">{% endif %}
+    <p class="share-category">{{ config.category|label_category }}</p>
+    <h1>{{ product.name_zh }}</h1>
+    <dl class="share-specs">
+      <div><dt>成色</dt><dd>{{ config.gold|label_purity }}</dd></div>
+      <div><dt>顏色</dt><dd>{{ config.color|label_color if config.color else '—' }}</dd></div>
+      <div><dt>克拉</dt><dd>{{ config.carat }}</dd></div>
+      {% if config.ringSize %}<div><dt>戒圍</dt><dd>{{ config.ringSize }}</dd></div>{% endif %}
+      {% if config.lengthCm %}<div><dt>長度</dt><dd>{{ config.lengthCm }} cm</dd></div>{% endif %}
+    </dl>
+    <div class="share-total">
+      <span>預估含稅總價</span>
+      <strong>NT$ {{ "{:,.0f}".format(quote.total) }}</strong>
+    </div>
+    <p class="share-note">價格依目前金價重新計算，實際金額以正式訂單為準。</p>
+    <div class="share-actions">
+      <a href="{{ url_for('main.calculator') }}">自己試算</a>
+      <button type="button" id="copy-summary">複製文字摘要</button>
+    </div>
+  </main>
+  <script nonce="{{ csp_nonce }}">
+  document.getElementById('copy-summary')?.addEventListener('click', async event => {
+    const text = {{ (
+      product.name_zh ~ '｜' ~
+      (config.gold|label_purity) ~ '｜' ~
+      config.carat ~ 'ct｜預估 NT$ ' ~
+      ('{:,.0f}'.format(quote.total))
+    )|tojson }};
+    try {
+      await navigator.clipboard.writeText(text);
+      event.currentTarget.textContent = '已複製';
+    } catch (_) {
+      window.prompt('複製以下摘要', text);
+    }
+  });
+  </script>
+</body>
+</html>

@@ -1,0 +1,189 @@
+{% extends "layout/base.html" %}
+{% from "macros/order_rows.html" import history_order_rows %}
+{% macro history_thead() %}
+      <tr>
+        <th class="col-id" data-i18n="table_id">編號</th>
+        <th class="col-date" data-i18n="table_date">日期時間</th>
+        <th class="col-item" data-i18n="table_item">品項</th>
+        <th class="col-image" data-i18n="table_image">商品圖</th>
+        <th class="col-style" data-i18n="table_style">款式</th>
+        <th class="col-price" data-i18n="table_price_taxed">含稅總計 (NT$)</th>
+        <th class="col-status" data-i18n="table_status">狀態</th>
+        <th class="col-actions" data-i18n="table_actions">操作</th>
+        <th class="col-detail" data-i18n="table_detail">詳情</th>
+      </tr>
+{% endmacro %}
+{% block title %}歷史紀錄 - 鑽石珠寶{% endblock %}
+{% block content %}
+
+<div class="records-page">
+<header class="app-page-header">
+  <p class="app-page-eyebrow"><span class="app-page-eyebrow-line"></span><span data-i18n="nav_history">訂購紀錄</span></p>
+  <h1 class="app-page-title records-title" data-i18n="history_title">歷史紀錄</h1>
+  <p class="app-page-sub records-subtitle" data-i18n="history_subtitle">您最近的送出紀錄</p>
+</header>
+
+{% set search_action = url_for('main.history') %}
+{% set search_clear_url = url_for('main.history') %}
+{% include 'orders/partials/search_bar.html' %}
+
+<div class="admin-tabs" role="tablist">
+  <button type="button" class="admin-tab-btn{% if active_tab == 'incomplete' %} is-active{% endif %}" data-tab="incomplete" role="tab" aria-selected="{{ 'true' if active_tab == 'incomplete' else 'false' }}" aria-controls="history-panel-incomplete">
+    <span data-i18n="admin_tab_incomplete">未完成訂單</span>
+    <span class="admin-tab-count" id="history-tabcount-incomplete">{{ incomplete_subs|length }}</span>
+  </button>
+  <button type="button" class="admin-tab-btn{% if active_tab == 'complete' %} is-active{% endif %}" data-tab="complete" role="tab" aria-selected="{{ 'true' if active_tab == 'complete' else 'false' }}" aria-controls="history-panel-complete">
+    <span data-i18n="admin_tab_complete">已完成訂單</span>
+    <span class="admin-tab-count admin-tab-count--complete" id="history-tabcount-complete">{{ complete_subs|length }}</span>
+  </button>
+  <button type="button" class="admin-tab-btn{% if active_tab == 'cancelled' %} is-active{% endif %}" data-tab="cancelled" role="tab" aria-selected="{{ 'true' if active_tab == 'cancelled' else 'false' }}" aria-controls="history-panel-cancelled">
+    <span data-i18n="admin_tab_cancelled">已取消訂單</span>
+    <span class="admin-tab-count admin-tab-count--cancelled" id="history-tabcount-cancelled">{{ cancelled_subs|length }}</span>
+  </button>
+</div>
+
+<div class="admin-tab-panel" id="history-panel-incomplete" data-tab-panel="incomplete" role="tabpanel"{% if active_tab != 'incomplete' %} hidden{% endif %}>
+  <div class="records-table-wrap records-table-wrap--compact">
+  <table class="records-table records-table--history records-table--compact">
+    <thead>
+      {{ history_thead() }}
+    </thead>
+    <tbody id="history-tbody-incomplete">
+      {% for sub in incomplete_subs %}
+      {{ history_order_rows(sub, tax_rate) }}
+      {% endfor %}
+      <tr class="admin-section-empty-row" id="history-empty-incomplete"{% if incomplete_subs %} hidden{% endif %}>
+        <td colspan="9" style="text-align:center;padding:14px 0;color:var(--color-text-muted);" data-i18n="history_empty_incomplete">目前沒有未完成訂單。</td>
+      </tr>
+      <tr class="order-search-empty-row" id="history-search-empty-incomplete" hidden>
+        <td colspan="9" style="text-align:center;padding:14px 0;color:var(--color-text-muted);" data-i18n="search_no_results">找不到符合的訂單。</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<div class="admin-tab-panel" id="history-panel-complete" data-tab-panel="complete" role="tabpanel"{% if active_tab != 'complete' %} hidden{% endif %}>
+  <div class="records-table-wrap records-table-wrap--compact">
+  <table class="records-table records-table--history records-table--compact">
+    <thead>
+      {{ history_thead() }}
+    </thead>
+    <tbody id="history-tbody-complete">
+      {% for sub in complete_subs %}
+      {{ history_order_rows(sub, tax_rate) }}
+      {% endfor %}
+      <tr class="admin-section-empty-row" id="history-empty-complete"{% if complete_subs %} hidden{% endif %}>
+        <td colspan="9" style="text-align:center;padding:14px 0;color:var(--color-text-muted);" data-i18n="history_empty_complete">目前沒有已完成訂單。</td>
+      </tr>
+      <tr class="order-search-empty-row" id="history-search-empty-complete" hidden>
+        <td colspan="9" style="text-align:center;padding:14px 0;color:var(--color-text-muted);" data-i18n="search_no_results">找不到符合的訂單。</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<div class="admin-tab-panel" id="history-panel-cancelled" data-tab-panel="cancelled" role="tabpanel"{% if active_tab != 'cancelled' %} hidden{% endif %}>
+  <div class="records-table-wrap records-table-wrap--compact">
+  <table class="records-table records-table--history records-table--compact">
+    <thead>
+      {{ history_thead() }}
+    </thead>
+    <tbody id="history-tbody-cancelled">
+      {% for sub in cancelled_subs %}
+      {{ history_order_rows(sub, tax_rate) }}
+      {% endfor %}
+      <tr class="admin-section-empty-row" id="history-empty-cancelled"{% if cancelled_subs %} hidden{% endif %}>
+        <td colspan="9" style="text-align:center;padding:14px 0;color:var(--color-text-muted);" data-i18n="history_empty_cancelled">目前沒有已取消訂單。</td>
+      </tr>
+      <tr class="order-search-empty-row" id="history-search-empty-cancelled" hidden>
+        <td colspan="9" style="text-align:center;padding:14px 0;color:var(--color-text-muted);" data-i18n="search_no_results">找不到符合的訂單。</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<script src="{{ module_static('orders', 'js/order-detail.js') }}"></script>
+<script nonce="{{ csp_nonce }}">
+window.orderSearchConfig = {
+  sections: [
+    { key: 'incomplete', tbodyId: 'history-tbody-incomplete', countId: 'history-tabcount-incomplete', emptyId: 'history-empty-incomplete', searchEmptyId: 'history-search-empty-incomplete' },
+    { key: 'complete', tbodyId: 'history-tbody-complete', countId: 'history-tabcount-complete', emptyId: 'history-empty-complete', searchEmptyId: 'history-search-empty-complete' },
+    { key: 'cancelled', tbodyId: 'history-tbody-cancelled', countId: 'history-tabcount-cancelled', emptyId: 'history-empty-cancelled', searchEmptyId: 'history-search-empty-cancelled' },
+  ],
+};
+</script>
+<script src="{{ module_static('orders', 'js/order-search.js') }}"></script>
+
+<script nonce="{{ csp_nonce }}">
+function updateHistoryTabCounts() {
+  window.orderSearchConfig.sections.forEach(section => {
+    const tbody = document.getElementById(section.tbodyId);
+    const countEl = document.getElementById(section.countId);
+    const emptyRow = document.getElementById(section.emptyId);
+    const searchEmpty = document.getElementById(section.searchEmptyId);
+    if (!tbody) return;
+    const q = (document.getElementById('order-search-input')?.value || '').trim();
+    const allRows = [...tbody.querySelectorAll('tr.order-row-main')];
+    const visibleRows = allRows.filter(r => !r.hidden);
+    const n = q ? visibleRows.length : allRows.length;
+    if (countEl) countEl.textContent = n;
+    if (emptyRow) emptyRow.hidden = allRows.length > 0;
+    if (searchEmpty) searchEmpty.hidden = !(allRows.length > 0 && visibleRows.length === 0 && q);
+  });
+}
+window.orderSearchConfig.onFilterChange = updateHistoryTabCounts;
+
+document.addEventListener('DOMContentLoaded', () => {
+  const tabBtns = document.querySelectorAll('.admin-tab-btn');
+  const panels  = document.querySelectorAll('.admin-tab-panel');
+  const initialTab = {{ active_tab | tojson }};
+
+  function activateTab(target) {
+    tabBtns.forEach(b => {
+      const isActive = b.dataset.tab === target;
+      b.classList.toggle('is-active', isActive);
+      b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+    panels.forEach(p => { p.hidden = p.dataset.tabPanel !== target; });
+  }
+
+  if (initialTab && initialTab !== 'incomplete') {
+    activateTab(initialTab);
+  }
+
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => activateTab(btn.dataset.tab));
+  });
+
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!confirm('確定要刪除這筆訂單嗎？ (Are you sure you want to delete this order?)')) return;
+
+      const id = btn.getAttribute('data-id');
+      try {
+        const res = await fetch(`/delete/${id}`, {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+          }
+        });
+        if (res.status === 401) { window.location.href = "/login"; return; }
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById(`row-${id}`)?.remove();
+          document.getElementById(`detail-${id}`)?.remove();
+          updateHistoryTabCounts();
+        } else {
+          alert(data.message || 'Error deleting order');
+        }
+      } catch (err) {
+        alert('Network error');
+      }
+    });
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,5 @@
+# Optional: live BOT gold scraping via headless browser.
+# Not needed on cloud servers if GOLD_XAU_PER_GRAM is set in .env.
+# After install: playwright install chromium   (or use system Chrome)
+-r requirements.txt
+playwright==1.61.0
