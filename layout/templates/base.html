@@ -14,6 +14,7 @@
 <meta name="csrf-token" content="{{ csrf_token() }}">
 {% block extra_head %}{% endblock %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/app-theme.css') }}?v=15">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}?v=1">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/animations.css') }}?v=3">
 </head>
 <body class="app-shell{% block body_class %}{% endblock %}">
@@ -190,7 +191,7 @@ if ('serviceWorker' in navigator) {
 <script src="{{ url_for('static', filename='js/toast.js') }}"></script>
 {% if current_user.is_authenticated %}
 <script src="{{ url_for('static', filename='js/app-nav.js') }}"></script>
-<script src="{{ url_for('static', filename='js/nav.js') }}?v=3"></script>
+<script src="{{ url_for('static', filename='js/nav.js') }}?v=4"></script>
 <script src="{{ url_for('static', filename='js/notifications.js') }}?v=2"></script>
 <script src="{{ url_for('static', filename='js/cart-panel.js') }}?v=2"></script>
 <script src="{{ url_for('static', filename='js/cart-badge.js') }}?v=3"></script>

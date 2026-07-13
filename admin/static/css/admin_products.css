@@ -1389,6 +1389,11 @@ body.app-shell .cms-admin-shell .ap-variant-row input {
   }
 
   .cms-admin-shell .records-table-wrap .ap-table {
-    min-width: 36rem;
+    min-width: 0;
+  }
+
+  .cms-admin-shell .ap-table .ap-actions {
+    flex-wrap: nowrap;
+    min-width: 18rem;
   }
 }

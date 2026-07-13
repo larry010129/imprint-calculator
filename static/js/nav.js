@@ -11,8 +11,13 @@ document.addEventListener('DOMContentLoaded', () => {
     return window.innerWidth <= MOBILE_BREAKPOINT;
   }
 
+  function syncBodyMenuState(isOpen) {
+    document.body.classList.toggle('nav-menu-open', isOpen && isMobile());
+  }
+
   function closeMenu() {
     navbar.classList.remove('nav-open');
+    syncBodyMenuState(false);
     if (toggle) {
       toggle.setAttribute('aria-expanded', 'false');
       toggle.setAttribute('aria-label', '開啟選單');
@@ -22,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function toggleMenu() {
     const isOpen = navbar.classList.toggle('nav-open');
+    syncBodyMenuState(isOpen);
     if (toggle) {
       toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
       toggle.setAttribute('aria-label', isOpen ? '關閉選單' : '開啟選單');

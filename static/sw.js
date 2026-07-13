@@ -1,9 +1,10 @@
-const CACHE_NAME = 'diamond-calculator-static-v9';
+const CACHE_NAME = 'diamond-calculator-static-v10';
 const CORE_ASSETS = [
   '/static/favicon.svg',
   '/static/css/style.css?v=10',
   '/static/css/app-theme.css?v=15',
-  '/static/css/animations.css?v=2',
+  '/static/css/responsive.css?v=1',
+  '/static/css/animations.css?v=3',
   '/admin/static/css/admin-dashboard.css?v=16',
   '/static/js/i18n.js',
 ];

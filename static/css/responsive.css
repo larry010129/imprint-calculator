@@ -1,0 +1,195 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Responsive layout system
+   Matches landing page nav breakpoints (marketing/static/css/landing.css):
+
+     Phone:   ≤640px  — tighter padding, stacked actions, 2-col grids
+     Tablet:  ≤900px  — hamburger nav, horizontal-scroll tables
+     Desktop: ≥901px  — inline nav, full multi-column layouts
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Admin CMS: don't inherit records-page body overflow lock (breaks table scroll) */
+html:has(.cms-admin-page),
+body:has(.cms-admin-page) {
+  overflow-x: auto;
+  max-width: none;
+}
+
+html:has(.cms-admin-page)::-webkit-scrollbar,
+body:has(.cms-admin-page)::-webkit-scrollbar {
+  display: initial;
+  width: auto;
+  height: auto;
+}
+
+body.cms-admin-page .records-page {
+  overflow: visible;
+}
+
+/* ── Tablet & phone (≤900px): universal data-table horizontal scroll ── */
+@media (max-width: 900px) {
+  .records-table-wrap,
+  .records-table-wrap--scroll,
+  .records-table-wrap--compact,
+  .records-table-wrap--accounts,
+  body.app-shell .cms-admin-shell .records-table-wrap {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    align-items: stretch;
+    max-width: 100%;
+  }
+
+  .records-page .records-table-wrap > table,
+  .records-page .records-table-wrap .admin-table,
+  .records-page .records-table-wrap .ap-table,
+  .records-page table.records-table--history,
+  .records-page .admin-accounts-table,
+  body.app-shell .cms-admin-shell .records-table-wrap > table,
+  body.app-shell .cms-admin-shell .records-table-wrap .admin-table,
+  body.app-shell .cms-admin-shell .records-table-wrap .ap-table,
+  body.app-shell .cms-admin-shell .admin-accounts-table {
+    width: max-content !important;
+    min-width: 100%;
+    max-width: none !important;
+    table-layout: auto !important;
+  }
+
+  .records-page .records-table-wrap th,
+  .records-page .records-table-wrap td,
+  body.app-shell .cms-admin-shell .records-table-wrap th,
+  body.app-shell .cms-admin-shell .records-table-wrap td {
+    white-space: nowrap;
+    word-break: keep-all;
+  }
+
+  /* Product listing: keep action chips in one row inside scrollable table */
+  body.app-shell .cms-admin-shell .ap-table .ap-actions {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    min-width: 18rem;
+  }
+
+  body.app-shell .cms-admin-shell .ap-table td.ap-actions,
+  body.app-shell .cms-admin-shell .ap-table th:last-child {
+    min-width: 18rem;
+  }
+
+  /* Page headers stack like landing mobile sections */
+  body.app-shell .adx-page-header,
+  body.app-shell .app-page-header {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  body.app-shell .cms-admin-shell .cms-admin-main {
+    padding: 1rem;
+  }
+}
+
+/* ── Phone (≤640px): padding & stacked actions ── */
+@media (max-width: 640px) {
+  body.app-shell .page-container {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  body.app-shell .page-container:has(.records-page) {
+    padding: 16px 12px 28px;
+  }
+
+  body.app-shell .cms-admin-shell .cms-admin-main {
+    padding: 0.75rem;
+  }
+
+  body.app-shell .adx-page-header__title,
+  body.app-shell .app-page-title {
+    font-size: clamp(1.25rem, 5vw, 1.75rem);
+  }
+
+  body.app-shell .admin-security-note {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  body.app-shell .success-page-actions {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: 0.65rem;
+  }
+
+  body.app-shell .success-page-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  body.app-shell .error-page,
+  body.app-shell .success-page {
+    padding: 2.5rem 1rem;
+  }
+
+  body.app-shell .error-page-code {
+    font-size: 3rem;
+  }
+
+  body.app-shell .cms-admin-shell .ap-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  body.app-shell .cms-admin-shell .ap-toolbar .ap-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ── Tablet portrait (641–900px) ── */
+@media (min-width: 641px) and (max-width: 900px) {
+  body.app-shell .page-container {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  body.app-shell .cms-admin-shell .cms-admin-main {
+    padding: 1.25rem;
+  }
+}
+
+/* ── App mobile nav: landing-style overlay when menu is open ── */
+@media (max-width: 900px) {
+  body.app-shell.nav-menu-open {
+    overflow: hidden;
+  }
+
+  body.app-shell .premium-navbar.nav-open::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 140;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+  }
+
+  body.app-shell .premium-navbar.nav-open .nav-links,
+  body.app-shell .premium-navbar.nav-open .nav-user {
+    position: relative;
+    z-index: 150;
+    max-height: min(72vh, calc(100dvh - 5.5rem));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-top: 0.35rem;
+    padding: 0.5rem 0.75rem 0.75rem;
+    border-radius: 0.75rem;
+    background: var(--color-surface);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  }
+
+  body.app-shell .premium-navbar.nav-open .nav-links {
+    border-top: none;
+  }
+
+  body.app-shell .app-nav-wrap {
+    position: relative;
+    z-index: 160;
+  }
+}
