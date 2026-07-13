@@ -888,21 +888,97 @@ body.app-shell .notify-panel-item--unread {
   body.app-shell .premium-navbar.app-navbar {
     width: 100%;
     max-width: none;
-    padding: 0 1rem;
+    padding: 0 0.85rem;
+    border-radius: 0.85rem;
+  }
+
+  body.app-shell .nav-container {
+    width: 100%;
+    max-width: 100%;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    min-height: 3.25rem;
   }
 
   body.app-shell .app-nav-brand {
-    font-size: 1.125rem;
+    font-size: 1.05rem;
+    margin-right: auto;
+    min-width: 0;
+  }
+
+  body.app-shell .nav-toggle-btn {
+    display: flex;
+    order: 2;
+  }
+
+  /* Collapse desktop nav into the hamburger panel.
+     Must beat body.app-shell .nav-links / .nav-user { display: flex }. */
+  body.app-shell .nav-links,
+  body.app-shell .nav-user {
+    display: none;
+    flex: 1 1 100%;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    height: auto;
+    gap: 0.25rem;
+  }
+
+  body.app-shell .premium-navbar.nav-open .nav-links,
+  body.app-shell .premium-navbar.nav-open .nav-user {
+    display: flex;
   }
 
   body.app-shell .nav-links {
+    order: 3;
+    padding: 0.5rem 0 0.25rem;
+    border-top: 1px solid var(--color-border);
+  }
+
+  body.app-shell .nav-user {
+    order: 4;
+    padding: 0.5rem 0 0.75rem;
+    border-top: 1px solid var(--color-border);
+    flex-wrap: wrap;
+  }
+
+  /* Theme / language / gold sit in one compact row inside the open menu */
+  body.app-shell .nav-user > .nav-gold-ticker,
+  body.app-shell .nav-user > .nav-icon-btn--theme,
+  body.app-shell .nav-user > .nav-icon-btn--lang {
+    flex: 1 1 auto;
+  }
+
+  body.app-shell .nav-user > .nav-gold-ticker {
     flex: 1 1 100%;
+    justify-content: center;
+  }
+
+  body.app-shell .nav-item {
+    width: 100%;
+    padding: 0.7rem 0.75rem;
   }
 
   body.app-shell .nav-dropdown-trigger {
     width: 100%;
     justify-content: space-between;
     padding: 0.65rem 0.75rem;
+  }
+
+  body.app-shell .nav-gold-ticker .nav-gold-label {
+    display: none;
+  }
+
+  body.app-shell .app-nav-cta {
+    width: 100%;
+    height: 2.5rem;
+    justify-content: center;
+  }
+
+  body.app-shell .nav-icon-btn--theme,
+  body.app-shell .nav-icon-btn--lang {
+    flex: 1 1 auto;
+    justify-content: center;
   }
 
   body.app-shell .nav-cart-wrap {
