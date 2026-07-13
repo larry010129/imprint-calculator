@@ -232,6 +232,13 @@ textarea:focus-visible,
   background: var(--color-surface-alt);
 }
 
+@media (pointer: coarse) {
+  .nav-toggle-btn {
+    width: 44px;
+    height: 44px;
+  }
+}
+
 .nav-toggle-bar {
   display: block;
   width: 20px;
@@ -1858,6 +1865,13 @@ body.dark-theme .notifications-feed-discard:hover {
   gap: 6px;
   margin: 0 0 16px;
   border-bottom: 1px solid var(--color-border);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.admin-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .order-search-bar {
@@ -3043,7 +3057,8 @@ body:has(.records-page)::-webkit-scrollbar {
 }
 
 .records-table-wrap--accounts {
-  overflow-x: hidden;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   align-items: stretch;
 }
 
@@ -3059,7 +3074,8 @@ body:has(.records-page)::-webkit-scrollbar {
 }
 
 .records-table-wrap--compact {
-  overflow-x: visible;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   align-items: stretch;
 }
 
@@ -3698,4 +3714,190 @@ body.dark-theme .order-detail-btn:hover {
 .auth-footer-link:hover {
   color: var(--color-accent-ink);
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   Phone layout (≤640px) — every app page must fit a 360–430px viewport
+   ══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  /* ── Page frame ── */
+  .page-container:has(.records-page) {
+    padding: 16px 12px 32px;
+  }
+
+  .records-title {
+    font-size: 26px;
+  }
+
+  .records-subtitle {
+    font-size: 14px;
+    margin-bottom: 18px;
+  }
+
+  /* ── Data tables: horizontal scroll instead of clipping ── */
+  .records-table-wrap,
+  .records-table-wrap--compact,
+  .records-table-wrap--scroll,
+  .records-table-wrap--accounts {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    align-items: stretch;
+    max-width: 100%;
+  }
+
+  .records-table--compact td,
+  .records-table--compact th {
+    font-size: 11px;
+    padding: 6px 6px;
+  }
+
+  /* Left edge must stay reachable inside the scroll container */
+  .records-page table.records-table--history,
+  .records-table-wrap > table,
+  .records-table-wrap .admin-table {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  /* ── Tabs scroll horizontally ── */
+  .admin-tab-btn {
+    flex-shrink: 0;
+    font-size: 13px;
+    padding: 8px 10px;
+  }
+
+  /* ── Search bar stacks ── */
+  .order-search-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .order-search-field {
+    flex-wrap: wrap;
+  }
+
+  .order-search-input {
+    flex: 1 1 100%;
+  }
+
+  .order-search-submit,
+  .order-search-clear {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+
+  /* ── Order detail progress stepper: smaller, no overlap ── */
+  .records-page .progress-stepper--table .progress-label {
+    font-size: 8px;
+    letter-spacing: -0.01em;
+  }
+
+  .order-detail-panel {
+    padding: 10px 10px 12px;
+  }
+
+  .order-detail-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px 10px;
+  }
+
+  /* ── Notifications: tighter padding, discard below content ── */
+  .notifications-header {
+    padding-left: 16px;
+    padding-right: 16px;
+    flex-wrap: wrap;
+  }
+
+  .notifications-group-title {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .notifications-feed-item {
+    padding: 12px 16px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .notifications-feed-icon {
+    width: 34px;
+    height: 34px;
+    font-size: 13px;
+  }
+
+  .notifications-feed-body {
+    flex: 1 1 0;
+    min-width: 200px;
+  }
+
+  .notifications-feed-discard {
+    align-self: flex-start;
+    margin-left: 44px;
+  }
+
+  /* ── Profile ── */
+  .profile-card {
+    padding: 16px 16px;
+  }
+
+  .profile-dl {
+    grid-template-columns: 1fr;
+    row-gap: 2px;
+  }
+
+  .profile-dl dt {
+    margin-top: 10px;
+  }
+
+  /* ── Favorites ── */
+  .favorites-empty {
+    padding: 28px 16px;
+  }
+
+  .favorite-actions {
+    flex-wrap: wrap;
+  }
+
+  /* ── Gold price ── */
+  .gold-price-header-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .gold-header-actions {
+    justify-content: space-between;
+  }
+
+  .gold-price-card {
+    padding: 16px 14px;
+  }
+
+  /* ── Admin: inline reset form + actions wrap ── */
+  .admin-reset-form {
+    flex-wrap: wrap;
+  }
+
+  .admin-table.records-table--compact .admin-actions-inner {
+    flex-wrap: wrap;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Tablet layout (641–1024px) — iPad / Android tablets
+   ══════════════════════════════════════════════════════════════════════ */
+@media (min-width: 641px) and (max-width: 1024px) {
+  /* Use more of the tablet width on narrow reading pages */
+  .gold-price-page,
+  .profile-page {
+    max-width: 720px;
+  }
+
+  .page-container:has(.records-page) {
+    padding: 24px 16px 36px;
+  }
+}
+
+
 

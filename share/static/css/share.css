@@ -141,11 +141,13 @@ h1, h2 { margin: 0; }
 .quote-sheet footer { display: flex; justify-content: flex-end; margin-top: 26px; }
 .quote-sheet footer button { flex: none; }
 
-@media (max-width: 560px) {
+@media (max-width: 640px) {
   .share-specs { grid-template-columns: 1fr; }
   .share-specs div:nth-child(n) { padding-inline: 0; border-left: 0; }
   .share-actions, .share-product, .quote-sheet-header { flex-direction: column; align-items: stretch; }
   .quote-sheet-meta { text-align: left; }
+  .quote-sheet-body { padding: 16px; }
+  .share-product img { width: 100%; max-width: 260px; margin: 0 auto; }
 }
 
 @media print {

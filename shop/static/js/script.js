@@ -1939,6 +1939,41 @@ document.getElementById("quote-sheet-btn")?.addEventListener("click", openQuoteS
 document.getElementById("share-config-btn")?.addEventListener("click", openShareSummary);
 document.getElementById("favorite-btn")?.addEventListener("click", addCurrentFavorite);
 
+(function setupMobilePricePanel() {
+  const details = document.getElementById('price-breakdown-details');
+  const toggle = document.getElementById('mobile-price-toggle');
+  const panel = document.getElementById('shop-price-panel');
+
+  function isMobileShop() {
+    return window.matchMedia('(max-width: 900px)').matches;
+  }
+
+  function syncDetailsOpen() {
+    if (!details) return;
+    if (!isMobileShop()) {
+      details.open = true;
+      panel?.classList.remove('is-mobile-open');
+      return;
+    }
+    if (!details.dataset.userOpened) details.open = false;
+  }
+
+  syncDetailsOpen();
+  window.addEventListener('resize', syncDetailsOpen);
+
+  toggle?.addEventListener('click', () => {
+    if (!panel || !details) return;
+    const willOpen = !panel.classList.contains('is-mobile-open');
+    panel.classList.toggle('is-mobile-open', willOpen);
+    details.dataset.userOpened = '1';
+    details.open = willOpen;
+    toggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    if (willOpen) {
+      panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  });
+})();
+
 ['catalog-search-input', 'catalog-metal-filter', 'catalog-price-filter'].forEach(id => {
   const element = document.getElementById(id);
   element?.addEventListener(element.tagName === 'INPUT' ? 'input' : 'change', renderTypeCards);

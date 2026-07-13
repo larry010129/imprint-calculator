@@ -1378,6 +1378,18 @@ body.dark-theme .ring-size-guide-table thead th {
   border-top: 1px solid var(--color-border);
 }
 
+.price-breakdown-details {
+  margin-bottom: 20px;
+  border-top: 1px solid var(--color-border);
+  padding-top: 4px;
+}
+
+.price-breakdown-details > .price-breakdown-panel {
+  margin-bottom: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
 .price-breakdown-title {
   font-size: 13px;
   font-weight: 600;
@@ -1385,6 +1397,33 @@ body.dark-theme .ring-size-guide-table thead th {
   text-transform: uppercase;
   color: var(--color-text-muted);
   margin: 16px 0 12px;
+}
+
+.price-breakdown-details > .price-breakdown-title {
+  list-style: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+.price-breakdown-details > .price-breakdown-title::-webkit-details-marker {
+  display: none;
+}
+
+/* Desktop: keep breakdown always visible (no accordion chrome) */
+@media (min-width: 901px) {
+  .price-breakdown-details {
+    border-top: none;
+    padding-top: 0;
+  }
+
+  .price-breakdown-details > .price-breakdown-title {
+    pointer-events: none;
+    cursor: default;
+  }
+
+  .price-breakdown-details > .price-breakdown-panel {
+    display: block !important;
+  }
 }
 
 .breakdown-rows {
@@ -1496,20 +1535,31 @@ body.dark-theme .ring-size-guide-table thead th {
 @media (max-width: 900px) {
   .shop-body {
     grid-template-columns: 1fr;
-    gap: 24px;
+    gap: 16px;
+  }
+
+  /* Product first — never pin the price card over selections */
+  .shop-main {
+    order: 1;
   }
 
   .shop-price-panel {
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    order: -1;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    position: static;
+    top: auto;
+    z-index: auto;
+    order: 2;
+    box-shadow: none;
+    padding: 14px 16px;
+    display: none;
+  }
+
+  .shop-price-panel.is-mobile-open {
+    display: block;
   }
 
   .product-layout {
     grid-template-columns: 1fr;
-    gap: 28px;
+    gap: 20px;
   }
 
   .product-gallery-col {
@@ -1528,7 +1578,7 @@ body.dark-theme .ring-size-guide-table thead th {
   }
 
   .product-preview {
-    max-height: min(70vh, 480px);
+    max-height: min(48vh, 360px);
   }
 
   .catalog-grid {
@@ -1536,18 +1586,73 @@ body.dark-theme .ring-size-guide-table thead th {
     gap: 12px;
   }
 
-  .shop-price-panel .shop-cta {
+  .shop-price-panel .shop-cta,
+  .shop-price-panel .shop-action-row,
+  .hero-price-disclaimer,
+  .shop-secondary-actions,
+  .shop-price-panel .studio-credit {
     display: none;
   }
 
   .hero-price-amount {
-    font-size: 30px;
+    font-size: 28px;
+  }
+
+  .price-breakdown-details:not([open]) .price-breakdown-panel {
+    display: none;
+  }
+
+  .price-breakdown-details > .price-breakdown-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 8px 0 0;
+    padding: 8px 0;
+  }
+
+  .price-breakdown-details > .price-breakdown-title::after {
+    content: "▾";
+    font-size: 0.75rem;
+    opacity: 0.7;
+  }
+
+  .price-breakdown-details[open] > .price-breakdown-title::after {
+    content: "▴";
+  }
+
+  .mobile-buy-bar:not(.hidden) {
+    display: flex;
+  }
+
+  .mobile-buy-price {
+    appearance: none;
+    border: none;
+    background: transparent;
+    text-align: left;
+    padding: 0;
+    cursor: pointer;
+    color: inherit;
+    font: inherit;
+    min-width: 0;
+  }
+
+  .mobile-buy-detail-hint {
+    display: block;
+    margin-top: 2px;
+    font-size: 11px;
+    color: var(--color-text-muted);
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
 }
 
 @media (min-width: 901px) {
   .mobile-buy-bar {
     display: none !important;
+  }
+
+  .mobile-buy-detail-hint {
+    display: none;
   }
 }
 
@@ -2201,17 +2306,27 @@ body.app-shell:not(.dark-theme) .shop-fit {
   display: none;
 }
 
+.shop-fit .price-breakdown-details {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0.625rem;
+  overflow: hidden;
+}
+
 .shop-fit .price-breakdown-panel {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  margin-bottom: 0.625rem;
+  margin-bottom: 0;
   scrollbar-width: thin;
 }
 
 .shop-fit .price-breakdown-title {
   font-size: 0.6875rem;
   margin: 0.5rem 0 0.375rem;
+  flex-shrink: 0;
 }
 
 .shop-fit .breakdown-rows .summary-row {
@@ -2226,14 +2341,28 @@ body.app-shell:not(.dark-theme) .shop-fit {
   letter-spacing: 0.06em;
 }
 
+/* Tablet landscape (901–1100px): keep a side price panel, but release the
+   viewport-height lock so the page scrolls normally. */
 @media (max-width: 1100px) {
   .shop-fit {
     height: auto;
-    min-height: calc(100dvh - 5.25rem);
+    min-height: 0;
+    overflow: visible;
   }
 
   .shop-fit .shop-body {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr) 240px;
+    align-items: start;
+  }
+
+  .shop-fit .shop-main {
+    order: 1;
+    overflow: visible;
+  }
+
+  .shop-fit .shop-section:not(.hidden) {
+    overflow: visible;
+    height: auto;
   }
 
   .shop-fit .catalog-grid {
@@ -2241,21 +2370,61 @@ body.app-shell:not(.dark-theme) .shop-fit {
   }
 
   .shop-fit .product-layout {
-    grid-template-columns: 1fr;
     height: auto;
   }
 
+  .shop-fit .product-buy-col {
+    overflow: visible;
+  }
+
   .shop-fit .product-preview {
-    max-height: min(42vh, 360px);
+    max-height: min(42vh, 320px);
     aspect-ratio: 1;
     flex: none;
   }
 
   .shop-fit .shop-price-panel {
     position: sticky;
-    top: 0.5rem;
-    z-index: 10;
+    order: 2;
+    top: 5rem;
+    z-index: auto;
+    height: auto;
+    max-height: calc(100dvh - 6rem);
+    overflow: auto;
+    align-self: start;
+  }
+}
+
+/* Tablet portrait / phone (≤900px): single column, price panel collapses
+   into the fixed buy bar. */
+@media (max-width: 900px) {
+  .shop-fit .shop-body {
+    grid-template-columns: 1fr;
+  }
+
+  .shop-fit .product-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .shop-fit .shop-price-panel {
+    display: none;
+    position: static;
+    top: auto;
     max-height: none;
+    overflow: visible;
+  }
+
+  .shop-fit .shop-price-panel.is-mobile-open {
+    display: flex;
+  }
+
+  .mobile-buy-bar {
+    flex-wrap: wrap;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+
+  body.shop-mobile-bar {
+    padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
   }
 }
 
@@ -2268,8 +2437,13 @@ body.app-shell:not(.dark-theme) .shop-fit {
     grid-template-columns: 1fr;
   }
 
-  .shop-fit .shop-price-panel .shop-cta {
+  .shop-fit .shop-price-panel .shop-cta,
+  .shop-fit .shop-price-panel .shop-action-row {
     display: none;
+  }
+
+  body.shop-mobile-bar {
+    padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
   }
 }
 
@@ -2585,7 +2759,7 @@ body.app-shell .mobile-buy-actions .shop-cta--secondary:hover:not(:disabled) {
 
 .shop-secondary-actions button:disabled { opacity: 0.45; cursor: not-allowed; }
 
-@media (max-width: 700px) {
+@media (max-width: 900px) {
   .catalog-filters { grid-template-columns: 1fr 1fr; }
   .catalog-search { grid-column: 1 / -1; }
   .catalog-search input { width: 100%; }
@@ -2865,7 +3039,8 @@ body.app-shell .mobile-buy-actions .shop-cta--secondary:hover:not(:disabled) {
   color: var(--color-text-muted);
 }
 
-@media (max-width: 720px) {
+/* Tablets and phones: stack cart rows into card-style layout */
+@media (max-width: 900px) {
   .cart-item-row {
     grid-template-columns: auto 56px 1fr;
     grid-template-areas:
@@ -2946,3 +3121,29 @@ body.app-shell .mobile-buy-actions .shop-cta--secondary:hover:not(:disabled) {
   width: auto;
   margin-top: 12px;
 }
+
+/* Touch devices (phones + tablets): larger tap targets for chips,
+   carousels, and cart action buttons */
+@media (pointer: coarse) {
+  .shop-fit .variant-chip,
+  .shop-fit .carat-btn,
+  .shop-fit .metal-btn,
+  .shop-fit .color-btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  .diamond-carousel-nav {
+    width: 40px;
+    height: 40px;
+  }
+
+  .shop-fit .diamond-carousel-item {
+    min-width: 64px;
+  }
+
+  .cart-action-btn {
+    padding: 8px 14px;
+  }
+}
+

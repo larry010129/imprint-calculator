@@ -119,7 +119,7 @@ a {
   flex-shrink: 0;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 901px) {
   .landing-nav-links {
     display: flex;
   }
@@ -171,7 +171,7 @@ a {
   margin-left: auto;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 901px) {
   .landing-nav-actions {
     display: flex;
   }
@@ -313,7 +313,7 @@ body.landing-page:not(.dark-theme) .landing-nav-cta:hover {
   color: var(--landing-fg);
 }
 
-@media (min-width: 768px) {
+@media (min-width: 901px) {
   .landing-nav-menu-btn {
     display: none;
   }
@@ -337,7 +337,7 @@ body.landing-page:not(.dark-theme) .landing-nav-cta:hover {
   pointer-events: auto;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 901px) {
   .landing-mobile-menu {
     display: none;
   }
@@ -533,6 +533,19 @@ body.landing-page:not(.dark-theme) .landing-nav-cta:hover {
 
 .landing-hero-stats.is-visible {
   opacity: 1;
+}
+
+/* Short/narrow screens: stats join normal flow so they can't overlap the CTA */
+@media (max-width: 640px), (max-height: 700px) {
+  .landing-hero-stats {
+    position: static;
+    margin-top: 3rem;
+    padding: 0;
+  }
+
+  .landing-hero-inner {
+    padding: 6.5rem 1.25rem 3.5rem;
+  }
 }
 
 .landing-hero-stats-inner {
@@ -922,6 +935,12 @@ body.landing-page:not(.dark-theme) .landing-nav-cta:hover {
 }
 
 @media (min-width: 768px) {
+  .landing-categories-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
   .landing-categories-grid {
     grid-template-columns: repeat(5, 1fr);
   }

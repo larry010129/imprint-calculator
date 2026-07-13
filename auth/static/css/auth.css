@@ -57,14 +57,14 @@ body.auth-body {
   transform: scale(1);
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 900px) {
   .auth-split-card {
     flex-direction: row;
     min-height: 34rem;
   }
 }
 
-/* â”€â”€ Left visual panel â”€â”€ */
+/* ?€?€ Left visual panel ?€?€ */
 .auth-split-visual {
   background: var(--auth-panel);
   padding: 1.25rem;
@@ -72,7 +72,7 @@ body.auth-body {
   flex-direction: column;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 900px) {
   .auth-split-visual {
     width: 45%;
   }
@@ -123,7 +123,18 @@ body.auth-body {
   overflow: hidden;
 }
 
-@media (min-width: 1024px) {
+@media (max-width: 640px) {
+  .auth-carousel {
+    min-height: 10rem;
+  }
+
+  .auth-split-page {
+    padding: 0.5rem;
+    align-items: flex-start;
+  }
+}
+
+@media (min-width: 900px) {
   .auth-carousel {
     min-height: 0;
   }
@@ -204,7 +215,7 @@ body.auth-body {
   background: rgba(255, 255, 255, 0.4);
 }
 
-/* â”€â”€ Right form panel â”€â”€ */
+/* ?€?€ Right form panel ?€?€ */
 .auth-split-form {
   padding: 1.5rem;
   display: flex;
@@ -212,7 +223,7 @@ body.auth-body {
   justify-content: center;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 900px) {
   .auth-split-form {
     width: 55%;
     padding: 2rem 2.5rem;

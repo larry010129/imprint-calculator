@@ -1,7 +1,7 @@
 {% extends "layout/base.html" %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{{ module_static('shop', 'css/shop.css') }}?v=14">
+<link rel="stylesheet" href="{{ module_static('shop', 'css/shop.css') }}?v=16">
 {% endblock %}
 
 {% block content %}
@@ -81,7 +81,7 @@
     shareBaseUrl: {{ url_for('main.shared_summary', token='TOKEN')|tojson }},
   };
 </script>
-<script src="{{ module_static('shop', 'js/script.js') }}?v=45"></script>
+<script src="{{ module_static('shop', 'js/script.js') }}?v=46"></script>
 {% if shop_mode == 'order' %}
 <script src="{{ url_for('static', filename='js/cart-badge.js') }}?v=1"></script>
 {% endif %}

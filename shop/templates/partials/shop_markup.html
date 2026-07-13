@@ -248,20 +248,22 @@
       <p class="hero-price-hint" id="price-hint" data-i18n="shop_complete_options">請完成選項以查看價格</p>
       <p class="hero-price-disclaimer" data-i18n="shop_price_estimate_notice">價格為預估價；鑽石價格為牌價。實際金額可能因市場浮動有 ±10%。</p>
 
-      <div class="price-breakdown-panel">
-        <h3 class="price-breakdown-title" data-i18n="shop_price_breakdown">價格明細</h3>
-        <div class="breakdown-rows">
-          <div class="summary-row"><span class="lbl" data-i18n="sum_item">品項</span><span class="colon">：</span><span class="val" id="sum-cat">-</span></div>
-          <div class="summary-row"><span class="lbl" data-i18n="sum_style">款式</span><span class="colon">：</span><span class="val" id="sum-type">-</span></div>
-          <div class="summary-row"><span class="lbl" data-i18n="sum_material">金屬材質</span><span class="colon">：</span><span class="val" id="sum-material">-</span></div>
-          <div class="summary-row"><span class="lbl" data-i18n="sum_carat">克拉</span><span class="colon">：</span><span class="val" id="sum-carat">-</span></div>
-          <hr>
-          <div class="summary-row" id="sum-diamond-row"><span class="lbl" data-i18n="sum_diamond">鑽石價格</span><span class="colon">：</span><span class="val">NT$ <span id="sum-diamond-price">0</span></span></div>
-          <div class="summary-row"><span class="lbl" data-i18n="sum_taijin_price">台金價格</span><span class="colon">：</span><span class="val">NT$ <span id="sum-taijin-price">-</span></span></div>
-          <div class="summary-row"><span class="lbl" data-i18n="sum_labor_fee">金工費</span><span class="colon">：</span><span class="val">NT$ <span id="sum-labor-price">-</span></span></div>
-          <div class="summary-row hidden" id="sum-chain-row"><span class="lbl" data-i18n="sum_chain_price">搭配鏈條</span><span class="colon">：</span><span class="val">NT$ <span id="sum-chain-price">-</span></span></div>
+      <details class="price-breakdown-details" id="price-breakdown-details">
+        <summary class="price-breakdown-title" data-i18n="shop_price_breakdown">價格明細</summary>
+        <div class="price-breakdown-panel">
+          <div class="breakdown-rows">
+            <div class="summary-row"><span class="lbl" data-i18n="sum_item">品項</span><span class="colon">：</span><span class="val" id="sum-cat">-</span></div>
+            <div class="summary-row"><span class="lbl" data-i18n="sum_style">款式</span><span class="colon">：</span><span class="val" id="sum-type">-</span></div>
+            <div class="summary-row"><span class="lbl" data-i18n="sum_material">金屬材質</span><span class="colon">：</span><span class="val" id="sum-material">-</span></div>
+            <div class="summary-row"><span class="lbl" data-i18n="sum_carat">克拉</span><span class="colon">：</span><span class="val" id="sum-carat">-</span></div>
+            <hr>
+            <div class="summary-row" id="sum-diamond-row"><span class="lbl" data-i18n="sum_diamond">鑽石價格</span><span class="colon">：</span><span class="val">NT$ <span id="sum-diamond-price">0</span></span></div>
+            <div class="summary-row"><span class="lbl" data-i18n="sum_taijin_price">台金價格</span><span class="colon">：</span><span class="val">NT$ <span id="sum-taijin-price">-</span></span></div>
+            <div class="summary-row"><span class="lbl" data-i18n="sum_labor_fee">金工費</span><span class="colon">：</span><span class="val">NT$ <span id="sum-labor-price">-</span></span></div>
+            <div class="summary-row hidden" id="sum-chain-row"><span class="lbl" data-i18n="sum_chain_price">搭配鏈條</span><span class="colon">：</span><span class="val">NT$ <span id="sum-chain-price">-</span></span></div>
+          </div>
         </div>
-      </div>
+      </details>
 
       {% if shop_mode == 'order' %}
       <div class="shop-action-row" id="shop-action-row">
@@ -398,10 +400,11 @@
 </dialog>
 
 <div class="mobile-buy-bar hidden" id="mobile-buy-bar">
-  <div class="mobile-buy-price">
+  <button type="button" class="mobile-buy-price" id="mobile-price-toggle" aria-expanded="false" aria-controls="shop-price-panel">
     <span class="mobile-buy-label" data-i18n="sum_total">總價</span>
     <span class="mobile-buy-amount">NT$ <span id="sum-total-mobile">?</span></span>
-  </div>
+    <span class="mobile-buy-detail-hint" data-i18n="shop_price_breakdown">明細</span>
+  </button>
   {% if shop_mode == 'order' %}
   <div class="mobile-buy-actions">
     {% if not edit_sub and not cart_edit_config %}

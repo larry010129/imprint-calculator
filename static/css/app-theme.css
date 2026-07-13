@@ -1195,13 +1195,11 @@ body.app-shell .records-table-wrap {
   overflow: hidden;
 }
 
-body.app-shell .records-table-wrap--scroll {
+body.app-shell .records-table-wrap--scroll,
+body.app-shell .records-table-wrap--compact,
+body.app-shell .records-table-wrap--accounts {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-}
-
-body.app-shell .records-table-wrap--accounts {
-  overflow-x: hidden;
 }
 
 body.app-shell .records-table th {
