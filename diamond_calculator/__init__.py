@@ -121,6 +121,12 @@ def create_app():
     app.config['SECRET_KEY'] = secret_key
 
     db_uri = os.environ.get('DATABASE_URL', 'sqlite:///database.db')
+    # Render / Heroku often provide postgres:// — SQLAlchemy + psycopg3 need
+    # postgresql+psycopg:// (or at least postgresql://).
+    if db_uri.startswith('postgres://'):
+        db_uri = 'postgresql+psycopg://' + db_uri[len('postgres://'):]
+    elif db_uri.startswith('postgresql://') and '+psycopg' not in db_uri:
+        db_uri = 'postgresql+psycopg://' + db_uri[len('postgresql://'):]
     app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     # Postgres (and other server DBs) can drop idle connections after restarts,

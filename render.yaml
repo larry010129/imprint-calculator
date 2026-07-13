@@ -1,0 +1,41 @@
+# Render Blueprint — connect this repo, then Deploy.
+# Docs: https://render.com/docs/blueprint-spec
+#
+# After first deploy, set in the Render dashboard (Environment):
+#   SECRET_KEY          (required)
+#   ADMIN_PASSWORD      (first run only — seeds admin)
+#   GOLD_XAU_PER_GRAM   (TWD/gram; update when BOT rates change)
+
+services:
+  - type: web
+    name: imprint-calculator
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: FLASK_DEBUG
+        value: "0"
+      - key: HOST
+        value: "0.0.0.0"
+      - key: DISABLE_BOT_SCRAPER
+        value: "1"
+      - key: TRUSTED_PROXY_COUNT
+        value: "1"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: GOLD_XAU_PER_GRAM
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: imprint-calculator-db
+          property: connectionString
+
+databases:
+  - name: imprint-calculator-db
+    plan: free
+    databaseName: imprint_calculator
+    user: imprint
