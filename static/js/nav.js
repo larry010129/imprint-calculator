@@ -15,24 +15,22 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.classList.toggle('nav-menu-open', isOpen && isMobile());
   }
 
-  function closeMenu() {
-    navbar.classList.remove('nav-open');
-    syncBodyMenuState(false);
+  function setMenuOpen(open) {
+    navbar.classList.toggle('nav-open', open);
+    syncBodyMenuState(open);
     if (toggle) {
-      toggle.setAttribute('aria-expanded', 'false');
-      toggle.setAttribute('aria-label', '開啟選單');
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      toggle.setAttribute('aria-label', open ? '關閉選單' : '開啟選單');
     }
-    closeAllDropdowns();
+    if (!open) closeAllDropdowns();
+  }
+
+  function closeMenu() {
+    setMenuOpen(false);
   }
 
   function toggleMenu() {
-    const isOpen = navbar.classList.toggle('nav-open');
-    syncBodyMenuState(isOpen);
-    if (toggle) {
-      toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-      toggle.setAttribute('aria-label', isOpen ? '關閉選單' : '開啟選單');
-    }
-    if (!isOpen) closeAllDropdowns();
+    setMenuOpen(!navbar.classList.contains('nav-open'));
   }
 
   function dropdownTrigger(dropdown) {

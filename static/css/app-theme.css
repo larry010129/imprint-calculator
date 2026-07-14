@@ -345,18 +345,109 @@ body.app-shell .user-greeting {
   }
 }
 
-body.app-shell .nav-toggle-bar {
-  background: var(--color-text);
-}
-
 body.app-shell .nav-toggle-btn {
-  border: none;
-  background: none;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  margin-left: auto;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--app-nav-border);
+  border-radius: 0.75rem;
+  background: transparent;
   color: var(--color-text);
+  cursor: pointer;
+  line-height: 0;
+  font-family: inherit;
 }
 
-body.app-shell .nav-toggle-btn:hover {
-  background: none;
+body.app-shell .nav-toggle-btn:hover,
+body.app-shell .nav-toggle-btn:focus-visible {
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+}
+
+body.app-shell .nav-toggle-icon {
+  display: block;
+  width: 1.35rem;
+  height: 1.35rem;
+  flex-shrink: 0;
+}
+
+/* Same idea as landing: only one glyph visible; CSS owns open/close (reliable on mobile WebKit) */
+body.app-shell .nav-toggle-icon-open {
+  display: block;
+}
+
+body.app-shell .nav-toggle-icon-close {
+  display: none;
+}
+
+body.app-shell .premium-navbar.nav-open .nav-toggle-icon-open {
+  display: none;
+}
+
+body.app-shell .premium-navbar.nav-open .nav-toggle-icon-close {
+  display: block;
+}
+
+body.app-shell .nav-toggle-label {
+  display: none;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: var(--app-nav-muted);
+}
+
+body.app-shell .premium-navbar.nav-open .nav-toggle-label--open {
+  display: none;
+}
+
+body.app-shell .premium-navbar.nav-open .nav-toggle-label--close {
+  display: none;
+}
+
+/* Prefer labeled close control on wider phones / tablets in the collapsed layout */
+@media (max-width: 900px) and (min-width: 420px) {
+  body.app-shell .nav-toggle-label--open {
+    display: inline;
+  }
+
+  body.app-shell .premium-navbar.nav-open .nav-toggle-label--open {
+    display: none;
+  }
+
+  body.app-shell .premium-navbar.nav-open .nav-toggle-label--close {
+    display: inline;
+  }
+}
+
+@media (pointer: coarse) {
+  body.app-shell .nav-toggle-btn {
+    min-width: 2.85rem;
+    min-height: 2.85rem;
+    padding: 0.55rem 0.75rem;
+  }
+}
+
+@media (max-width: 900px) {
+  body.app-shell .nav-toggle-btn {
+    display: inline-flex;
+    order: 2;
+  }
+}
+
+@media (min-width: 901px) {
+  body.app-shell .nav-toggle-btn {
+    display: none !important;
+  }
+}
+
+body.app-shell .nav-toggle-bar {
+  display: none;
 }
 
 body.app-shell .nav-dropdown-menu {
@@ -902,13 +993,14 @@ body.app-shell .notify-panel-item--unread {
 
   body.app-shell .app-nav-brand {
     font-size: 1.05rem;
-    margin-right: auto;
+    margin-right: 0.5rem;
     min-width: 0;
   }
 
   body.app-shell .nav-toggle-btn {
-    display: flex;
+    display: inline-flex;
     order: 2;
+    margin-left: auto;
   }
 
   /* Collapse desktop nav into the hamburger panel.
