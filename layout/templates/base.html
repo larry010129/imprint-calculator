@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=10">
 <meta name="csrf-token" content="{{ csrf_token() }}">
 {% block extra_head %}{% endblock %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/app-theme.css') }}?v=17">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/app-theme.css') }}?v=18">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}?v=1">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/animations.css') }}?v=3">
 </head>
@@ -38,18 +38,20 @@
 <div class="app-nav-wrap" id="app-nav-wrap">
 <nav class="premium-navbar app-navbar">
   <div class="nav-container">
-    <a href="{{ url_for('main.home') }}" class="app-nav-brand">
-      <span class="app-nav-brand-text" data-i18n="landing_brand">珠寶線上訂製</span>
-      <span class="app-nav-brand-mark">TM</span>
-    </a>
-    <button type="button" id="nav-toggle" class="nav-toggle-btn" aria-label="開啟選單" aria-expanded="false" aria-controls="nav-links-panel">
-      <svg class="nav-toggle-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-        <path class="nav-toggle-icon-open" d="M4 7h16M4 12h16M4 17h16"/>
-        <path class="nav-toggle-icon-close" d="M6 6l12 12M18 6L6 18"/>
-      </svg>
-      <span class="nav-toggle-label nav-toggle-label--open" data-i18n="nav_menu_open">選單</span>
-      <span class="nav-toggle-label nav-toggle-label--close" data-i18n="nav_menu_close">關閉</span>
-    </button>
+    <div class="nav-mobile-chrome">
+      <a href="{{ url_for('main.home') }}" class="app-nav-brand">
+        <span class="app-nav-brand-text" data-i18n="landing_brand">珠寶線上訂製</span>
+        <span class="app-nav-brand-mark">TM</span>
+      </a>
+      <button type="button" id="nav-toggle" class="nav-toggle-btn" aria-label="開啟選單" aria-expanded="false" aria-controls="nav-links-panel">
+        <svg class="nav-toggle-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" aria-hidden="true">
+          <path class="nav-toggle-icon-open" d="M4 7h16M4 12h16M4 17h16"/>
+          <path class="nav-toggle-icon-close" d="M6 6l12 12M18 6L6 18"/>
+        </svg>
+        <span class="nav-toggle-label nav-toggle-label--open" data-i18n="nav_menu_open">選單</span>
+        <span class="nav-toggle-label nav-toggle-label--close" data-i18n="nav_menu_close">關閉</span>
+      </button>
+    </div>
     <div class="nav-links" id="nav-links-panel">
       <a href="{{ url_for('main.home') }}" class="nav-item{% if request.endpoint == 'main.home' %} nav-item--active{% endif %}" data-i18n="nav_home">系統首頁</a>
 
@@ -195,7 +197,7 @@ if ('serviceWorker' in navigator) {
 <script src="{{ url_for('static', filename='js/toast.js') }}"></script>
 {% if current_user.is_authenticated %}
 <script src="{{ url_for('static', filename='js/app-nav.js') }}"></script>
-<script src="{{ url_for('static', filename='js/nav.js') }}?v=6"></script>
+<script src="{{ url_for('static', filename='js/nav.js') }}?v=7"></script>
 <script src="{{ url_for('static', filename='js/notifications.js') }}?v=2"></script>
 <script src="{{ url_for('static', filename='js/cart-panel.js') }}?v=2"></script>
 <script src="{{ url_for('static', filename='js/cart-badge.js') }}?v=3"></script>

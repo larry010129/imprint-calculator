@@ -345,28 +345,34 @@ body.app-shell .user-greeting {
   }
 }
 
+body.app-shell .nav-mobile-chrome {
+  display: contents;
+}
+
 body.app-shell .nav-toggle-btn {
   display: none;
   align-items: center;
   justify-content: center;
-  gap: 0.35rem;
+  gap: 0.4rem;
   flex-shrink: 0;
   margin-left: auto;
   min-width: 2.75rem;
   min-height: 2.75rem;
-  padding: 0.5rem 0.65rem;
+  padding: 0.45rem 0.7rem;
   border: 1px solid var(--app-nav-border);
   border-radius: 0.75rem;
-  background: transparent;
+  background: var(--color-surface);
   color: var(--color-text);
   cursor: pointer;
-  line-height: 0;
+  line-height: 1;
   font-family: inherit;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 body.app-shell .nav-toggle-btn:hover,
 body.app-shell .nav-toggle-btn:focus-visible {
-  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+  border-color: color-mix(in srgb, var(--color-brand) 45%, var(--app-nav-border));
+  background: color-mix(in srgb, var(--color-brand) 10%, var(--color-surface));
 }
 
 body.app-shell .nav-toggle-icon {
@@ -374,9 +380,10 @@ body.app-shell .nav-toggle-icon {
   width: 1.35rem;
   height: 1.35rem;
   flex-shrink: 0;
+  color: inherit;
 }
 
-/* Same idea as landing: only one glyph visible; CSS owns open/close (reliable on mobile WebKit) */
+/* Same idea as landing: CSS owns open/close glyphs (reliable on mobile WebKit) */
 body.app-shell .nav-toggle-icon-open {
   display: block;
 }
@@ -395,23 +402,59 @@ body.app-shell .premium-navbar.nav-open .nav-toggle-icon-close {
 
 body.app-shell .nav-toggle-label {
   display: none;
-  font-size: 0.75rem;
-  font-weight: 500;
+  font-size: 0.8125rem;
+  font-weight: 600;
   line-height: 1;
   letter-spacing: 0.02em;
-  color: var(--app-nav-muted);
+  color: inherit;
 }
 
-body.app-shell .premium-navbar.nav-open .nav-toggle-label--open {
-  display: none;
+body.app-shell .nav-toggle-bar {
+  display: none !important;
 }
 
-body.app-shell .premium-navbar.nav-open .nav-toggle-label--close {
-  display: none;
+@media (pointer: coarse) {
+  body.app-shell .nav-toggle-btn {
+    min-width: 3rem;
+    min-height: 3rem;
+    padding: 0.55rem 0.85rem;
+  }
 }
 
-/* Prefer labeled close control on wider phones / tablets in the collapsed layout */
-@media (max-width: 900px) and (min-width: 420px) {
+@media (max-width: 900px) {
+  /* Brand + open/close stay on one sticky row, like landing */
+  body.app-shell .nav-mobile-chrome {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex: 1 1 100%;
+    width: 100%;
+    order: 1;
+    position: sticky;
+    top: 0;
+    z-index: 6;
+    margin: 0;
+    padding: 0.35rem 0;
+    background: var(--app-nav-bg);
+    backdrop-filter: blur(12px);
+  }
+
+  body.app-shell .nav-toggle-btn {
+    display: inline-flex !important;
+    order: initial;
+    margin-left: 0;
+    color: var(--color-text);
+    border-color: var(--app-nav-border);
+    background: color-mix(in srgb, var(--color-text) 6%, var(--color-surface));
+  }
+
+  body.app-shell .premium-navbar.nav-open .nav-toggle-btn {
+    border-color: color-mix(in srgb, var(--color-brand) 55%, var(--app-nav-border));
+    color: var(--color-text);
+    background: color-mix(in srgb, var(--color-brand) 14%, var(--color-surface));
+  }
+
   body.app-shell .nav-toggle-label--open {
     display: inline;
   }
@@ -425,29 +468,14 @@ body.app-shell .premium-navbar.nav-open .nav-toggle-label--close {
   }
 }
 
-@media (pointer: coarse) {
-  body.app-shell .nav-toggle-btn {
-    min-width: 2.85rem;
-    min-height: 2.85rem;
-    padding: 0.55rem 0.75rem;
-  }
-}
-
-@media (max-width: 900px) {
-  body.app-shell .nav-toggle-btn {
-    display: inline-flex;
-    order: 2;
-  }
-}
-
 @media (min-width: 901px) {
+  body.app-shell .nav-mobile-chrome {
+    display: contents;
+  }
+
   body.app-shell .nav-toggle-btn {
     display: none !important;
   }
-}
-
-body.app-shell .nav-toggle-bar {
-  display: none;
 }
 
 body.app-shell .nav-dropdown-menu {
@@ -972,9 +1000,18 @@ body.app-shell .notify-panel-item--unread {
 }
 
 @media (max-width: 900px) {
-  body.app-shell .app-nav-wrap {
-    padding: 0.75rem 0.75rem 0;
+  /* Old 3-bar morph — unused by app shell SVG toggle; keep inert */
+  body.app-shell .premium-navbar.nav-open .nav-toggle-bar {
+    display: none !important;
+    transform: none !important;
+    opacity: 0 !important;
   }
+
+  /* Do not let base style.css order:-1 pull the close control into the links stack */
+  body.app-shell .nav-toggle-btn {
+    order: initial !important;
+  }
+}
 
   body.app-shell .premium-navbar.app-navbar {
     width: 100%;
@@ -993,14 +1030,14 @@ body.app-shell .notify-panel-item--unread {
 
   body.app-shell .app-nav-brand {
     font-size: 1.05rem;
-    margin-right: 0.5rem;
+    margin-right: 0;
     min-width: 0;
+    flex: 1 1 auto;
   }
 
   body.app-shell .nav-toggle-btn {
-    display: inline-flex;
-    order: 2;
-    margin-left: auto;
+    display: inline-flex !important;
+    flex: 0 0 auto;
   }
 
   /* Collapse desktop nav into the hamburger panel.
