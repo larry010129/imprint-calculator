@@ -349,7 +349,7 @@ body.app-shell .nav-mobile-chrome {
   display: contents;
 }
 
-body.app-shell .nav-mobile-close {
+body.app-shell .nav-backdrop {
   display: none;
 }
 
@@ -426,7 +426,7 @@ body.app-shell .nav-toggle-bar {
 }
 
 @media (max-width: 900px) {
-  /* Brand + open/close stay on one sticky row, like landing */
+  /* Brand + X stay pinned above menu content — same spot as landing page */
   body.app-shell .nav-mobile-chrome {
     display: flex;
     align-items: center;
@@ -435,39 +435,39 @@ body.app-shell .nav-toggle-bar {
     flex: 1 1 100%;
     width: 100%;
     order: 1;
-    position: relative;
-    z-index: 1002;
+    position: sticky;
+    top: 0;
+    z-index: 20;
     margin: 0;
     padding: 0.35rem 0;
     background: var(--app-nav-bg);
     backdrop-filter: blur(12px);
+    pointer-events: auto;
+    touch-action: manipulation;
   }
 
   body.app-shell .nav-toggle-btn {
     display: inline-flex !important;
     order: initial;
     margin-left: 0;
+    position: relative;
+    z-index: 21;
     color: var(--color-text);
     border-color: var(--app-nav-border);
-    background: color-mix(in srgb, var(--color-text) 6%, var(--color-surface));
+    background: color-mix(in srgb, var(--color-text) 8%, var(--color-surface));
+    pointer-events: auto;
+    touch-action: manipulation;
   }
 
   body.app-shell .premium-navbar.nav-open .nav-toggle-btn {
     border-color: color-mix(in srgb, var(--color-brand) 55%, var(--app-nav-border));
     color: var(--color-text);
-    background: color-mix(in srgb, var(--color-brand) 14%, var(--color-surface));
+    background: color-mix(in srgb, var(--color-brand) 18%, var(--color-surface));
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-brand) 25%, transparent);
   }
 
-  body.app-shell .nav-toggle-label--open {
-    display: inline;
-  }
-
-  body.app-shell .premium-navbar.nav-open .nav-toggle-label--open {
-    display: none;
-  }
-
-  body.app-shell .premium-navbar.nav-open .nav-toggle-label--close {
-    display: inline;
+  body.app-shell .nav-toggle-label {
+    display: none !important;
   }
 }
 
@@ -1044,34 +1044,6 @@ body.app-shell .notify-panel-item--unread {
   body.app-shell .nav-toggle-btn {
     display: inline-flex !important;
     flex: 0 0 auto;
-  }
-
-  /* Independent close control inside the expanded panel. It remains above
-     menu links even when a long account/admin submenu is open. */
-  body.app-shell .nav-mobile-close {
-    display: none;
-    order: 2;
-    position: relative;
-    z-index: 1001;
-    width: 100%;
-    min-height: 2.75rem;
-    align-items: center;
-    justify-content: center;
-    gap: 0.45rem;
-    margin: 0;
-    padding: 0.65rem 0.85rem;
-    border: 1px solid color-mix(in srgb, var(--color-brand) 45%, var(--app-nav-border));
-    border-radius: 0.7rem;
-    background: color-mix(in srgb, var(--color-brand) 12%, var(--color-surface));
-    color: var(--color-text);
-    font: 600 0.875rem/1 var(--font-body);
-    cursor: pointer;
-    pointer-events: auto;
-    touch-action: manipulation;
-  }
-
-  body.app-shell .premium-navbar.nav-open .nav-mobile-close {
-    display: inline-flex;
   }
 
   /* Collapse desktop nav into the hamburger panel.

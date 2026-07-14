@@ -161,22 +161,66 @@ body.cms-admin-page .records-page {
     overflow: hidden;
   }
 
-  body.app-shell .premium-navbar.nav-open::before {
-    content: "";
+  /* Backdrop is a real button (not ::before) so it never blocks the header X. */
+  body.app-shell .nav-backdrop {
+    display: none;
     position: fixed;
     inset: 0;
-    z-index: 140;
-    background: rgba(0, 0, 0, 0.5);
+    z-index: 0;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: rgba(0, 0, 0, 0.55);
     backdrop-filter: blur(4px);
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  body.app-shell.nav-menu-open .nav-backdrop {
+    display: block;
+    pointer-events: auto;
+  }
+
+  body.app-shell.nav-menu-open .app-nav-wrap {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0.75rem;
+    pointer-events: none;
+  }
+
+  body.app-shell.nav-menu-open .premium-navbar.app-navbar {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: none;
+    max-height: calc(100dvh - 1.5rem);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    pointer-events: none;
+    isolation: isolate;
+  }
+
+  body.app-shell.nav-menu-open .premium-navbar .nav-mobile-chrome,
+  body.app-shell.nav-menu-open .premium-navbar .nav-links,
+  body.app-shell.nav-menu-open .premium-navbar .nav-user,
+  body.app-shell.nav-menu-open .premium-navbar a,
+  body.app-shell.nav-menu-open .premium-navbar button,
+  body.app-shell.nav-menu-open .premium-navbar input,
+  body.app-shell.nav-menu-open .premium-navbar select,
+  body.app-shell.nav-menu-open .premium-navbar textarea {
+    pointer-events: auto;
   }
 
   body.app-shell .premium-navbar.nav-open .nav-links,
   body.app-shell .premium-navbar.nav-open .nav-user {
     position: relative;
-    z-index: 150;
-    max-height: min(72vh, calc(100dvh - 5.5rem));
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    z-index: 1;
+    max-height: none;
+    overflow: visible;
     margin-top: 0.35rem;
     padding: 0.5rem 0.75rem 0.75rem;
     border-radius: 0.75rem;
@@ -186,10 +230,5 @@ body.cms-admin-page .records-page {
 
   body.app-shell .premium-navbar.nav-open .nav-links {
     border-top: none;
-  }
-
-  body.app-shell .app-nav-wrap {
-    position: relative;
-    z-index: 160;
   }
 }

@@ -1,7 +1,7 @@
 // Mobile nav + dropdown menus (authenticated app shell).
 document.addEventListener('DOMContentLoaded', () => {
   const toggle = document.getElementById('nav-toggle');
-  const closeButton = document.getElementById('nav-close');
+  const backdrop = document.getElementById('nav-backdrop');
   const navbar = document.querySelector('.premium-navbar');
   if (!navbar) return;
 
@@ -14,6 +14,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function syncBodyMenuState(isOpen) {
     document.body.classList.toggle('nav-menu-open', isOpen && isMobile());
+    if (backdrop) {
+      backdrop.hidden = !(isOpen && isMobile());
+      backdrop.setAttribute('aria-hidden', isOpen && isMobile() ? 'false' : 'true');
+    }
   }
 
   function setMenuOpen(open) {
@@ -35,7 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function dropdownTrigger(dropdown) {
-    // Account: whole row toggles on mobile (avatar/name + chevron), not just the tiny button.
     if (dropdown.classList.contains('nav-user-dropdown')) {
       return dropdown.querySelector('.nav-user-trigger')
         || dropdown.querySelector('.nav-user-menu-btn');
@@ -64,6 +67,20 @@ document.addEventListener('DOMContentLoaded', () => {
     setTriggerExpanded(dropdown, open);
   }
 
+  function bindCloseOnActivate(el, handler) {
+    if (!el) return;
+    let lastTouch = 0;
+    el.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      lastTouch = Date.now();
+      handler(e);
+    }, { passive: false });
+    el.addEventListener('click', (e) => {
+      if (Date.now() - lastTouch < 500) return;
+      handler(e);
+    });
+  }
+
   dropdowns.forEach((dropdown) => {
     const trigger = dropdownTrigger(dropdown);
     if (!trigger) return;
@@ -86,28 +103,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     trigger.addEventListener('click', (e) => {
       if (!isMobile()) return;
-      // Re-pressing the same account/shop/admin tab retracts its list.
       e.preventDefault();
       e.stopPropagation();
       setDropdownOpen(dropdown, !dropdown.classList.contains('is-open'));
     });
   });
 
-  if (toggle) {
-    toggle.addEventListener('click', (e) => {
-      e.stopPropagation();
-      toggleMenu();
-    });
-  }
+  bindCloseOnActivate(toggle, (e) => {
+    e.stopPropagation();
+    toggleMenu();
+  });
 
-  if (closeButton) {
-    closeButton.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      closeMenu();
-      toggle?.focus({ preventScroll: true });
-    });
-  }
+  bindCloseOnActivate(backdrop, (e) => {
+    e.stopPropagation();
+    closeMenu();
+    toggle?.focus({ preventScroll: true });
+  });
 
   navbar.querySelectorAll('.nav-links > a, .nav-dropdown-item[href], .nav-user a.nav-cart-link').forEach((el) => {
     el.addEventListener('click', () => {
@@ -120,11 +131,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!e.target.closest('[data-nav-dropdown]')) {
         closeAllDropdowns();
       }
-      return;
-    }
-    // Phone: tap outside the open panel closes hamburger + any accordion lists.
-    if (navbar.classList.contains('nav-open') && !navbar.contains(e.target)) {
-      closeMenu();
       return;
     }
     if (!e.target.closest('[data-nav-dropdown]')) {
