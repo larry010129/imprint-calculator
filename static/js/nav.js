@@ -1,6 +1,7 @@
 // Mobile nav + dropdown menus (authenticated app shell).
 document.addEventListener('DOMContentLoaded', () => {
   const toggle = document.getElementById('nav-toggle');
+  const closeButton = document.getElementById('nav-close');
   const navbar = document.querySelector('.premium-navbar');
   if (!navbar) return;
 
@@ -96,6 +97,15 @@ document.addEventListener('DOMContentLoaded', () => {
     toggle.addEventListener('click', (e) => {
       e.stopPropagation();
       toggleMenu();
+    });
+  }
+
+  if (closeButton) {
+    closeButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      closeMenu();
+      toggle?.focus({ preventScroll: true });
     });
   }
 
