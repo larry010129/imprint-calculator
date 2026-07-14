@@ -220,9 +220,10 @@ def seed_legacy_products(check_images_exist: bool = True) -> int:
         for gold in sorted(VALID_GOLDS):
             for carat, weight_chin in CHAIN_WEIGHT_CHIN.items():
                 product.variants.append(ProductVariant(gold=gold, carat=carat, weight_chin=weight_chin))
-        path = _image_for('chain', style, color, check_images_exist)
-        if path:
-            product.images.append(ProductImage(color=color, file_path=path))
+        for image_color in IMAGE_COLORS:
+            path = _image_for('chain', style, image_color, check_images_exist)
+            if path:
+                product.images.append(ProductImage(color=image_color, file_path=path))
         db.session.add(product)
         created += 1
 
@@ -268,3 +269,27 @@ def sync_bracelet_variants() -> tuple[int, int]:
     if removed or added:
         db.session.commit()
     return removed, added
+
+
+_CHAIN_STYLE_BY_SORT = {0: 'A', 1: 'B', 2: 'C'}
+
+
+def sync_chain_product_images(check_images_exist: bool = True) -> int:
+    """Add missing chain color images when files exist on disk."""
+    added = 0
+    for product in Product.query.filter_by(category='chain').order_by(Product.sort_order).all():
+        style = _CHAIN_STYLE_BY_SORT.get(product.sort_order or 0)
+        if not style:
+            continue
+        existing = {img.color for img in product.images}
+        for image_color in IMAGE_COLORS:
+            if image_color in existing:
+                continue
+            path = _image_for('chain', style, image_color, check_images_exist)
+            if not path:
+                continue
+            product.images.append(ProductImage(color=image_color, file_path=path))
+            added += 1
+    if added:
+        db.session.commit()
+    return added

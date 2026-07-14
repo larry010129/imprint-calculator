@@ -449,21 +449,39 @@ body.app-shell .nav-toggle-bar {
   body.app-shell .nav-toggle-btn {
     display: inline-flex !important;
     order: initial;
-    margin-left: 0;
+    margin-left: auto;
     position: relative;
     z-index: 21;
+    min-width: auto;
+    min-height: auto;
+    padding: 0.5rem;
+    gap: 0;
     color: var(--color-text);
-    border-color: var(--app-nav-border);
-    background: color-mix(in srgb, var(--color-text) 8%, var(--color-surface));
+    border: none;
+    background: none;
+    box-shadow: none;
     pointer-events: auto;
     touch-action: manipulation;
   }
 
-  body.app-shell .premium-navbar.nav-open .nav-toggle-btn {
-    border-color: color-mix(in srgb, var(--color-brand) 55%, var(--app-nav-border));
+  body.app-shell .nav-toggle-btn:hover,
+  body.app-shell .nav-toggle-btn:focus-visible {
+    border: none;
+    background: none;
+    box-shadow: none;
     color: var(--color-text);
-    background: color-mix(in srgb, var(--color-brand) 18%, var(--color-surface));
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-brand) 25%, transparent);
+  }
+
+  body.app-shell .premium-navbar.nav-open .nav-toggle-btn {
+    border: none;
+    color: var(--color-text);
+    background: none;
+    box-shadow: none;
+  }
+
+  body.app-shell .nav-toggle-icon {
+    width: 1.5rem;
+    height: 1.5rem;
   }
 
   body.app-shell .nav-toggle-label {

@@ -346,6 +346,7 @@ def create_app():
         from diamond_calculator.application.catalog_seed import (
             seed_legacy_products,
             sync_bracelet_variants,
+            sync_chain_product_images,
         )
         try:
             # Local / fresh DB recovery: empty catalog looks broken (category
@@ -361,6 +362,13 @@ def create_app():
         except Exception as exc:
             db.session.rollback()
             app.logger.exception('sync_bracelet_variants failed on startup: %s', exc)
+        try:
+            chain_images = sync_chain_product_images()
+            if chain_images:
+                app.logger.info('Added %s chain product color images', chain_images)
+        except Exception as exc:
+            db.session.rollback()
+            app.logger.exception('sync_chain_product_images failed on startup: %s', exc)
         admin_password = os.environ.get('ADMIN_PASSWORD')
         if admin_password:
             try:

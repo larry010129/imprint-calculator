@@ -1,0 +1,164 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  username     String    @unique @db.VarChar(150)
+  passwordHash String    @map("password_hash") @db.VarChar(256)
+  role         String    @default("provider") @db.VarChar(50)
+  storeName    String?   @map("store_name") @db.VarChar(150)
+  isActive     Boolean   @default(true) @map("is_active")
+  lastLoginAt  DateTime? @map("last_login_at")
+  submissions  Submission[]
+  cartItems    CartItem[]
+  favoriteItems FavoriteItem[]
+  notifications UserNotification[]
+  createdProducts Product[] @relation("ProductCreator")
+  createdInvites  InviteCode[] @relation("InviteCreator")
+  usedInvites     InviteCode[] @relation("InviteUsedBy")
+}
+
+model Product {
+  id               Int       @id @default(autoincrement())
+  category         String    @db.VarChar(50)
+  nameZh           String    @map("name_zh") @db.VarChar(150)
+  nameEn           String?   @map("name_en") @db.VarChar(150)
+  descriptionZh    String?   @map("description_zh")
+  descriptionEn    String?   @map("description_en")
+  defaultColor     String    @default("white") @map("default_color") @db.VarChar(20)
+  isPublished      Boolean   @default(false) @map("is_published")
+  firstPublishedAt DateTime? @map("first_published_at")
+  sortOrder        Int       @default(0) @map("sort_order")
+  createdById      Int?      @map("created_by_id")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  createdBy        User?     @relation("ProductCreator", fields: [createdById], references: [id])
+  variants         ProductVariant[]
+  images           ProductImage[]
+  submissions      Submission[] @relation("SubmissionProduct")
+  chainSubmissions Submission[] @relation("SubmissionChainProduct")
+  cartItems        CartItem[]
+  favoriteItems    FavoriteItem[]
+}
+
+model ProductVariant {
+  id              Int     @id @default(autoincrement())
+  productId       Int     @map("product_id")
+  gold            String  @db.VarChar(20)
+  carat           String  @db.VarChar(20)
+  weightChin      Float   @map("weight_chin")
+  manualPriceTwd  Float?  @map("manual_price_twd")
+  product         Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, gold, carat], name: "uq_variant_product_gold_carat")
+}
+
+model ProductImage {
+  id        Int     @id @default(autoincrement())
+  productId Int     @map("product_id")
+  color     String  @db.VarChar(20)
+  filePath  String  @map("file_path") @db.VarChar(300)
+  sortOrder Int     @default(0) @map("sort_order")
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model Submission {
+  id               Int       @id @default(autoincrement())
+  userId           Int       @map("user_id")
+  productId        Int?      @map("product_id")
+  category         String?   @db.VarChar(50)
+  carat            String?   @db.VarChar(50)
+  styleType        String?   @map("style_type") @db.VarChar(50)
+  goldPurity       String?   @map("gold_purity") @db.VarChar(50)
+  color            String?   @db.VarChar(20)
+  diamondKind      String    @default("white") @map("diamond_kind") @db.VarChar(20)
+  fancyColor       String?   @map("fancy_color") @db.VarChar(20)
+  stoneCount       Int?      @map("stone_count")
+  diamondShape     String    @default("round") @map("diamond_shape") @db.VarChar(20)
+  weight           Float?
+  ringSize         Float?    @map("ring_size")
+  engravingBand    String?   @map("engraving_band") @db.VarChar(10)
+  engravingGirdle  String?   @map("engraving_girdle") @db.VarChar(10)
+  includeChain     Boolean   @default(false) @map("include_chain")
+  chainProductId   Int?      @map("chain_product_id")
+  chainGold        String?   @map("chain_gold") @db.VarChar(20)
+  chainColor       String?   @map("chain_color") @db.VarChar(20)
+  chainLengthCm    Int?      @map("chain_length_cm")
+  chainWeightChin  Float?    @map("chain_weight_chin")
+  chainTotalTwd    Float?    @map("chain_total_twd")
+  cancelReason     String?   @map("cancel_reason") @db.VarChar(500)
+  diamondPriceTwd  Float?    @map("diamond_price_twd")
+  taijinPriceTwd   Float?    @map("taijin_price_twd")
+  laborPriceTwd    Float?    @map("labor_price_twd")
+  taxAmountTwd     Float?    @map("tax_amount_twd")
+  totalPrice       Float?    @map("total_price")
+  goldRatePerGram  Float?    @map("gold_rate_per_gram")
+  priceSource      String?   @map("price_source") @db.VarChar(20)
+  status           String    @default("pending") @db.VarChar(20)
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime? @map("updated_at")
+  user             User      @relation(fields: [userId], references: [id])
+  product          Product?  @relation("SubmissionProduct", fields: [productId], references: [id])
+  chainProduct     Product?  @relation("SubmissionChainProduct", fields: [chainProductId], references: [id])
+}
+
+model InviteCode {
+  id           Int       @id @default(autoincrement())
+  code         String    @unique @db.VarChar(32)
+  createdById  Int?      @map("created_by_id")
+  usedById     Int?      @map("used_by_id")
+  useCount     Int       @default(0) @map("use_count")
+  maxUses      Int?      @map("max_uses")
+  isActive     Boolean   @default(true) @map("is_active")
+  grantsAdmin  Boolean   @default(false) @map("grants_admin")
+  expiresAt    DateTime? @map("expires_at")
+  usedAt       DateTime? @map("used_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  createdBy    User?     @relation("InviteCreator", fields: [createdById], references: [id])
+  usedBy       User?     @relation("InviteUsedBy", fields: [usedById], references: [id])
+}
+
+model UserNotification {
+  id           Int      @id @default(autoincrement())
+  userId       Int      @map("user_id")
+  kind         String   @default("order_removed") @db.VarChar(32)
+  message      String   @db.VarChar(500)
+  orderId      Int?     @map("order_id")
+  orderSummary String?  @map("order_summary") @db.VarChar(200)
+  isRead       Boolean  @default(false) @map("is_read")
+  createdAt    DateTime @default(now()) @map("created_at")
+  user         User     @relation(fields: [userId], references: [id])
+}
+
+model CartItem {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  productId  Int?     @map("product_id")
+  category   String   @db.VarChar(20)
+  styleType  String   @map("style_type") @db.VarChar(50)
+  configJson String   @map("config_json")
+  summaryZh  String?  @map("summary_zh") @db.VarChar(200)
+  totalPrice Float?   @map("total_price")
+  createdAt  DateTime @default(now()) @map("created_at")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product    Product? @relation(fields: [productId], references: [id])
+}
+
+model FavoriteItem {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id")
+  productId  Int?     @map("product_id")
+  category   String   @db.VarChar(20)
+  styleType  String   @map("style_type") @db.VarChar(50)
+  configJson String   @map("config_json")
+  summaryZh  String?  @map("summary_zh") @db.VarChar(200)
+  createdAt  DateTime @default(now()) @map("created_at")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product    Product? @relation(fields: [productId], references: [id])
+}

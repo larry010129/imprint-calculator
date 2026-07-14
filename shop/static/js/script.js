@@ -501,8 +501,10 @@ function updateConfigChips() {
 
 function effectiveColor() {
   if (state.color) return state.color;
-  if (state.category === 'chain' && state.gold) return materialColor(state.gold);
   const product = getSelectedProduct();
+  if (state.category === 'chain' && state.gold) {
+    return product?.defaultColor || materialColor(state.gold);
+  }
   if (product) return product.defaultColor || 'white';
   return null;
 }
@@ -799,13 +801,6 @@ function updateColorStep(goldOverride) {
   const row = document.getElementById('color-btn-row');
   if (!step) return;
   const gold = goldOverride ?? state.gold;
-  const isChain = state.category === 'chain';
-  if (isChain && gold !== '9k') {
-    step.classList.add('hidden');
-    if (row) row.innerHTML = '';
-    state.color = null;
-    return;
-  }
   const show = gold && needsColorSelection(gold, product);
   updateColorStepLabel('color-step-label', gold);
   step.classList.toggle('hidden', !show);
@@ -814,7 +809,8 @@ function updateColorStep(goldOverride) {
     if (row) row.innerHTML = '';
     return;
   }
-  state.color = enforceMetalColor(gold, state.color, product);
+  const preferredColor = state.color || (state.category === 'chain' ? product?.defaultColor : null);
+  state.color = enforceMetalColor(gold, preferredColor, product);
   renderColorButtons('color-btn-row', gold, product, state.color, selectColor);
 }
 
