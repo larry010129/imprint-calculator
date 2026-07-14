@@ -300,12 +300,16 @@ def _per_gram_from_bar_sell_row(row, weight_cols):
 
 
 def _is_gold_bar_table(table):
-    summary = table.get("summary") or table.get("title") or ""
-    if "黃金條塊" in summary:
-        return True
     for td in table.find_all("td"):
         if td.get_text(strip=True) == GOLD_BAR_ANCHOR:
             return True
+    summary = table.get("summary") or table.get("title") or ""
+    # Prefer the product cell above. Summary fallbacks must be strip-specific:
+    # the live page overview summary lists every product including 黃金條塊.
+    if GOLD_BAR_ANCHOR in summary and "存摺" not in summary:
+        return True
+    if "黃金條塊歷史牌價" in summary or "黃金條塊牌價" in summary or "黃金條塊表格" in summary:
+        return True
     return False
 
 
@@ -334,9 +338,10 @@ def _quotes_from_live_gold_bar_block(soup, page_stamp):
     started = anchor_row is None
     for row in table.find_all("tr"):
         if row is anchor_row:
+            # Current BOT live page puts 本行賣出 + bar totals on the same
+            # row as the 黃金條塊 label. Older layouts used a following row.
             started = True
-            continue
-        if not started:
+        elif not started:
             continue
 
         row_text = row.get_text(" ", strip=True)

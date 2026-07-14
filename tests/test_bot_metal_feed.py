@@ -66,6 +66,45 @@ LIVE_BAR_ROW_HTML = """
 </body></html>
 """
 
+# Current BOT live page (2026/07): label + 本行賣出 + totals on one row;
+# summary uses 「黃金條塊表格」; no separate 本行買進 row.
+LIVE_BAR_CURRENT_HTML = """
+<html><body>
+<div>掛牌時間：2026/07/14 10:04</div>
+<table summary="此表格為黃金條塊表格，有六直欄，第一直欄是品名，第二直欄是買賣別，第三直欄是一公斤金額，第四直欄是五百公克金額，第五直欄二百五十克金額，第六直欄是一百公克金額。">
+  <tr>
+    <td>品名 / 規格</td>
+    <td></td>
+    <td>單位：新臺幣元</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td></td>
+    <td>1 公斤</td>
+    <td>500 公克</td>
+    <td>250 公克</td>
+    <td>100 公克</td>
+  </tr>
+  <tr>
+    <td>黃金條塊</td>
+    <td>本行賣出</td>
+    <td class="text-right">4,211,484</td>
+    <td class="text-right">2,109,399</td>
+    <td class="text-right">1,056,791</td>
+    <td class="text-right">423,999</td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>黃金存摺轉換 金品應補繳款</td>
+    <td class="text-right">34,484</td>
+    <td class="text-right">20,899</td>
+    <td class="text-right">12,541</td>
+    <td class="text-right">6,299</td>
+  </tr>
+</table>
+</body></html>
+"""
+
 HISTORY_BAR_HTML = """
 <html><body>
 <table summary="此表格是黃金條塊歷史牌價">
@@ -101,6 +140,16 @@ HISTORY_BAR_HTML = """
 sell, stamp = _find_gold_bar_prices(BeautifulSoup(LIVE_BAR_ROW_HTML, "html.parser"))
 assert sell == 4306.484, f"expected 4306.484 from 1kg bar, got {sell}"
 assert stamp == "2026/07/09 19:43"
+
+sell, stamp = _find_gold_bar_prices(BeautifulSoup(LIVE_BAR_CURRENT_HTML, "html.parser"))
+assert sell == 4211.484, f"expected 4211.484 from current live layout, got {sell}"
+assert stamp == "2026/07/14 10:04"
+
+from diamond_calculator.application.bot_metal_feed import _quotes_from_live_gold_bar_block
+live_only = _quotes_from_live_gold_bar_block(
+    BeautifulSoup(LIVE_BAR_CURRENT_HTML, "html.parser"), "2026/07/14 10:04"
+)
+assert live_only == [(4211.484, "2026/07/14 10:04")], f"live block must parse same-row sell, got {live_only}"
 
 sell, stamp = _find_gold_bar_prices(BeautifulSoup(HISTORY_BAR_HTML, "html.parser"))
 assert sell == 4306.484, f"expected latest history bar price, got {sell}"
