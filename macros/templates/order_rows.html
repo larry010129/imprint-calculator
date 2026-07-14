@@ -1,0 +1,231 @@
+{% macro style_thumb(sub) %}
+{% set style_img = sub.category|style_image_url(sub.style_type, sub.gold_purity, sub.color, sub.product) %}
+{% set style_img_white = sub.category|style_image_url(sub.style_type, sub.gold_purity, 'white', sub.product) %}
+{% if style_img %}
+<img class="order-style-thumb"
+     src="{{ style_img }}"
+     data-fallback="{{ style_img_white }}"
+     alt="{{ sub.style_type|label_style(sub.category, sub.product) }}"
+     loading="lazy">
+{% else %}
+<span class="order-style-thumb--empty" aria-hidden="true">—</span>
+{% endif %}
+{% endmacro %}
+
+{% macro style_name(sub) %}
+{{ sub.style_type|label_style(sub.category, sub.product) }}
+{% if sub.include_chain %}<small>＋ {{ sub.chain_product.name_zh if sub.chain_product else '鏈條' }}（{{ sub.chain_length_cm }}cm）</small>{% endif %}
+{% endmacro %}
+
+{% macro status_badge(sub) %}
+{% if sub.status == 'cancelled' %}
+<span class="order-status-badge order-status-badge--cancelled" data-i18n="status_cancelled">已取消</span>
+{% elif sub.status == 'shipped' %}
+<span class="order-status-badge order-status-badge--shipped" data-i18n="status_shipped">已出貨</span>
+{% elif sub.status == 'completed' %}
+<span class="order-status-badge order-status-badge--completed" data-i18n="status_completed">已完成</span>
+{% elif sub.status == 'processing' %}
+<span class="order-status-badge order-status-badge--processing" data-i18n="status_processing">處理中</span>
+{% elif sub.status == 'confirmed' %}
+<span class="order-status-badge order-status-badge--confirmed" data-i18n="status_confirmed">訂單成立</span>
+{% else %}
+<span class="order-status-badge order-status-badge--pending" data-i18n="status_pending">待處理</span>
+{% endif %}
+{% endmacro %}
+
+{% macro order_detail_panel(sub, tax_rate, show_store=false) %}
+{% set style_img = sub.category|style_image_url(sub.style_type, sub.gold_purity, sub.color, sub.product) %}
+{% set style_img_white = sub.category|style_image_url(sub.style_type, sub.gold_purity, 'white', sub.product) %}
+{% set all_imgs = sub.category|style_images(sub.style_type, sub.gold_purity, sub.color, sub.product) %}
+<div class="order-detail-panel">
+  <div class="order-detail-layout">
+    <div class="order-detail-gallery">
+      {% if style_img %}
+      <div class="order-detail-preview">
+        <img class="order-detail-main-img"
+             src="{{ style_img }}"
+             data-fallback="{{ style_img_white }}"
+             alt="{{ sub.style_type|label_style(sub.category, sub.product) }}">
+      </div>
+      {% if all_imgs|length > 1 %}
+      <div class="order-detail-thumbs" role="list">
+        {% for img in all_imgs %}
+        <button type="button" class="order-detail-thumb-btn{% if loop.first %} is-active{% endif %}"
+                role="listitem"
+                data-image="{{ img }}"
+                aria-label="商品圖 {{ loop.index }}">
+          <img src="{{ img }}" alt="" loading="lazy">
+        </button>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% else %}
+      <div class="order-detail-preview order-detail-preview--empty">
+        <span class="style-preview-placeholder">—</span>
+      </div>
+      {% endif %}
+      <p class="order-detail-product-name">{{ style_name(sub) }}</p>
+      <p class="order-detail-product-meta">{{ sub.category|label_category }} · {{ sub.gold_purity|label_purity }}{% if sub.color %} · {{ sub.color|label_color }}{% endif %}{% if sub.category != 'chain' %} · {{ sub|label_diamond_color }}{% endif %}</p>
+    </div>
+    <div class="order-detail-specs">
+      <div class="order-detail-grid">
+        {% if show_store %}
+        <div class="order-detail-item">
+          <span class="order-detail-label" data-i18n="table_store">供應商 / 店家</span>
+          <span class="order-detail-value"><strong>{{ sub.user.store_name }}</strong></span>
+        </div>
+        {% endif %}
+        <div class="order-detail-item">
+          <span class="order-detail-label" data-i18n="table_purity">成色</span>
+          <span class="order-detail-value">{{ sub.gold_purity|label_purity }}</span>
+        </div>
+        <div class="order-detail-item">
+          <span class="order-detail-label" data-i18n="table_color">顏色</span>
+          <span class="order-detail-value">{{ sub.color|label_color if sub.color else '-' }}</span>
+        </div>
+        <div class="order-detail-item">
+          <span class="order-detail-label" data-i18n="table_carat">克拉</span>
+          <span class="order-detail-value">{{ sub.carat }}</span>
+        </div>
+        {% if sub.category != 'chain' %}
+        <div class="order-detail-item">
+          <span class="order-detail-label" data-i18n="table_diamond_color">鑽石顏色</span>
+          <span class="order-detail-value">{{ sub|label_diamond_color }}</span>
+        </div>
+        {% endif %}
+        <div class="order-detail-item">
+          <span class="order-detail-label" data-i18n="table_rate">計價金價</span>
+          <span class="order-detail-value">{{ "{:,.0f}".format(sub.gold_rate_per_gram) if sub.gold_rate_per_gram is not none else '-' }}</span>
+        </div>
+        <div class="order-detail-item">
+          <span class="order-detail-label" data-i18n="table_weight">重量 (克)</span>
+          <span class="order-detail-value">{{ "{:.3f}".format(sub.weight) if sub.weight is not none else '-' }}</span>
+        </div>
+        <div class="order-detail-item">
+          <span class="order-detail-label" data-i18n="table_size">戒圍</span>
+          <span class="order-detail-value">{{ sub.ring_size or '-' }}</span>
+        </div>
+        <div class="order-detail-item">
+          <span class="order-detail-label" data-i18n="table_engraving_band">戒圈刻字</span>
+          <span class="order-detail-value">{{ sub.engraving_band or '-' }}</span>
+        </div>
+        <div class="order-detail-item">
+          <span class="order-detail-label" data-i18n="table_engraving_girdle">腰圍刻字</span>
+          <span class="order-detail-value">{{ sub.engraving_girdle or '-' }}</span>
+        </div>
+        <div class="order-detail-item">
+          <span class="order-detail-label" data-i18n="table_price">總價 (NT$)</span>
+          <span class="order-detail-value">{{ "{:,.0f}".format(sub.subtotal_before_tax(tax_rate)) if sub.subtotal_before_tax(tax_rate) is not none else '-' }}</span>
+        </div>
+        <div class="order-detail-item">
+          <span class="order-detail-label" data-i18n="table_tax">稅金 5% (NT$)</span>
+          <span class="order-detail-value">{{ "{:,.0f}".format(sub.display_tax(tax_rate)) if sub.display_tax(tax_rate) is not none else '-' }}</span>
+        </div>
+        {% if sub.chain_length_cm and sub.category in ('chain', 'bracelet') %}
+        <div class="order-detail-item">
+          <span class="order-detail-label" data-i18n="step_chain_length">鍊長</span>
+          <span class="order-detail-value">{{ sub.chain_length_cm }} cm</span>
+        </div>
+        {% endif %}
+      </div>
+      {% if sub.status != 'cancelled' %}
+      <div class="order-detail-status">
+        <div class="progress-stepper progress-stepper--table" data-status="{{ sub.status }}">
+          <div class="progress-line"></div>
+          <div class="progress-step active">
+            <div class="progress-label" data-i18n="status_pending">待處理</div>
+          </div>
+          <div class="progress-step {% if sub.status in ['confirmed', 'processing', 'completed', 'shipped'] %}active{% endif %}">
+            <div class="progress-label" data-i18n="status_confirmed">訂單成立</div>
+          </div>
+          <div class="progress-step {% if sub.status in ['processing', 'completed', 'shipped'] %}active{% endif %}">
+            <div class="progress-label" data-i18n="status_processing">處理中</div>
+          </div>
+          <div class="progress-step {% if sub.status in ['completed', 'shipped'] %}active{% endif %}">
+            <div class="progress-label" data-i18n="status_completed">已完成</div>
+          </div>
+          <div class="progress-step {% if sub.status == 'shipped' %}active{% endif %}">
+            <div class="progress-label" data-i18n="status_shipped">已出貨</div>
+          </div>
+        </div>
+      </div>
+      {% elif sub.cancel_reason %}
+      <p class="order-detail-cancel"><span data-i18n="status_cancelled">已取消</span> — {{ sub.cancel_reason }}</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endmacro %}
+
+{% macro history_order_rows(sub, tax_rate) %}
+<tr id="row-{{ sub.id }}" class="order-row-main" data-search="{{ sub|search_blob }}">
+  <td class="col-id">{{ sub.id }}</td>
+  <td class="col-date">{{ sub.created_at|tz_taiwan }}</td>
+  <td class="col-item">{{ sub.category|label_category }}</td>
+  <td class="col-image">{{ style_thumb(sub) }}</td>
+  <td class="col-style">{{ style_name(sub) }}</td>
+  <td class="col-price col-price--total">{{ "{:,.0f}".format(sub.display_total_with_tax(tax_rate)) if sub.display_total_with_tax(tax_rate) is not none else '-' }}</td>
+  <td class="col-status">{{ status_badge(sub) }}</td>
+  <td class="col-actions">
+    {% if sub.status == 'pending' %}
+    <a href="{{ url_for('main.calculator', edit_id=sub.id) }}" class="action-btn edit-btn" data-i18n="btn_edit" style="text-decoration:none; display:inline-block; margin-right: 4px;">編輯</a>
+    <button class="action-btn delete-btn" data-id="{{ sub.id }}" data-i18n="btn_delete">刪除</button>
+    {% endif %}
+    <a href="{{ url_for('main.calculator', reorder=sub.id) }}" class="action-btn reorder-btn" style="text-decoration:none; display:inline-block;">再次訂購</a>
+  </td>
+  <td class="col-detail">
+    <button type="button" class="order-detail-btn" data-target="detail-{{ sub.id }}" aria-expanded="false">
+      <span data-i18n="btn_see_detail">查看詳情</span>
+    </button>
+  </td>
+</tr>
+<tr class="order-detail-row" id="detail-{{ sub.id }}" hidden>
+  <td colspan="9">{{ order_detail_panel(sub, tax_rate) }}</td>
+</tr>
+{% endmacro %}
+
+{% macro admin_order_rows(sub, tax_rate) %}
+<tr id="admin-row-{{ sub.id }}" class="order-row-main"
+    data-id="{{ sub.id }}"
+    data-price="{{ sub.total_price or 0 }}"
+    data-status="{{ sub.status }}"
+    data-search="{{ sub|search_blob(true) }}">
+  <td class="admin-check-cell">
+    <input type="checkbox" class="admin-row-check" value="{{ sub.id }}">
+  </td>
+  <td data-val="{{ sub.id }}">{{ sub.id }}</td>
+  <td data-val="{{ sub.created_at.strftime('%Y%m%d%H%M%S') if sub.created_at else '0' }}">{{ sub.created_at|tz_taiwan }}</td>
+  <td data-val="{{ sub.user.store_name }}"><strong>{{ sub.user.store_name }}</strong></td>
+  <td>{{ sub.category|label_category }}</td>
+  <td class="col-image">{{ style_thumb(sub) }}</td>
+  <td data-val="{{ sub.style_type|label_style(sub.category, sub.product) }}">{{ style_name(sub) }}</td>
+  <td class="col-price col-price--total" data-val="{{ sub.display_total_with_tax(tax_rate) or 0 }}">{{ "{:,.0f}".format(sub.display_total_with_tax(tax_rate)) if sub.display_total_with_tax(tax_rate) is not none else '-' }}</td>
+  <td class="col-status">{{ status_badge(sub) }}</td>
+  <td class="col-actions admin-actions-cell">
+    <div class="admin-actions-inner">
+    {% if sub.status == 'cancelled' %}
+    <span class="order-status-badge order-status-badge--cancelled order-status-badge--inline" data-i18n="status_cancelled">已取消</span>
+    {% else %}
+    <select class="status-select {{ sub.status }}" data-id="{{ sub.id }}">
+      <option value="pending" {% if sub.status == 'pending' %}selected{% endif %} data-i18n="status_pending">待處理</option>
+      <option value="confirmed" {% if sub.status == 'confirmed' %}selected{% endif %} data-i18n="status_confirmed">訂單成立</option>
+      <option value="processing" {% if sub.status == 'processing' %}selected{% endif %} data-i18n="status_processing">處理中</option>
+      <option value="completed" {% if sub.status == 'completed' %}selected{% endif %} data-i18n="status_completed">已完成</option>
+      <option value="shipped" {% if sub.status == 'shipped' %}selected{% endif %} data-i18n="status_shipped">已出貨</option>
+    </select>
+    {% endif %}
+    <button type="button" class="admin-delete-btn" data-id="{{ sub.id }}"
+            data-label="#{{ sub.id }} · {{ sub.user.store_name }}"
+            title="刪除訂單" aria-label="刪除訂單">✕</button>
+    </div>
+  </td>
+  <td class="col-detail">
+    <button type="button" class="order-detail-btn" data-target="admin-detail-{{ sub.id }}" aria-expanded="false">
+      <span data-i18n="btn_see_detail">查看詳情</span>
+    </button>
+  </td>
+</tr>
+<tr class="order-detail-row" id="admin-detail-{{ sub.id }}" hidden>
+  <td colspan="11">{{ order_detail_panel(sub, tax_rate, show_store=false) }}</td>
+</tr>
+{% endmacro %}

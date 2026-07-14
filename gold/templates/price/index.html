@@ -1,0 +1,293 @@
+{% extends "layout/base.html" %}
+
+{% block title %}台銀黃金牌價{% endblock %}
+
+{% block content %}
+<div class="gold-price-page">
+  <header class="gold-price-header app-page-header">
+    <p class="app-page-eyebrow"><span class="app-page-eyebrow-line"></span><span data-i18n="nav_gold">台銀金價</span></p>
+    <div class="gold-price-header-row">
+      <div>
+        <h1 class="app-page-title" data-i18n="gold_page_title">台銀黃金條塊牌價</h1>
+        <p class="gold-price-sub">
+          <span data-i18n="gold_page_sub">資料來源：</span>
+          <a href="{{ quote.source_url }}" target="_blank" rel="noopener noreferrer" data-i18n="gold_page_source_link">臺灣銀行「新臺幣黃金牌價」</a>
+          <span data-i18n="gold_page_sub_unit">（1 公克）</span>
+        </p>
+      </div>
+      <div class="gold-header-actions">
+        <div class="gold-unit-switch" role="group" aria-label="價格單位">
+          <span class="gold-unit-switch-label" data-i18n="gold_unit_label">單位</span>
+          <button type="button" class="gold-unit-btn" data-unit="g" data-i18n="unit_g">克</button>
+          <button type="button" class="gold-unit-btn" data-unit="chin" data-i18n="unit_chin">錢</button>
+          <button type="button" class="gold-unit-btn" data-unit="tael" data-i18n="unit_tael">兩</button>
+        </div>
+        <button type="button" id="gold-refresh-btn" class="gold-refresh-btn" data-i18n="gold_refresh_btn">重新抓取牌價</button>
+      </div>
+    </div>
+    <p id="gold-refresh-msg" class="gold-refresh-msg hidden" role="status"></p>
+  </header>
+
+  <div id="gold-price-body">
+  {% if quote.available %}
+  <div class="gold-price-card gold-price-card--live">
+    <div class="gold-price-badge" id="gold-source-badge">
+      {% if quote.source == 'bot' %}
+      <span class="source-pill source-pill--bot" data-i18n="gold_source_bot">台銀牌價</span>
+      {% elif quote.source == 'cached' %}
+      <span class="source-pill source-pill--cached" data-i18n="gold_source_cached">沿用上次牌價</span>
+      {% elif quote.source == 'manual' %}
+      <span class="source-pill source-pill--manual" data-i18n="gold_source_manual">手動設定金價</span>
+      {% else %}
+      <span class="source-pill source-pill--fallback" data-i18n="gold_source_fallback">備援牌價</span>
+      {% endif %}
+    </div>
+
+    <div class="gold-price-grid">
+      <div class="gold-price-stat">
+        <span class="gold-price-label" id="gold-sell-label" data-i18n="{% if quote.source == 'manual' %}gold_price_label_manual{% else %}gold_bank_sell{% endif %}">{% if quote.source == 'manual' %}手動設定金價{% else %}本行賣出{% endif %}</span>
+        <span class="gold-price-value" id="gold-sell-val" data-countup-format="currency" data-countup-init="{{ quote.sell|round|int }}" data-per-gram="{{ quote.sell }}">NT$ {{ "{:,.0f}".format(quote.sell) }}</span>
+        <span class="gold-price-unit" id="gold-sell-unit" data-i18n="gold_per_gram">/ 公克</span>
+      </div>
+    </div>
+
+    {% if quote.bot_posted_at %}
+    <p class="gold-price-updated" id="gold-updated-line">
+      <span data-i18n="gold_last_updated">掛牌時間</span>：{{ quote.bot_posted_at }}
+    </p>
+    {% else %}
+    <p class="gold-price-updated hidden" id="gold-updated-line"></p>
+    {% endif %}
+    {% if quote.fetched_at_display %}
+    <p class="gold-price-updated" id="gold-fetched-line">
+      <span data-i18n="gold_fetched_at">資料擷取時間</span>：{{ quote.fetched_at_display }}
+    </p>
+    {% endif %}
+    {% if quote.source == 'manual' %}
+    <p class="gold-price-note gold-price-manual-note" data-i18n="gold_manual_note">價格來自 .env 設定，請於台銀調整後手動更新</p>
+    {% endif %}
+    <p class="gold-price-stale{% if not quote.is_stale %} hidden{% endif %}" id="gold-stale-warning" role="alert" data-i18n="gold_stale_warning">目前牌價超過 24 小時未更新或正在使用備援價格，試算前請先確認最新金價。</p>
+
+    <p class="gold-price-note" data-i18n="gold_calc_note">計算機以黃金條塊「本行賣出」換算之公克金價為基準，再依 9K / 14K / 18K 成色係數計價。</p>
+
+    <div class="gold-alloy-table-wrap">
+      <h2 id="gold-alloy-heading" data-i18n="gold_alloy_heading">試算用成色金價（NT$ / g）</h2>
+      <table class="gold-alloy-table" id="gold-alloy-table">
+        <thead>
+          <tr>
+            <th data-i18n="sum_gold">成色</th>
+            <th data-i18n="gold_alloy_rate">金價</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for gold, rate in alloy_rates.items() %}
+          <tr>
+            <td>{{ gold|label_purity }}</td>
+            <td class="gold-alloy-rate" data-per-gram="{{ rate }}">{{ "{:,.0f}".format(rate) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="gold-price-card gold-price-card--empty">
+    <p data-i18n="gold_unavailable">目前無法取得台銀牌價，請稍後再試或聯絡管理員。</p>
+  </div>
+  {% endif %}
+  </div>
+
+  <p class="gold-price-schedule" data-i18n="gold_sync_schedule">系統於每次啟動與每日凌晨 3:00（台灣時間）自動更新牌價。</p>
+  <p class="gold-price-external">
+    <a href="{{ quote.source_url }}" class="gold-source-btn" target="_blank" rel="noopener noreferrer" data-i18n="gold_open_bot">前往臺灣銀行官網查看即時牌價 ↗</a>
+  </p>
+</div>
+
+<script nonce="{{ csp_nonce }}">
+(function () {
+  const btn = document.getElementById('gold-refresh-btn');
+  const msg = document.getElementById('gold-refresh-msg');
+  if (!btn) return;
+
+  const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+  const purityLabels = { '9k': '9K金', '14k': '14K金', '18k': '18K金' };
+  const CHIN_TO_GRAMS = 3.75;
+  const GOLD_UNITS = ['g', 'chin', 'tael'];
+
+  function formatTwd(value) {
+    return 'NT$ ' + Math.round(value).toLocaleString('en-US');
+  }
+
+  /* ── 公克 / 錢 / 兩 display unit (shared preference with the calculator) ── */
+  function currentUnit() {
+    const stored = localStorage.getItem('goldPriceUnit');
+    return GOLD_UNITS.includes(stored) ? stored : 'g';
+  }
+  function unitFactor() {
+    const unit = currentUnit();
+    // 1 錢 = 3.75g; 1 兩 = 10 錢 = 37.5g.
+    if (unit === 'chin') return CHIN_TO_GRAMS;
+    if (unit === 'tael') return CHIN_TO_GRAMS * 10;
+    return 1;
+  }
+
+  function renderUnit() {
+    const unit = currentUnit();
+    document.querySelectorAll('.gold-unit-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.unit === unit));
+
+    const sellEl = document.getElementById('gold-sell-val');
+    if (sellEl) {
+      const perGram = parseFloat(sellEl.dataset.perGram);
+      if (!isNaN(perGram)) {
+        const v = perGram * unitFactor();
+        // Keep the load-time countup target in sync with the chosen unit.
+        sellEl.setAttribute('data-countup-init', String(Math.round(v)));
+        if (window.animateCountUp) window.animateCountUp(sellEl, v, { format: formatTwd });
+        else sellEl.textContent = formatTwd(v);
+      }
+    }
+
+    const unitLabelKey = { g: 'gold_per_gram', chin: 'gold_per_chin', tael: 'gold_per_tael' }[unit];
+    const unitFallback = { g: '/ 公克', chin: '/ 錢', tael: '/ 兩' }[unit];
+    const unitEl = document.getElementById('gold-sell-unit');
+    if (unitEl) {
+      unitEl.textContent = window.t ? window.t(unitLabelKey) : unitFallback;
+    }
+
+    document.querySelectorAll('.gold-alloy-rate').forEach(td => {
+      const perGram = parseFloat(td.dataset.perGram);
+      if (!isNaN(perGram)) {
+        td.textContent = Math.round(perGram * unitFactor()).toLocaleString('en-US');
+      }
+    });
+
+    const heading = document.getElementById('gold-alloy-heading');
+    if (heading) {
+      const base = window.t ? window.t('gold_alloy_heading') : '試算用成色金價（NT$ / g）';
+      const headingSuffix = { g: null, chin: '/ 錢', tael: '/ 兩' }[unit];
+      heading.textContent = headingSuffix ? base.replace('/ g', headingSuffix) : base;
+    }
+  }
+
+  document.querySelectorAll('.gold-unit-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      localStorage.setItem('goldPriceUnit', b.dataset.unit);
+      renderUnit();
+    });
+  });
+  /* Re-apply after i18n rewrites data-i18n texts, and after load countups */
+  document.addEventListener('langchange', renderUnit);
+  document.addEventListener('DOMContentLoaded', renderUnit);
+  renderUnit();
+
+  const SOURCE_PILL = {
+    bot: { cls: 'source-pill--bot', key: 'gold_source_bot', fallback: '台銀牌價' },
+    cached: { cls: 'source-pill--cached', key: 'gold_source_cached', fallback: '沿用上次牌價' },
+    manual: { cls: 'source-pill--manual', key: 'gold_source_manual', fallback: '手動設定金價' },
+    fallback: { cls: 'source-pill--fallback', key: 'gold_source_fallback', fallback: '備援牌價' },
+  };
+
+  function renderSourcePill(source) {
+    const badge = document.getElementById('gold-source-badge');
+    if (!badge) return;
+    const meta = SOURCE_PILL[source] || SOURCE_PILL.fallback;
+    const label = window.t ? window.t(meta.key) : meta.fallback;
+    badge.innerHTML = '<span class="source-pill ' + meta.cls + '">' + label + '</span>';
+  }
+
+  function renderSellLabel(source) {
+    const labelEl = document.getElementById('gold-sell-label');
+    if (!labelEl) return;
+    const isManual = source === 'manual';
+    const key = isManual ? 'gold_price_label_manual' : 'gold_bank_sell';
+    const fallback = isManual ? '手動設定金價' : '本行賣出';
+    labelEl.textContent = window.t ? window.t(key) : fallback;
+    labelEl.dataset.i18n = key;
+  }
+
+  function applyQuote(data) {
+    const q = data.quote || {};
+    renderSourcePill(q.source || 'fallback');
+    renderSellLabel(q.source || 'fallback');
+
+    const sellEl = document.getElementById('gold-sell-val');
+    if (sellEl && q.sell != null) {
+      sellEl.dataset.perGram = String(q.sell);
+      const v = q.sell * unitFactor();
+      if (window.animateCountUp) {
+        window.animateCountUp(sellEl, v, { format: formatTwd });
+      } else {
+        sellEl.textContent = formatTwd(v);
+      }
+    }
+
+    const updatedEl = document.getElementById('gold-updated-line');
+    if (updatedEl) {
+      if (q.bot_posted_at) {
+        const label = window.t ? window.t('gold_last_updated') : '掛牌時間';
+        updatedEl.textContent = label + '：' + q.bot_posted_at;
+        updatedEl.classList.remove('hidden');
+      } else {
+        updatedEl.textContent = '';
+        updatedEl.classList.add('hidden');
+      }
+    }
+
+    const fetchedEl = document.getElementById('gold-fetched-line');
+    if (fetchedEl && q.fetched_at_display) {
+      const label = window.t ? window.t('gold_fetched_at') : '資料擷取時間';
+      fetchedEl.textContent = label + '：' + q.fetched_at_display;
+      fetchedEl.classList.remove('hidden');
+    }
+
+    const staleEl = document.getElementById('gold-stale-warning');
+    if (staleEl) staleEl.classList.toggle('hidden', !q.is_stale);
+
+    const tbody = document.querySelector('#gold-alloy-table tbody');
+    if (tbody && data.alloyRates) {
+      tbody.innerHTML = Object.entries(data.alloyRates).map(([gold, rate]) =>
+        '<tr><td>' + (purityLabels[gold] || gold) + '</td><td class="gold-alloy-rate" data-per-gram="' + rate + '">' +
+        Math.round(rate * unitFactor()).toLocaleString('en-US') + '</td></tr>'
+      ).join('');
+    }
+  }
+
+  function showMsg(text, ok) {
+    const el = document.getElementById('gold-refresh-msg');
+    el.textContent = text;
+    el.classList.remove('hidden', 'gold-refresh-msg--ok', 'gold-refresh-msg--err');
+    el.classList.add(ok ? 'gold-refresh-msg--ok' : 'gold-refresh-msg--err');
+  }
+
+  btn.addEventListener('click', async () => {
+    btn.disabled = true;
+    btn.classList.add('is-loading');
+    showMsg(window.t ? window.t('gold_refreshing') : '抓取中…', true);
+    try {
+      const res = await fetch('/api/gold/refresh', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrf },
+      });
+      const data = await res.json();
+      if (!data.quote || !data.quote.available) {
+        throw new Error(data.message || 'refresh failed');
+      }
+      applyQuote(data);
+      if (data.refreshed) {
+        showMsg(window.t ? window.t('gold_refresh_ok') : '牌價已更新', true);
+      } else if (data.quote.source === 'cached') {
+        showMsg(window.t ? window.t('gold_refresh_fail_cached') : '抓取失敗，沿用上次台銀牌價', false);
+      } else {
+        showMsg(window.t ? window.t('gold_refresh_ok') : '牌價已更新', true);
+      }
+    } catch (e) {
+      showMsg(window.t ? window.t('gold_refresh_fail') : '更新失敗，請稍後再試', false);
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('is-loading');
+    }
+  });
+})();
+</script>
+{% endblock %}

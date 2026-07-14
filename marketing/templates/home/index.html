@@ -1,0 +1,375 @@
+{% extends "layout/landing_base.html" %}
+
+{% block title %}鑽石珠寶價格試算{% endblock %}
+
+{% block body %}
+<main class="landing-main">
+  <header class="landing-nav-wrap" id="landing-nav-wrap">
+    <nav class="landing-nav" aria-label="主選單">
+      <a href="{{ url_for('main.home') }}" class="landing-logo">
+        <span data-i18n="landing_brand">珠寶線上訂製</span>
+        <span class="landing-logo-mark">TM</span>
+      </a>
+
+      <div class="landing-nav-links">
+        <a href="#features" class="landing-nav-link" data-i18n="landing_nav_features">功能</a>
+        <a href="#how-it-works" class="landing-nav-link" data-i18n="landing_nav_process">流程</a>
+        <a href="#categories" class="landing-nav-link" data-i18n="landing_nav_styles">品項</a>
+        {% if bot_gold and bot_gold.available %}
+        <a href="#gold" class="landing-nav-link" data-i18n="landing_nav_gold">金價</a>
+        {% endif %}
+      </div>
+
+      <div class="landing-nav-actions">
+        <button type="button" id="theme-toggle" class="landing-nav-icon-btn landing-nav-icon-btn--theme" aria-label="切換深色模式">☀️</button>
+        <button type="button" id="lang-toggle" class="landing-nav-icon-btn" aria-label="切換語言">EN</button>
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('main.calculator') }}" class="landing-nav-cta" data-i18n="home_btn_calc">開始訂製</a>
+        {% else %}
+        <a href="{{ url_for('main.login') }}" class="landing-nav-signin" data-i18n="home_btn_login">登入</a>
+        <a href="{{ url_for('main.calculator') }}" class="landing-nav-cta" data-i18n="home_btn_calc">開始訂製</a>
+        {% endif %}
+      </div>
+
+      <button type="button" class="landing-nav-menu-btn" id="landing-menu-btn" aria-label="開啟選單" aria-expanded="false">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path class="menu-icon-open" d="M4 7h16M4 12h16M4 17h16"/>
+          <path class="menu-icon-close" d="M6 6l12 12M18 6L6 18" hidden/>
+        </svg>
+      </button>
+    </nav>
+  </header>
+
+  <div class="landing-mobile-menu" id="landing-mobile-menu" aria-hidden="true">
+    <div class="landing-mobile-links">
+      <a href="#features" class="landing-mobile-link" data-i18n="landing_nav_features">功能</a>
+      <a href="#how-it-works" class="landing-mobile-link" data-i18n="landing_nav_process">流程</a>
+      <a href="#categories" class="landing-mobile-link" data-i18n="landing_nav_styles">品項</a>
+      {% if bot_gold and bot_gold.available %}
+      <a href="#gold" class="landing-mobile-link" data-i18n="landing_nav_gold">金價</a>
+      {% endif %}
+    </div>
+    <div class="landing-mobile-cta">
+      {% if current_user.is_authenticated %}
+      <a href="{{ url_for('main.calculator') }}" class="landing-btn landing-btn--brand" data-i18n="home_btn_calc">開始訂製</a>
+      {% else %}
+      <a href="{{ url_for('main.login') }}" class="landing-btn landing-btn--outline" data-i18n="home_btn_login">登入</a>
+      <a href="{{ url_for('main.calculator') }}" class="landing-btn landing-btn--brand" data-i18n="home_btn_calc">開始訂製</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <section class="landing-hero" aria-labelledby="landing-hero-heading">
+    <div class="landing-hero-media" aria-hidden="true">
+      <video autoplay muted loop playsinline poster="{{ url_for('static', filename='images/white/ring-A.png') }}">
+        <source src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/bg-hero-0BnFGdr81Ifnj3WbBZoNt1KE4D5DMT.mp4" type="video/mp4">
+      </video>
+      <div class="landing-hero-overlay-r"></div>
+      <div class="landing-hero-overlay-b"></div>
+    </div>
+    <div class="landing-hero-grid" aria-hidden="true"></div>
+
+    <div class="landing-hero-inner">
+      <p class="landing-eyebrow" id="landing-eyebrow">
+        <span class="landing-eyebrow-line"></span>
+        <span data-i18n="landing_hero_eyebrow">鑽石珠寶 · 即時報價試算</span>
+      </p>
+      <h1 class="landing-hero-title" id="landing-hero-heading">
+        <span data-i18n="landing_hero_line1">鑽石珠寶，</span><br>
+        <span data-i18n="landing_hero_line2_prefix">一鍵</span>
+        <span class="landing-hero-word" id="landing-hero-word" aria-live="polite"></span>
+      </h1>
+      <p class="landing-hero-desc" id="landing-hero-desc" data-i18n="landing_hero_desc">
+        整合台銀金價、鑽石價格與金工費，為戒指、項鍊、手鍊等款式提供透明、可追蹤的試算與訂單管理
+      </p>
+      <div class="landing-hero-actions" id="landing-hero-actions">
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('main.calculator') }}" class="landing-btn landing-btn--brand" data-i18n="home_btn_calc">開始訂製</a>
+        <a href="{{ url_for('main.history') }}" class="landing-btn landing-btn--outline" data-i18n="landing_hero_history">查看訂單</a>
+        {% else %}
+        <a href="{{ url_for('main.calculator') }}" class="landing-btn landing-btn--brand" data-i18n="home_btn_calc">開始訂製</a>
+        <a href="{{ url_for('main.login') }}" class="landing-btn landing-btn--outline" data-i18n="home_btn_login">店家登入</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="landing-hero-stats" id="landing-hero-stats">
+      <div class="landing-hero-stats-inner">
+        <div>
+          <span class="landing-stat-value" data-i18n="landing_stat_1_value">試算</span>
+          <span class="landing-stat-label" data-i18n="landing_stat_1_label">選品項・款式・規格</span>
+        </div>
+        <div>
+          <span class="landing-stat-value" data-i18n="landing_stat_2_value">計價</span>
+          <span class="landing-stat-label" data-i18n="landing_stat_2_label">主石・鑲工・金重分項</span>
+        </div>
+        <div>
+          <span class="landing-stat-value" data-i18n="landing_stat_3_value">下單</span>
+          <span class="landing-stat-label" data-i18n="landing_stat_3_label">確認明細後送出訂單</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-section" id="features">
+    <div class="landing-container">
+      <div class="landing-features-header">
+        <div class="landing-reveal">
+          <span class="landing-section-label">
+            <span class="landing-section-label-line"></span>
+            <span data-i18n="landing_nav_features">功能</span>
+          </span>
+          <h2 class="landing-section-title">
+            <span data-i18n="landing_features_title1">精準</span><br>
+            <span class="landing-section-title-muted" data-i18n="landing_features_title2">試算</span>
+          </h2>
+        </div>
+        <p class="landing-features-intro landing-reveal landing-reveal-delay-2" data-i18n="landing_features_intro">
+          從款式選擇到鑽石配置，系統自動加總金工、主石與配鑽，並依台銀牌價換算 K 金成本
+        </p>
+      </div>
+
+      <div class="landing-feature-hero landing-reveal">
+        <div class="landing-feature-hero-copy">
+          <canvas class="landing-feature-canvas" id="landing-particles" aria-hidden="true"></canvas>
+          <div style="position:relative;z-index:1">
+            <span class="landing-feature-num">01</span>
+            <h3 class="landing-feature-name" data-i18n="landing_feature1_title">即時台銀金價</h3>
+            <p class="landing-feature-desc" data-i18n="landing_feature1_desc">每日自動同步黃金條塊牌價，試算時依 9K / 14K / 18K 成色係數計入金料成本</p>
+            <span class="landing-feature-stat-label landing-feature-stat-label--solo" data-i18n="landing_feature1_stat">台銀牌價來源</span>
+          </div>
+        </div>
+        <div class="landing-feature-hero-img">
+          <img src="{{ url_for('static', filename='images/yellow/ring-A.png') }}" alt="">
+          <div class="landing-feature-hero-img-fade"></div>
+        </div>
+      </div>
+
+      <div class="landing-features-grid">
+        <article class="landing-feature-card landing-reveal landing-reveal-delay-1">
+          <span class="landing-feature-num">02</span>
+          <h3 data-i18n="landing_feature2_title">多款式配置</h3>
+          <p data-i18n="landing_feature2_desc">戒指、項鍊、手鍊、耳環、吊墜 — 依品項切換鑽石切工、克拉、成色與鍊長等選項</p>
+        </article>
+        <article class="landing-feature-card landing-reveal landing-reveal-delay-2">
+          <span class="landing-feature-num">03</span>
+          <h3 data-i18n="landing_feature3_title">透明價格明細</h3>
+          <p data-i18n="landing_feature3_desc">金工費、主石、配鑽、項鍊加價分項列出，含稅總價一目了然</p>
+        </article>
+        <article class="landing-feature-card landing-reveal landing-reveal-delay-3">
+          <span class="landing-feature-num">04</span>
+          <h3 data-i18n="landing_feature4_title">訂單與通知</h3>
+          <p data-i18n="landing_feature4_desc">試算結果可加入訂單、編輯重送，管理後台與店家通知同步追蹤</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-section landing-process" id="how-it-works">
+    <div class="landing-container">
+      <div class="landing-process-header">
+        <div class="landing-reveal">
+          <span class="landing-section-label">
+            <span class="landing-section-label-line"></span>
+            <span data-i18n="landing_nav_process">流程</span>
+          </span>
+          <h2 class="landing-section-title">
+            <span data-i18n="landing_process_title1">選款</span><br>
+            <span class="landing-section-title-muted" data-i18n="landing_process_title2">配置</span><br>
+            <span style="opacity:0.35" data-i18n="landing_process_title3">下單</span>
+          </h2>
+        </div>
+        <div class="landing-process-visual landing-reveal landing-reveal-delay-2">
+          <img src="{{ url_for('static', filename='images/white/pendant-A.png') }}" alt="">
+        </div>
+      </div>
+
+      <div class="landing-steps" id="landing-steps">
+        <article class="landing-step is-active" data-step="0">
+          <span class="landing-step-num">01</span>
+          <h3 class="landing-step-title" data-i18n="landing_step1_title">選擇</h3>
+          <p class="landing-step-sub" data-i18n="landing_step1_sub">款式</p>
+          <p class="landing-step-desc" data-i18n="landing_step1_desc">從商品目錄挑選戒指、項鍊等品項，切換金屬顏色與克拉大小</p>
+        </article>
+        <article class="landing-step" data-step="1">
+          <span class="landing-step-num">02</span>
+          <h3 class="landing-step-title" data-i18n="landing_step2_title">配置</h3>
+          <p class="landing-step-sub" data-i18n="landing_step2_sub">鑽石與金工</p>
+          <p class="landing-step-desc" data-i18n="landing_step2_desc">設定切工、主石克拉、配鑽、刻字與項鍊鍊長，即時更新試算價格</p>
+        </article>
+        <article class="landing-step" data-step="2">
+          <span class="landing-step-num">03</span>
+          <h3 class="landing-step-title" data-i18n="landing_step3_title">加入</h3>
+          <p class="landing-step-sub" data-i18n="landing_step3_sub">訂單</p>
+          <p class="landing-step-desc" data-i18n="landing_step3_desc">確認明細後送出訂單，可在紀錄中查詢、編輯或重新試算</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  {% if bot_gold and bot_gold.available %}
+  <section class="landing-section landing-gold" id="gold">
+    <div class="landing-container landing-reveal">
+      <span class="landing-section-label">
+        <span class="landing-section-label-line"></span>
+        <span data-i18n="landing_nav_gold">金價</span>
+      </span>
+      <div class="landing-gold-card">
+        <div>
+          <h2 class="landing-section-title" style="font-size:clamp(2rem,4vw,3rem)">
+            <span data-i18n="home_gold_title">今日黃金牌價（台銀黃金條塊賣出價）</span>
+          </h2>
+          <p class="landing-gold-price">
+            NT$ <span class="countup" data-countup-init="{{ bot_gold.sell|round|int }}">{{ "{:,.0f}".format(bot_gold.sell) }}</span>
+            <span class="landing-gold-meta" data-i18n="gold_per_gram">/ 公克</span>
+          </p>
+          <p class="landing-gold-meta" data-i18n="gold_calc_note">計算機以黃金條塊「本行賣出」換算之公克金價為基準，再依 9K / 14K / 18K 成色係數計價</p>
+          <a href="{{ url_for('main.gold_price') if current_user.is_authenticated else bot_gold.source_url }}" class="landing-gold-link" {% if not current_user.is_authenticated %}target="_blank" rel="noopener noreferrer"{% endif %} data-i18n="home_gold_detail">查看完整牌價 →</a>
+        </div>
+        {% if current_user.is_authenticated %}
+        <a href="{{ url_for('main.gold_price') }}" class="landing-btn landing-btn--brand" data-i18n="gold_page_title">台銀黃金條塊牌價</a>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="landing-section" id="categories">
+    <div class="landing-container">
+      <div class="landing-reveal" style="margin-bottom:2.5rem">
+        <span class="landing-section-label">
+          <span class="landing-section-label-line"></span>
+          <span data-i18n="landing_nav_styles">品項</span>
+        </span>
+        <h2 class="landing-section-title">
+          <span data-i18n="landing_categories_title1">五大</span><br>
+          <span class="landing-section-title-muted" data-i18n="landing_categories_title2">品項</span>
+        </h2>
+      </div>
+      <div class="landing-categories-grid landing-reveal landing-reveal-delay-1">
+        <figure class="landing-category">
+          <img src="{{ url_for('static', filename='images/white/ring-A.png') }}" alt="">
+          <figcaption class="landing-category-label" data-i18n="cat_ring">戒指</figcaption>
+        </figure>
+        <figure class="landing-category">
+          <img src="{{ url_for('static', filename='images/white/pendant-A.png') }}" alt="">
+          <figcaption class="landing-category-label" data-i18n="cat_pendant">吊墜</figcaption>
+        </figure>
+        <figure class="landing-category">
+          <img src="{{ url_for('static', filename='images/white/chain-A.png') }}" alt="">
+          <figcaption class="landing-category-label" data-i18n="cat_chain">項鍊</figcaption>
+        </figure>
+        <figure class="landing-category">
+          <img src="{{ url_for('static', filename='images/white/bracelet-A.png') }}" alt="">
+          <figcaption class="landing-category-label" data-i18n="cat_bracelet">手鍊</figcaption>
+        </figure>
+        <figure class="landing-category">
+          <img src="{{ url_for('static', filename='images/white/earring-A.png') }}" alt="">
+          <figcaption class="landing-category-label" data-i18n="cat_earring">耳環</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-section">
+    <div class="landing-container">
+      <div class="landing-cta-box landing-reveal" id="landing-cta-box">
+        <div class="landing-cta-spotlight" id="landing-cta-spotlight"></div>
+        <div class="landing-cta-corner-t"></div>
+        <div class="landing-cta-corner-b"></div>
+        <div class="landing-cta-inner">
+          <div>
+            <h2 class="landing-cta-title">
+              <span data-i18n="landing_cta_title1">準備好</span><br>
+              <span data-i18n="landing_cta_title2">開始試算了嗎？</span>
+            </h2>
+            <p class="landing-cta-desc" data-i18n="landing_cta_desc">登入店家帳號，立即為客戶配置鑽石珠寶並取得即時報價</p>
+            <div class="landing-cta-actions">
+              {% if current_user.is_authenticated %}
+              <a href="{{ url_for('main.calculator') }}" class="landing-btn landing-btn--brand" data-i18n="home_btn_calc">開始訂製</a>
+              {% else %}
+              <a href="{{ url_for('main.login') }}" class="landing-btn landing-btn--brand" data-i18n="landing_nav_cta">開始訂製</a>
+              <a href="{{ url_for('main.register') }}" class="landing-btn landing-btn--outline" data-i18n="login_register_link">註冊新帳號</a>
+              {% endif %}
+            </div>
+            <p class="landing-cta-note" data-i18n="landing_cta_note">鑽石價格 · 台銀金價 · 金工費試算</p>
+          </div>
+          <div class="landing-cta-deco">
+            <img src="{{ url_for('static', filename='images/yellow/bracelet-A.png') }}" alt="">
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="landing-footer">
+    <div class="landing-footer-banner" id="landing-footer-banner" aria-hidden="true">
+      <div class="landing-footer-banner-media">
+        <img
+          class="landing-footer-banner-img"
+          src="{{ url_for('static', filename='images/landing/footer-banner.png') }}"
+          alt=""
+          width="2400"
+          height="900"
+          decoding="async"
+          loading="eager">
+      </div>
+      <div class="landing-footer-banner-glow" id="landing-footer-banner-glow" aria-hidden="true"></div>
+      <div class="landing-footer-banner-fade"></div>
+    </div>
+    <div class="landing-container">
+      <div class="landing-footer-grid">
+        <div>
+          <a href="{{ url_for('main.home') }}" class="landing-footer-brand">
+            <span data-i18n="landing_brand">珠寶線上訂製</span>
+            <span class="landing-logo-mark">TM</span>
+          </a>
+          <p class="landing-footer-tagline" data-i18n="landing_footer_tagline">鑽石珠寶價格試算與訂單管理，服務珠寶零售店家</p>
+        </div>
+        <div class="landing-footer-col">
+          <h4 data-i18n="landing_footer_product">產品</h4>
+          <ul>
+            <li><a href="#features" data-i18n="landing_nav_features">功能</a></li>
+            <li><a href="#how-it-works" data-i18n="landing_nav_process">流程</a></li>
+            <li><a href="#categories" data-i18n="landing_nav_styles">品項</a></li>
+          </ul>
+        </div>
+        <div class="landing-footer-col">
+          <h4 data-i18n="landing_footer_account">帳戶</h4>
+          <ul>
+            {% if current_user.is_authenticated %}
+            <li><a href="{{ url_for('main.calculator') }}" data-i18n="nav_calc">樣式選擇</a></li>
+            <li><a href="{{ url_for('main.history') }}" data-i18n="nav_history">訂購紀錄</a></li>
+            <li><a href="{{ url_for('main.profile') }}" data-i18n="nav_profile">帳戶</a></li>
+            {% else %}
+            <li><a href="{{ url_for('main.login') }}" data-i18n="home_btn_login">登入</a></li>
+            <li><a href="{{ url_for('main.register') }}" data-i18n="login_register_link">註冊新帳號</a></li>
+            {% endif %}
+          </ul>
+        </div>
+        <div class="landing-footer-col">
+          <h4 data-i18n="landing_footer_gold">金價</h4>
+          <ul>
+            {% if bot_gold and bot_gold.available %}
+            <li><a href="#gold" data-i18n="landing_nav_gold">金價</a></li>
+            {% endif %}
+            {% if current_user.is_authenticated %}
+            <li><a href="{{ url_for('main.gold_price') }}" data-i18n="nav_gold">台銀金價</a></li>
+            {% else %}
+            <li><a href="{{ bot_gold.source_url if bot_gold and bot_gold.available else '#' }}" target="_blank" rel="noopener noreferrer" data-i18n="gold_open_bot">前往臺灣銀行官網查看即時牌價 ↗</a></li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+      <div class="landing-footer-bar">
+        {% set studio_credit_modifier = 'landing-bar' %}
+        {% include 'layout/studio_credit.html' %}
+        <span class="landing-footer-status">
+          <span class="landing-footer-dot"></span>
+          <span data-i18n="landing_footer_status">試算系統運作中</span>
+        </span>
+      </div>
+    </div>
+  </footer>
+</main>
+{% endblock %}

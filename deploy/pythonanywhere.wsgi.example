@@ -1,0 +1,17 @@
+import os
+import sys
+
+# === EDIT THIS if your clone path differs (run `pwd` in the project folder) ===
+PROJECT_HOME = '/home/yuzi010129/calculator/imprint-calculator'
+
+if PROJECT_HOME not in sys.path:
+    sys.path.insert(0, PROJECT_HOME)
+
+os.chdir(PROJECT_HOME)
+
+env_file = os.path.join(PROJECT_HOME, '.env')
+if os.path.isfile(env_file):
+    from dotenv import load_dotenv
+    load_dotenv(env_file, override=True)
+
+from app import app as application  # noqa: F401

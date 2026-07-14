@@ -1,0 +1,10 @@
+{
+  "name": "diamond-calculator",
+  "private": true,
+  "scripts": {
+    "build:admin-css": "tailwindcss -c admin/tailwind.config.js -i admin/static/css/cmsfullform.src.css -o admin/static/css/cmsfullform.css --minify"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
+  }
+}

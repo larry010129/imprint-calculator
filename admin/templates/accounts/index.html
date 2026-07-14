@@ -1,0 +1,106 @@
+{% extends "admin/base.html" %}
+{% block title %}帳戶管理 - 管理後台{% endblock %}
+{% block admin_page_class %} records-page{% endblock %}
+{% block admin_content %}
+<header class="adx-page-header">
+  <div class="adx-page-header__copy">
+    <p class="app-page-eyebrow"><span class="app-page-eyebrow-line"></span><span data-i18n="nav_admin">管理後台</span></p>
+    <h1 class="adx-page-header__title" data-i18n="admin_accounts_title">帳戶管理</h1>
+    <p class="adx-page-header__desc" data-i18n="admin_accounts_subtitle">已註冊帳號（密碼以加密方式儲存，無法顯示原文）</p>
+  </div>
+</header>
+
+<p class="admin-security-note" data-i18n="admin_accounts_security_note">
+  為保護帳號安全，系統不儲存也不顯示明文密碼。如需協助店家登入，請使用「重設密碼」設定新密碼後私下告知該店家。
+</p>
+
+<div class="records-table-wrap records-table-wrap--accounts">
+<table class="admin-accounts-table">
+  <thead>
+    <tr>
+      <th data-i18n="admin_col_id">編號</th>
+      <th data-i18n="profile_username">登入帳號</th>
+      <th data-i18n="profile_store">店家名稱</th>
+      <th data-i18n="profile_role">角色</th>
+      <th data-i18n="admin_col_orders">訂單數</th>
+      <th data-i18n="admin_col_status">狀態</th>
+      <th data-i18n="admin_col_password">密碼</th>
+      <th data-i18n="admin_col_reset">重設密碼</th>
+      <th data-i18n="table_actions">操作</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for user in users %}
+    <tr>
+      <td>{{ user.id }}</td>
+      <td><strong>{{ user.username }}</strong></td>
+      <td>{{ user.store_name or '—' }}</td>
+      <td>
+        {% if user.role == 'admin' %}
+        <span data-i18n="profile_role_admin">管理員</span>
+        {% else %}
+        <span data-i18n="profile_role_store">店家</span>
+        {% endif %}
+      </td>
+      <td>{{ user.submissions|length }}</td>
+      <td>{% if user.is_active %}<span data-i18n="admin_account_active">啟用</span>{% else %}<span data-i18n="admin_account_disabled">停用</span>{% endif %}</td>
+      <td><span class="admin-pw-masked" data-i18n="admin_password_hashed">已加密儲存</span></td>
+      <td>
+        <form method="post" action="{{ url_for('main.admin_reset_password', user_id=user.id) }}" class="admin-reset-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="password" name="new_password" class="admin-reset-input" minlength="8" required
+                 data-i18n-placeholder="register_password" placeholder="密碼（至少 8 個字元）" autocomplete="new-password"
+                 aria-label="New password for {{ user.username }}">
+          <button type="submit" class="admin-reset-btn" data-i18n="admin_reset_password_btn">重設</button>
+        </form>
+      </td>
+      <td class="admin-actions-cell">
+        {% if user.id != current_user.id %}
+        <div class="admin-actions-inner">
+        <form method="post" action="{{ url_for('main.admin_toggle_user_active', user_id=user.id) }}" class="admin-invite-action-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="admin-reset-btn">{% if user.is_active %}<span data-i18n="admin_disable_account">停用</span>{% else %}<span data-i18n="admin_enable_account">啟用</span>{% endif %}</button>
+        </form>
+        <form method="post" action="{{ url_for('main.admin_clear_lockout', user_id=user.id) }}" class="admin-invite-action-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="admin-reset-btn" data-i18n="admin_clear_lockout">清除鎖定</button>
+        </form>
+        {% if user.role != 'admin' %}
+        <form method="post" action="{{ url_for('main.admin_delete_user', user_id=user.id) }}" class="admin-remove-account-form admin-invite-action-form"
+              data-username="{{ user.username }}" data-orders="{{ user.submissions|length }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="admin-reset-btn admin-reset-btn--danger" data-i18n="admin_remove_account">刪除帳戶</button>
+        </form>
+        {% endif %}
+        </div>
+        {% else %}—{% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr>
+      <td colspan="9" style="text-align:center;" data-i18n="admin_no_accounts">尚無註冊帳號。</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}
+{% block admin_foot %}
+<script nonce="{{ csp_nonce }}">
+document.querySelectorAll('.admin-remove-account-form').forEach(function (form) {
+  form.addEventListener('submit', function (e) {
+    var username = form.getAttribute('data-username') || '';
+    var orders = form.getAttribute('data-orders') || '0';
+    var msg;
+    if (typeof window.t === 'function') {
+      msg = window.t('admin_remove_account_confirm')
+        .replace('{user}', username)
+        .replace('{n}', orders);
+    } else {
+      msg = '確定刪除帳號 ' + username + '？其 ' + orders + ' 筆訂單將一併刪除，且無法復原。';
+    }
+    if (!confirm(msg)) e.preventDefault();
+  });
+});
+</script>
+{% endblock %}

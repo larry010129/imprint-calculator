@@ -1,0 +1,14 @@
+{% extends "layout/base.html" %}
+{% block title %}送出成功 - 鑽石戒指／項鍊{% endblock %}
+
+{% block content %}
+<div class="success-page">
+  <div class="success-page-icon" aria-hidden="true">✓</div>
+  <h2 data-i18n="success_title">訂單送出</h2>
+  <p class="app-page-sub" data-i18n="success_desc">您的訂單已經成功記錄。</p>
+  <div class="success-page-actions">
+    <a href="{{ url_for('main.calculator') }}" class="success-page-btn success-page-btn--secondary" data-i18n="success_btn_new">新增另一筆</a>
+    <a href="{{ url_for('main.history') }}" class="success-page-btn success-page-btn--primary" data-i18n="success_btn_history">查看歷史紀錄</a>
+  </div>
+</div>
+{% endblock %}

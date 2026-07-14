@@ -1,0 +1,121 @@
+{% extends "layout/base.html" %}
+{% block title %}通知 - 鑽石珠寶{% endblock %}
+{% block content %}
+<div class="records-page notifications-page">
+  <div class="notifications-shell">
+    <header class="notifications-header app-page-header">
+      <div>
+        <p class="app-page-eyebrow"><span class="app-page-eyebrow-line"></span><span data-i18n="nav_notifications">通知</span></p>
+        <h1 class="app-page-title notifications-header-title" data-i18n="notifications_title">通知</h1>
+        <p class="app-page-sub notifications-header-sub" data-i18n="notifications_subtitle">系統訊息與訂單更新</p>
+      </div>
+      {% if unread_count %}
+      <span class="notifications-unread-pill">{{ unread_count }} <span data-i18n="notifications_unread_count">則未讀</span></span>
+      {% endif %}
+    </header>
+
+    {% if notification_groups %}
+    <div class="notifications-feed">
+      {% for group, group_notes in notification_groups %}
+      <section class="notifications-group">
+        <h2 class="notifications-group-title">
+          {% if group == 'today' %}
+          <span data-i18n="notifications_today">今天</span>
+          {% elif group == 'yesterday' %}
+          <span data-i18n="notifications_yesterday">昨天</span>
+          {% else %}
+          {{ group }}
+          {% endif %}
+        </h2>
+        <ul class="notifications-feed-list">
+          {% for note in group_notes %}
+          <li class="notifications-feed-item{% if note.show_unread %} notifications-feed-item--unread{% endif %}"
+              id="notification-{{ note.id }}">
+            <span class="notifications-feed-icon notifications-feed-icon--{{ note.kind }}" aria-hidden="true">
+              {% if note.kind == 'order_removed' %}✕{% else %}🔔{% endif %}
+            </span>
+            <div class="notifications-feed-body">
+              <div class="notifications-feed-top">
+                <strong class="notifications-feed-title">{{ note.order_summary or '系統通知' }}</strong>
+                {% if note.show_unread %}
+                <span class="notifications-feed-dot" aria-label="未讀"></span>
+                {% endif %}
+              </div>
+              <p class="notifications-feed-message">{{ note.message }}</p>
+              <time class="notifications-feed-time">{{ note.created_at|notify_time }}</time>
+            </div>
+            <button type="button" class="notifications-feed-discard notification-delete-btn" data-id="{{ note.id }}"
+                    data-i18n="notification_discard">刪除</button>
+          </li>
+          {% endfor %}
+        </ul>
+      </section>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="notifications-empty-state">
+      <span class="notifications-empty-icon" aria-hidden="true">🔔</span>
+      <p data-i18n="notifications_empty">目前沒有通知。</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script nonce="{{ csp_nonce }}">
+(function () {
+  const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
+
+  document.querySelectorAll('.notification-delete-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const msg = window.t ? window.t('notification_delete_confirm') : '確定要刪除此通知嗎？';
+      if (!confirm(msg)) return;
+
+      const id = btn.dataset.id;
+      try {
+        const res = await fetch('/notifications/delete/' + id, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrf,
+          },
+        });
+        if (res.status === 401) { window.location.href = '/login'; return; }
+        const data = await res.json();
+        if (data.success) {
+          const row = document.getElementById('notification-' + id);
+          const list = row?.closest('.notifications-feed-list');
+          row?.remove();
+          if (list && !list.querySelector('.notifications-feed-item')) {
+            list.closest('.notifications-group')?.remove();
+          }
+          if (!document.querySelector('.notifications-feed-item')) {
+            document.querySelector('.notifications-feed')?.replaceWith((() => {
+              const box = document.createElement('div');
+              box.className = 'notifications-empty-state';
+              box.innerHTML = '<span class="notifications-empty-icon" aria-hidden="true">🔔</span><p>' +
+                (window.t ? window.t('notifications_empty') : '目前沒有通知。') + '</p>';
+              return box;
+            })());
+            document.querySelector('.notifications-unread-pill')?.remove();
+          }
+          const badge = document.getElementById('nav-notify-badge');
+          if (badge) {
+            if (data.unread_count > 0) {
+              badge.textContent = String(data.unread_count);
+              badge.hidden = false;
+            } else {
+              badge.hidden = true;
+            }
+          }
+        } else {
+          alert(data.message || 'Delete failed');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error deleting notification.');
+      }
+    });
+  });
+})();
+</script>
+{% endblock %}

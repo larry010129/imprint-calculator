@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+{% include 'layout/partials/theme_head.html' %}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}鑽石戒指／項鍊 價格試算{% endblock %}</title>
+<link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+<link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
+<meta name="theme-color" content="#91d6d9">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chiron-hei-hk-webfont@2.6.9/css/vf.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=10">
+<meta name="csrf-token" content="{{ csrf_token() }}">
+{% block extra_head %}{% endblock %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/app-theme.css') }}?v=15">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}?v=1">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/animations.css') }}?v=3">
+</head>
+<body class="app-shell{% block body_class %}{% endblock %}">
+{% include 'layout/partials/theme_body.html' %}
+
+<div class="toast-container" id="toast-container" aria-live="polite" aria-atomic="true">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+    <div class="toast toast--{{ category }}" role="status">
+      <span class="toast-message">{{ message }}</span>
+      <button type="button" class="toast-close" aria-label="關閉通知">&times;</button>
+    </div>
+    {% endfor %}
+  {% endwith %}
+</div>
+
+{% if current_user.is_authenticated %}
+{% set nav_shop_active = request.endpoint in ('main.calculator', 'main.history', 'main.favorites') %}
+{% set nav_admin_active = request.endpoint in ('main.admin', 'main.admin_dashboard', 'main.admin_dashboard_export', 'main.admin_accounts', 'main.admin_reset_password', 'main.admin_products', 'main.admin_product_new', 'main.admin_product_edit', 'main.admin_invites', 'main.admin_invite_create', 'main.admin_invite_revoke', 'main.admin_invite_delete') %}
+{% set nav_user_active = request.endpoint in ('main.profile', 'main.notifications') %}
+<div class="app-nav-wrap" id="app-nav-wrap">
+<nav class="premium-navbar app-navbar">
+  <div class="nav-container">
+    <a href="{{ url_for('main.home') }}" class="app-nav-brand">
+      <span class="app-nav-brand-text" data-i18n="landing_brand">珠寶線上訂製</span>
+      <span class="app-nav-brand-mark">TM</span>
+    </a>
+    <button type="button" id="nav-toggle" class="nav-toggle-btn" aria-label="開啟選單" aria-expanded="false" aria-controls="nav-links-panel">
+      <span class="nav-toggle-bar"></span>
+      <span class="nav-toggle-bar"></span>
+      <span class="nav-toggle-bar"></span>
+    </button>
+    <div class="nav-links" id="nav-links-panel">
+      <a href="{{ url_for('main.home') }}" class="nav-item{% if request.endpoint == 'main.home' %} nav-item--active{% endif %}" data-i18n="nav_home">系統首頁</a>
+
+      <div class="nav-dropdown" data-nav-dropdown>
+        <button type="button" class="nav-item nav-dropdown-trigger{% if nav_shop_active %} nav-item--active{% endif %}"
+                aria-expanded="false" aria-haspopup="true" id="nav-shop-trigger">
+          <span data-i18n="nav_shop">訂製</span>
+          <svg class="nav-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="nav-dropdown-menu" role="menu" aria-labelledby="nav-shop-trigger">
+          <a href="{{ url_for('main.calculator') }}" class="nav-dropdown-item{% if request.endpoint == 'main.calculator' %} is-active{% endif %}" role="menuitem" data-i18n="nav_calc">品項</a>
+          <a href="{{ url_for('main.history') }}" class="nav-dropdown-item{% if request.endpoint == 'main.history' %} is-active{% endif %}" role="menuitem" data-i18n="nav_history">訂購紀錄</a>
+          <a href="{{ url_for('main.favorites') }}" class="nav-dropdown-item{% if request.endpoint == 'main.favorites' %} is-active{% endif %}" role="menuitem">收藏款式</a>
+        </div>
+      </div>
+
+      <a href="{{ url_for('main.gold_price') }}" class="nav-item{% if request.endpoint == 'main.gold_price' %} nav-item--active{% endif %}" data-i18n="nav_gold">台銀金價</a>
+
+      {% if current_user.role == 'admin' %}
+      <div class="nav-dropdown" data-nav-dropdown>
+        <a href="{{ url_for('main.admin_dashboard') }}" class="nav-item nav-dropdown-trigger{% if nav_admin_active %} nav-item--active{% endif %}"
+           aria-expanded="false" aria-haspopup="true" id="nav-admin-trigger" data-i18n="nav_admin">
+          管理後台
+          <svg class="nav-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+        </a>
+        <div class="nav-dropdown-menu" role="menu" aria-labelledby="nav-admin-trigger">
+          <a href="{{ url_for('main.admin_dashboard') }}" class="nav-dropdown-item{% if request.endpoint == 'main.admin_dashboard' %} is-active{% endif %}" role="menuitem" data-i18n="admin_nav_dashboard">儀表板</a>
+          <a href="{{ url_for('main.admin') }}" class="nav-dropdown-item{% if request.endpoint == 'main.admin' %} is-active{% endif %}" role="menuitem" data-i18n="admin_section_orders">訂單管理</a>
+          <a href="{{ url_for('main.admin_products') }}" class="nav-dropdown-item{% if request.endpoint in ('main.admin_products', 'main.admin_product_new', 'main.admin_product_edit') %} is-active{% endif %}" role="menuitem" data-i18n="admin_section_products">商品上架</a>
+          <a href="{{ url_for('main.admin_accounts') }}" class="nav-dropdown-item{% if request.endpoint == 'main.admin_accounts' %} is-active{% endif %}" role="menuitem" data-i18n="admin_section_accounts">帳戶管理</a>
+          <a href="{{ url_for('main.admin_invites') }}" class="nav-dropdown-item{% if request.endpoint in ('main.admin_invites', 'main.admin_invite_create', 'main.admin_invite_revoke', 'main.admin_invite_delete') %} is-active{% endif %}" role="menuitem" data-i18n="admin_section_invites">邀請碼</a>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    <div class="nav-user">
+      {% if bot_gold and bot_gold.available %}
+      <a href="{{ url_for('main.gold_price') }}" class="nav-gold-ticker" title="台銀黃金條塊牌價">
+        <span class="nav-gold-icon" aria-hidden="true">●</span>
+        <span class="nav-gold-text">
+          <span class="nav-gold-label" data-i18n="nav_gold_ticker">台銀賣出</span>
+          <span class="nav-gold-value">NT$ <span class="countup" data-countup-init="{{ bot_gold.sell|round|int }}">{{ "{:,.0f}".format(bot_gold.sell) }}</span></span>
+        </span>
+      </a>
+      {% endif %}
+      <button id="theme-toggle" type="button" class="nav-icon-btn nav-icon-btn--theme" aria-label="切換深色模式">☀️</button>
+      <button id="lang-toggle" type="button" class="nav-icon-btn nav-icon-btn--lang" aria-label="切換語言">EN</button>
+      <a href="{{ url_for('main.calculator') }}" class="app-nav-cta" data-i18n="home_btn_calc">開始訂製</a>
+
+      <div class="nav-user-actions">
+      <div class="nav-cart-wrap" id="nav-cart-wrap">
+        <a href="{{ url_for('main.cart') }}" class="nav-icon-btn nav-cart-link nav-cart-trigger{% if request.endpoint == 'main.cart' %} nav-cart-link--active{% endif %}"
+           id="nav-cart-trigger" aria-label="購物車" aria-haspopup="true" aria-expanded="false">
+          <svg class="nav-cart-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+            <path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6 5 3H2"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/>
+          </svg>
+          <span class="nav-cart-label" data-i18n="nav_cart">購物車</span>
+          <span class="nav-cart-badge" id="nav-cart-badge"{% if not cart_count %} hidden{% endif %}>{{ cart_count or '' }}</span>
+        </a>
+        <div class="cart-panel" id="cart-panel" role="dialog" aria-label="購物車">
+          <div class="cart-panel-header">
+            <h3 class="cart-panel-heading" data-i18n="cart_panel_title">購物車</h3>
+            <a href="{{ url_for('main.cart') }}" class="cart-panel-view-all" data-i18n="cart_panel_view_all">查看全部</a>
+          </div>
+          <div class="cart-panel-body" id="cart-panel-body">
+            <p class="cart-panel-loading" data-i18n="notifications_loading">載入中…</p>
+          </div>
+          <div class="cart-panel-footer">
+            <a href="{{ url_for('main.cart') }}" class="cart-panel-footer-link" data-i18n="cart_panel_view_all">查看購物車</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-notify-wrap" id="nav-notify-wrap">
+        <a href="{{ url_for('main.notifications') }}" class="nav-icon-btn nav-notify-btn{% if request.endpoint == 'main.notifications' %} nav-notify-btn--active{% endif %}"
+                id="nav-notify-btn" aria-label="通知" aria-expanded="false" aria-haspopup="true">
+          <svg class="nav-notify-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+            <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/>
+          </svg>
+          <span class="nav-notify-badge" id="nav-notify-badge"{% if not notification_unread_count %} hidden{% endif %}>{{ notification_unread_count or '' }}</span>
+        </a>
+        <div class="notify-panel" id="notify-panel" role="dialog" aria-label="通知">
+          <div class="notify-panel-header">
+            <h3 class="notify-panel-heading" data-i18n="notifications_title">通知</h3>
+            <a href="{{ url_for('main.notifications') }}" class="notify-panel-view-all" data-i18n="notifications_view_all">查看全部</a>
+          </div>
+          <div class="notify-panel-body" id="notify-panel-body">
+            <p class="notify-panel-loading" data-i18n="notifications_loading">載入中…</p>
+          </div>
+          <div class="notify-panel-footer">
+            <a href="{{ url_for('main.notifications') }}" class="notify-panel-footer-link" data-i18n="notifications_view_all_page">查看全部通知</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-dropdown nav-user-dropdown" data-nav-dropdown>
+        <div class="nav-user-trigger{% if nav_user_active %} nav-user-trigger--active{% endif %}" id="nav-user-trigger">
+          <a href="{{ url_for('main.profile') }}" class="nav-user-link">
+            <span class="nav-user-avatar" aria-hidden="true">{{ current_user.store_name[:1] }}</span>
+            <span class="nav-user-name">{{ current_user.store_name }}</span>
+          </a>
+          <button type="button" class="nav-user-menu-btn" aria-expanded="false" aria-haspopup="true" aria-label="帳戶選單">
+            <svg class="nav-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+        </div>
+        <div class="nav-dropdown-menu nav-dropdown-menu--end" role="menu" aria-labelledby="nav-user-trigger">
+          <p class="nav-user-menu-meta"><span data-i18n="nav_login_as">目前登入：</span>{{ current_user.store_name }}</p>
+          <a href="{{ url_for('main.profile') }}" class="nav-dropdown-item{% if request.endpoint == 'main.profile' %} is-active{% endif %}" role="menuitem" data-i18n="nav_profile">帳戶</a>
+          <a href="{{ url_for('main.notifications') }}" class="nav-dropdown-item{% if request.endpoint == 'main.notifications' %} is-active{% endif %}" role="menuitem" data-i18n="nav_notifications">通知</a>
+          <div class="nav-dropdown-divider" role="separator"></div>
+          <form method="POST" action="{{ url_for('main.logout') }}" class="nav-user-logout-form" role="none">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="nav-dropdown-item nav-dropdown-item--action" role="menuitem" data-i18n="nav_logout">登出</button>
+          </form>
+        </div>
+      </div>
+      </div>
+    </div>
+  </div>
+</nav>
+</div>
+{% endif %}
+
+<div class="page-container">
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+</div>
+
+<footer class="app-site-footer" role="contentinfo">
+  {% include 'layout/studio_credit.html' %}
+</footer>
+
+<script src="{{ url_for('static', filename='js/page-transitions.js') }}?v=1"></script>
+<script nonce="{{ csp_nonce }}">
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+}
+</script>
+<script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
+<script src="{{ url_for('static', filename='js/anim.js') }}"></script>
+<script src="{{ url_for('static', filename='js/toast.js') }}"></script>
+{% if current_user.is_authenticated %}
+<script src="{{ url_for('static', filename='js/app-nav.js') }}"></script>
+<script src="{{ url_for('static', filename='js/nav.js') }}?v=4"></script>
+<script src="{{ url_for('static', filename='js/notifications.js') }}?v=2"></script>
+<script src="{{ url_for('static', filename='js/cart-panel.js') }}?v=2"></script>
+<script src="{{ url_for('static', filename='js/cart-badge.js') }}?v=3"></script>
+{% endif %}
+</body>
+</html>

@@ -1,0 +1,32 @@
+<details class="ring-size-guide-inline">
+  <summary data-i18n="ring_size_inline_title">戒圍尺寸指南</summary>
+  <div class="ring-size-guide-inline__content">
+    <ol class="ring-size-guide-inline__steps">
+      <li data-i18n="ring_size_inline_step_1">用細紙條繞過手指最寬處。</li>
+      <li data-i18n="ring_size_inline_step_2">在紙條交會處做記號，勿過緊或過鬆。</li>
+      <li data-i18n="ring_size_inline_step_3">攤平量出長度，依內周長對照戒圍。</li>
+    </ol>
+    <div class="ring-size-guide-inline__scroll" role="region" aria-label="戒圍尺寸表" tabindex="0">
+      <table class="ring-size-guide-inline__table">
+        <thead>
+          <tr>
+            <th scope="col" data-i18n="ring_size_col_tw">國際圍</th>
+            <th scope="col" data-i18n="ring_size_inline_diameter">內直徑 cm</th>
+            <th scope="col" data-i18n="ring_size_inline_circumference">內周長 cm</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in ring_size_measure_chart %}
+          <tr>
+            <th scope="row">#{{ row.size }}</th>
+            <td>{{ "{:.2f}".format(row.diameter_cm) }}</td>
+            <td>{{ "{:.2f}".format(row.circumference_cm) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="ring-size-guide-inline__note" data-i18n="ring_size_inline_note">建議測量 2 至 3 次取平均值。寬版戒指可預留較鬆尺寸。</p>
+    <button type="button" class="ring-size-guide-inline__more" id="ring-size-guide-open" data-i18n="ring_size_guide_open">完整戒圍對照表</button>
+  </div>
+</details>

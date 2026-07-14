@@ -1,0 +1,23 @@
+<form class="order-search-bar" method="get" action="{{ search_action }}">
+  {% if per_page is defined %}
+  <input type="hidden" name="per_page" value="{{ per_page }}">
+  {% endif %}
+  <label for="order-search-input" class="order-search-label">
+    <span data-i18n="search_orders_label">搜尋訂單</span>
+  </label>
+  <div class="order-search-field">
+    <input type="search"
+           id="order-search-input"
+           name="q"
+           class="order-search-input"
+           value="{{ search_q or '' }}"
+           placeholder="編號、款式、品項、狀態…"
+           data-i18n-placeholder="search_orders_placeholder"
+           autocomplete="off"
+           enterkeyhint="search">
+    <button type="submit" class="order-search-submit" data-i18n="search_orders_btn">搜尋</button>
+    {% if search_q %}
+    <a href="{{ search_clear_url }}" class="order-search-clear" data-i18n="search_clear">清除</a>
+    {% endif %}
+  </div>
+</form>

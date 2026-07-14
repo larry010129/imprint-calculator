@@ -1,0 +1,431 @@
+{% set shop_mode = shop_mode|default('order') %}
+<div class="shop-page shop-fit">
+  {% if edit_sub %}
+  <p class="shop-edit-notice helper-text" data-i18n="edit_reprice_notice">儲存後將以目前金價重新計算總價。</p>
+  {% endif %}
+  {% if shop_mode == 'guest' %}
+  <div class="shop-guest-banner" role="status">
+    <div class="shop-guest-banner-copy">
+      <span class="shop-guest-banner-label" data-i18n="shop_guest_preview_title">預覽模式</span>
+      <span data-i18n="shop_guest_banner">登入後可使用下單、購物車與訂單管理等完整功能。</span>
+    </div>
+    <a href="{{ url_for('main.login', next=url_for('main.calculator')) }}" class="shop-guest-banner-login" data-i18n="shop_guest_login_cta">登入</a>
+  </div>
+  {% endif %}
+
+
+  <header class="shop-toolbar">
+    <nav class="shop-breadcrumb" id="shop-breadcrumb" aria-label="Breadcrumb">
+      <ol class="shop-breadcrumb-list">
+        <li><span data-i18n="shop_breadcrumb_shop">商品</span></li>
+      </ol>
+    </nav>
+    <div class="shop-progress" id="shop-progress" aria-label="Progress">
+      <div class="shop-progress-bar" aria-hidden="true">
+        <span class="shop-progress-fill" id="shop-progress-fill"></span>
+      </div>
+      <div class="shop-progress-dots" id="shop-progress-dots">
+        <span class="shop-progress-dot is-active"></span>
+        <span class="shop-progress-dot"></span>
+        <span class="shop-progress-dot"></span>
+      </div>
+    </div>
+  </header>
+
+  <div class="shop-body">
+    <div class="shop-main">
+
+      <section id="shop-catalog" class="shop-section">
+        <h2 class="shop-section-title" data-i18n="step_category">選擇品項</h2>
+        <div class="catalog-grid is-loading" aria-busy="true">
+          <button type="button" class="catalog-tile cat-btn" data-cat="pendant">
+            <img loading="lazy" src="{{ url_for('static', filename='images/white/pendant-A.png') }}" alt="">
+            <span data-i18n="cat_pendant">項墜</span>
+          </button>
+          <button type="button" class="catalog-tile cat-btn" data-cat="ring">
+            <img loading="lazy" src="{{ url_for('static', filename='images/white/ring-A.png') }}" alt="">
+            <span data-i18n="cat_ring">戒指</span>
+          </button>
+          <button type="button" class="catalog-tile cat-btn" data-cat="earring">
+            <img loading="lazy" src="{{ url_for('static', filename='images/white/earring-A.png') }}" alt="">
+            <span data-i18n="cat_earring">耳飾</span>
+          </button>
+          <button type="button" class="catalog-tile cat-btn" data-cat="bracelet">
+            <img loading="lazy" src="{{ url_for('static', filename='images/white/bracelet-A.png') }}" alt="">
+            <span data-i18n="cat_bracelet">手鍊</span>
+          </button>
+          <button type="button" class="catalog-tile cat-btn" data-cat="chain">
+            <img loading="lazy" src="{{ url_for('static', filename='images/white/chain-A.png') }}" alt="">
+            <span data-i18n="cat_chain">鍊條</span>
+          </button>
+        </div>
+      </section>
+
+      <section id="shop-styles" class="shop-section hidden">
+        <button type="button" class="shop-back" id="back-to-catalog" data-i18n="shop_back_catalog">← 返回品項</button>
+        <h2 class="shop-section-title" id="shop-category-title"></h2>
+        <div class="catalog-filters" id="catalog-filters">
+          <label class="catalog-search">
+            <span class="sr-only" data-i18n="catalog_search_label">搜尋款式</span>
+            <input type="search" id="catalog-search-input" placeholder="搜尋款式" data-i18n-placeholder="catalog_search_placeholder">
+          </label>
+          <select id="catalog-metal-filter" aria-label="金屬篩選">
+            <option value="" data-i18n="catalog_all_metals">所有金屬</option>
+            <option value="9k">9K</option>
+            <option value="14k">14K</option>
+            <option value="18k">18K</option>
+            <option value="pt950">Pt950</option>
+            <option value="s925">S925</option>
+          </select>
+          <select id="catalog-price-filter" aria-label="價格篩選">
+            <option value="" data-i18n="catalog_all_prices">所有價格</option>
+            <option value="under30000">NT$ 30,000 以下</option>
+            <option value="30000to80000">NT$ 30,000–80,000</option>
+            <option value="over80000">NT$ 80,000 以上</option>
+          </select>
+          <button type="button" id="catalog-filter-clear" data-i18n="catalog_clear_filters">清除</button>
+        </div>
+        <div class="type-grid" id="type-grid"></div>
+        <div class="catalog-filter-empty hidden" id="catalog-filter-empty">
+          <p data-i18n="catalog_no_matches">找不到符合條件的款式。</p>
+          <button type="button" id="catalog-filter-empty-clear" data-i18n="catalog_clear_filters">清除篩選</button>
+        </div>
+      </section>
+
+      <section id="shop-product" class="shop-section hidden">
+        <button type="button" class="shop-back" id="back-to-styles" data-i18n="shop_back_styles">← 更換款式</button>
+
+        <div class="product-layout">
+          <div class="product-gallery-col">
+            <div id="large-image-container" class="product-preview">
+              <img id="large-image" loading="lazy" src="" alt="">
+              <button type="button" class="product-gallery-nav product-gallery-prev" id="product-gallery-prev" aria-label="上一張" hidden>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M11.03 3.97a.75.75 0 010 1.06l-6.22 6.22H21a.75.75 0 010 1.5H4.81l6.22 6.22a.75.75 0 11-1.06 1.06l-7.5-7.5a.75.75 0 010-1.06l7.5-7.5a.75.75 0 011.06 0z"/></svg>
+              </button>
+              <button type="button" class="product-gallery-nav product-gallery-next" id="product-gallery-next" aria-label="下一張" hidden>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22H3a.75.75 0 010-1.5h16.19l-6.22-6.22a.75.75 0 010-1.06z"/></svg>
+              </button>
+              <span class="product-gallery-counter" id="product-gallery-counter" hidden></span>
+              <button type="button" class="product-zoom-btn" id="product-zoom-btn" aria-label="放大圖片" title="放大圖片" hidden>
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M10.5 3a7.5 7.5 0 015.89 12.13l4.36 4.36a1 1 0 01-1.42 1.42l-4.36-4.36A7.5 7.5 0 1110.5 3zm0 2a5.5 5.5 0 100 11 5.5 5.5 0 000-11z"/></svg>
+                <span data-i18n="shop_zoom_image">放大圖片</span>
+              </button>
+            </div>
+            <div id="product-image-thumbs" class="product-image-thumbs" hidden></div>
+          </div>
+
+          <div class="product-buy-col">
+            <header class="product-info-header">
+              <p class="product-subtitle" id="product-subtitle"></p>
+              <div class="product-title-row">
+                <h2 class="product-title" id="product-title">?</h2>
+                {% if shop_mode == 'order' %}
+                <button type="button" class="favorite-toggle" id="favorite-btn" disabled aria-label="收藏此配置" title="收藏此配置">♡</button>
+                {% endif %}
+              </div>
+              <div class="config-chips" id="config-chips"></div>
+            </header>
+
+            <div class="product-info-tabs" id="product-info-tabs">
+              <div class="product-tab-nav" role="tablist" aria-label="Product information">
+                <button type="button" class="product-tab-btn active" role="tab" aria-selected="true" data-tab="description" id="product-tab-description" data-i18n="shop_tab_description">商品說明</button>
+                <button type="button" class="product-tab-btn" role="tab" aria-selected="false" data-tab="pricing" id="product-tab-pricing" data-i18n="shop_tab_pricing">價格說明</button>
+              </div>
+              <div class="product-tab-panels">
+                <div class="product-tab-panel active" role="tabpanel" id="product-panel-description">
+                  <p class="product-description" id="product-description" data-i18n="shop_no_description">此商品暫無說明。</p>
+                </div>
+                <div class="product-tab-panel" role="tabpanel" id="product-panel-pricing" hidden>
+                  <p class="product-tab-copy" data-i18n="shop_price_estimate_notice">價格為預估價；鑽石價格為牌價。實際金額可能因市場浮動有 ±10%。</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="product-options-section">
+            <div class="variant-group" id="carat-step">
+              <h3 class="variant-label" data-i18n="step_carat">選擇克拉數</h3>
+              <div class="variant-chips variant-chips--row" id="carat-btn-row">
+                <button type="button" class="carat-btn variant-chip" data-carat="0.1">0.10 ct</button>
+                <button type="button" class="carat-btn variant-chip" data-carat="0.2">0.20 ct</button>
+                <button type="button" class="carat-btn variant-chip" data-carat="0.3">0.30 ct</button>
+                <button type="button" class="carat-btn variant-chip" data-carat="0.5">0.50 ct</button>
+                <button type="button" class="carat-btn variant-chip" data-carat="1.0">1.00 ct</button>
+                <button type="button" class="carat-btn variant-chip" data-carat="3fen" data-i18n="chain_3fen">3分重 (0.3錢)</button>
+                <button type="button" class="carat-btn variant-chip" data-carat="4fen" data-i18n="chain_4fen">4分重 (0.4錢)</button>
+              </div>
+            </div>
+
+            <div class="variant-group" id="fancy-diamond-step">
+              <h3 class="variant-label" data-i18n="step_diamond_color">選擇鑽石顏色</h3>
+              <div class="diamond-carousel-wrap">
+                <button type="button" class="diamond-carousel-nav" id="fancy-color-prev" aria-label="Previous" hidden>?</button>
+                <div class="diamond-carousel" id="fancy-color-carousel"></div>
+                <button type="button" class="diamond-carousel-nav" id="fancy-color-next" aria-label="Next" hidden>?</button>
+              </div>
+            </div>
+
+            <div class="variant-group" id="metal-step">
+              <h3 class="variant-label" data-i18n="step_metal">選擇材質</h3>
+              <div class="variant-chips" id="metal-btn-row"></div>
+            </div>
+
+            <div class="variant-group hidden" id="color-step">
+              <h3 class="variant-label" id="color-step-label" data-i18n="step_color">選擇金屬顏色</h3>
+              <div class="variant-chips variant-chips--colors" id="color-btn-row"></div>
+            </div>
+
+            <div class="variant-group hidden" id="ringsize-step">
+              <h3 class="variant-label" data-i18n="step_ring_size">選擇國際戒圍</h3>
+              <select id="ring-size-select" class="ring-size-select" aria-label="Ring size">
+                <option value="" data-i18n="ring_size_placeholder">請選擇國際戒圍</option>
+              </select>
+            </div>
+
+            <div class="variant-group hidden" id="engraving-band-step">
+              <h3 class="variant-label" data-i18n="step_engraving_band">戒圈刻字</h3>
+              <input id="engraving-band-input" class="engraving-input" type="text" maxlength="10"
+                     data-i18n-placeholder="engraving_placeholder" placeholder="選填，最多 10 個字">
+            </div>
+
+            <div class="variant-group hidden" id="engraving-girdle-step">
+              <h3 class="variant-label" data-i18n="step_engraving_girdle">腰圍刻字</h3>
+              <input id="engraving-girdle-input" class="engraving-input" type="text" maxlength="10"
+                     pattern="[A-Za-z0-9]*" inputmode="text" autocomplete="off"
+                     data-i18n-placeholder="engraving_placeholder" placeholder="選填，最多 10 個字">
+              <p class="engraving-hint" data-i18n="engraving_girdle_hint">僅限英數字，最多 10 字</p>
+            </div>
+
+            <div class="variant-group hidden" id="ringsize-guide-step">
+              {% include "shop/partials/ring_size_guide_inline.html" %}
+            </div>
+
+            <div class="variant-group hidden" id="chain-length-step">
+              <div class="variant-label-row">
+                <h3 class="variant-label" data-i18n="step_chain_length">選擇鏈條長度</h3>
+                <button type="button" class="ring-size-guide-btn" id="chain-length-guide-open" data-i18n="chain_length_guide_open">長度參考</button>
+              </div>
+              <div class="variant-chips" id="chain-length-btn-row"></div>
+            </div>
+
+            <div class="variant-group hidden" id="pendant-chain-step">
+              <h3 class="variant-label" data-i18n="step_pendant_chain">搭配鏈條</h3>
+              <div class="variant-chips" id="pendant-chain-toggle-row">
+                <button type="button" class="variant-chip pendant-chain-toggle" data-include-chain="false" data-i18n="pendant_only">僅墜子</button>
+                <button type="button" class="variant-chip pendant-chain-toggle" data-include-chain="true" data-i18n="pendant_with_chain">含鍊</button>
+              </div>
+              <div class="pendant-chain-options hidden" id="pendant-chain-options">
+                <select id="pendant-chain-product" class="ring-size-select"></select>
+                <div class="variant-group pendant-chain-metal">
+                  <h3 class="variant-label" data-i18n="step_metal">選擇材質</h3>
+                  <div class="variant-chips" id="pendant-chain-metal-row"></div>
+                </div>
+                <div class="variant-group pendant-chain-color" id="pendant-chain-color-step">
+                  <h3 class="variant-label" id="pendant-chain-color-label" data-i18n="step_color">選擇金屬顏色</h3>
+                  <div class="variant-chips" id="pendant-chain-color-row"></div>
+                </div>
+                <div class="variant-group pendant-chain-length">
+                  <div class="variant-label-row">
+                    <h3 class="variant-label" data-i18n="step_chain_length">選擇鏈條長度</h3>
+                    <button type="button" class="ring-size-guide-btn" id="pendant-chain-length-guide-open" data-i18n="chain_length_guide_open">長度參考</button>
+                  </div>
+                  <div class="variant-chips" id="pendant-chain-length-row"></div>
+                </div>
+              </div>
+            </div>
+
+            </div><!-- /.product-options-section -->
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /.shop-main -->
+
+    <aside class="shop-price-panel" id="shop-price-panel" aria-live="polite">
+      <div class="hero-price">
+        <span class="hero-price-currency">NT$</span>
+        <span class="hero-price-amount" id="sum-total">?</span>
+      </div>
+      <p class="hero-price-hint" id="price-hint" data-i18n="shop_complete_options">請完成選項以查看價格</p>
+      <p class="hero-price-disclaimer" data-i18n="shop_price_estimate_notice">價格為預估價；鑽石價格為牌價。實際金額可能因市場浮動有 ±10%。</p>
+
+      <details class="price-breakdown-details" id="price-breakdown-details">
+        <summary class="price-breakdown-title" data-i18n="shop_price_breakdown">價格明細</summary>
+        <div class="price-breakdown-panel">
+          <div class="breakdown-rows">
+            <div class="summary-row"><span class="lbl" data-i18n="sum_item">品項</span><span class="colon">：</span><span class="val" id="sum-cat">-</span></div>
+            <div class="summary-row"><span class="lbl" data-i18n="sum_style">款式</span><span class="colon">：</span><span class="val" id="sum-type">-</span></div>
+            <div class="summary-row"><span class="lbl" data-i18n="sum_material">金屬材質</span><span class="colon">：</span><span class="val" id="sum-material">-</span></div>
+            <div class="summary-row"><span class="lbl" data-i18n="sum_carat">克拉</span><span class="colon">：</span><span class="val" id="sum-carat">-</span></div>
+            <hr>
+            <div class="summary-row" id="sum-diamond-row"><span class="lbl" data-i18n="sum_diamond">鑽石價格</span><span class="colon">：</span><span class="val">NT$ <span id="sum-diamond-price">0</span></span></div>
+            <div class="summary-row"><span class="lbl" data-i18n="sum_taijin_price">台金價格</span><span class="colon">：</span><span class="val">NT$ <span id="sum-taijin-price">-</span></span></div>
+            <div class="summary-row"><span class="lbl" data-i18n="sum_labor_fee">金工費</span><span class="colon">：</span><span class="val">NT$ <span id="sum-labor-price">-</span></span></div>
+            <div class="summary-row hidden" id="sum-chain-row"><span class="lbl" data-i18n="sum_chain_price">搭配鏈條</span><span class="colon">：</span><span class="val">NT$ <span id="sum-chain-price">-</span></span></div>
+          </div>
+        </div>
+      </details>
+
+      {% if shop_mode == 'order' %}
+      <div class="shop-action-row" id="shop-action-row">
+        {% if not edit_sub and not cart_edit_config %}
+        <button type="button" class="shop-cta shop-cta--secondary" id="cart-btn" disabled data-i18n="btn_add_cart">加入購物車</button>
+        {% endif %}
+        <button type="button" class="shop-cta" id="confirm-btn" disabled{% if not edit_sub and not cart_edit_config %} data-i18n="btn_add_order"{% endif %}>{% if cart_edit_config %}更新購物車{% elif edit_sub %}更新訂單{% else %}訂購{% endif %}</button>
+      </div>
+      {% elif shop_mode == 'guest' %}
+      <p class="shop-guest-notice" data-i18n="shop_guest_notice">登入後即可下單與加入購物車</p>
+      <div class="shop-action-row shop-action-row--guest" id="shop-action-row">
+        <button type="button" class="shop-cta shop-cta--login" id="confirm-btn" disabled data-i18n="shop_guest_login">登入下單</button>
+      </div>
+      {% endif %}
+      {% if shop_mode != 'preview' %}
+      <div class="shop-secondary-actions">
+        <button type="button" id="share-config-btn" disabled data-i18n="btn_share_summary">分享摘要</button>
+        <button type="button" id="quote-sheet-btn" disabled data-i18n="btn_quote_sheet">匯出報價單</button>
+      </div>
+      {% endif %}
+      {% set studio_credit_modifier = 'panel' %}
+      {% include 'layout/studio_credit.html' %}
+    </aside>
+  </div><!-- /.shop-body -->
+</div>
+
+<dialog id="ring-size-guide-dialog" class="ring-size-guide-dialog">
+  <div class="ring-size-guide-header">
+    <div>
+      <h2 data-i18n="ring_size_guide_title">戒圍對照表</h2>
+      <p data-i18n="ring_size_guide_intro">國際圍為台灣常用標準；請以實際配戴手指測量為準。</p>
+    </div>
+    <button type="button" class="ring-size-guide-close" id="ring-size-guide-close" aria-label="Close">x</button>
+  </div>
+  <p class="ring-size-guide-method" data-i18n="ring_size_guide_method">用紙條或細線繞手指根部一圈並標記，量出長度後對照下表；建議於傍晚、常溫時測量。</p>
+  <div class="guide-method-grid">
+    <section class="guide-card">
+      <h3 class="guide-section-title" data-i18n="ring_size_guide_steps_title">量測步驟</h3>
+      <p class="guide-section-text" data-i18n="ring_size_guide_steps">1. 準備線/紙條與尺 → 2. 繞指根一圈標記 → 3. 量長度(mm) → 4. 對照戒圍表 → 5. 注意時段與溫度影響</p>
+    </section>
+    <section class="guide-card">
+      <h3 class="guide-section-title" data-i18n="ring_size_guide_method2_title">方法二：量現有戒指</h3>
+      <p class="guide-section-text" data-i18n="ring_size_guide_method2">拿一枚經常穿戴的戒指，平放在尺上測量內直徑，再對照下表。</p>
+    </section>
+  </div>
+  <section class="guide-section guide-section--chart">
+    <h3 class="guide-section-title" data-i18n="ring_size_guide_chart_title">各國戒圍對照</h3>
+  </section>
+  <section class="guide-section guide-section--precautions">
+    <h3 class="guide-section-title" data-i18n="ring_size_guide_precautions_title">注意事項</h3>
+    <ul class="guide-precautions">
+      <li data-i18n="ring_size_guide_precaution_1">慣用手通常略大，請量配戴的那隻手。</li>
+      <li data-i18n="ring_size_guide_precaution_2">戒圈越寬，同尺寸會感覺越緊。</li>
+      <li data-i18n="ring_size_guide_precaution_3">請在體溫與環境溫度適中時測量。</li>
+      <li data-i18n="ring_size_guide_precaution_4">傍晚手指較腫，建議傍晚測量。</li>
+      <li data-i18n="ring_size_guide_precaution_5">關節較寬者，請量關節與配戴處後取平均。</li>
+      <li data-i18n="ring_size_guide_precaution_6">不同品牌尺寸可能略有差異。</li>
+    </ul>
+  </section>
+  <section class="guide-section guide-section--table">
+    <h3 class="guide-section-title guide-section-title--sub" data-i18n="ring_size_guide_table_title">數值對照表</h3>
+    <div class="ring-size-guide-scroll">
+      <table class="ring-size-guide-table">
+        <thead>
+          <tr>
+            <th data-i18n="ring_size_col_tw">國際圍</th>
+            <th data-i18n="ring_size_col_diameter">內直徑</th>
+            <th data-i18n="ring_size_col_circumference">內圍</th>
+            <th data-i18n="ring_size_col_jp">日本圍</th>
+            <th data-i18n="ring_size_col_us">美國圍</th>
+            <th data-i18n="ring_size_col_eu">歐洲圍</th>
+          </tr>
+        </thead>
+        <tbody id="ring-size-guide-body"></tbody>
+      </table>
+    </div>
+  </section>
+</dialog>
+
+<dialog id="chain-length-guide-dialog" class="ring-size-guide-dialog">
+  <div class="ring-size-guide-header">
+    <div>
+      <h2 data-i18n="chain_length_guide_title">鏈條長度參考</h2>
+      <p data-i18n="chain_length_guide_intro">選擇適合您的項鍊長度；實際配戴效果可能因身形而異。</p>
+    </div>
+    <button type="button" class="ring-size-guide-close" id="chain-length-guide-close" aria-label="Close">x</button>
+  </div>
+  <section class="guide-section" id="chain-length-guide-necklace">
+    <h3 class="guide-section-title" data-i18n="chain_length_guide_necklace_title">項鍊／鏈條長度</h3>
+    <p class="guide-section-text" data-i18n="chain_length_guide_necklace_method">將鏈條平量總長度，或比對現有項鍊從扣環到墜子連接處的長度。</p>
+    <div class="ring-size-guide-scroll">
+      <table class="ring-size-guide-table chain-length-guide-table">
+        <thead>
+          <tr>
+            <th data-i18n="chain_length_col_cm">長度</th>
+            <th data-i18n="chain_length_col_position">配戴位置</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>35 cm</td><td data-i18n="chain_length_35">貼頸／鎖骨上方（短項鍊）</td></tr>
+          <tr><td>40 cm</td><td data-i18n="chain_length_40">鎖骨位置</td></tr>
+          <tr><td>45 cm</td><td data-i18n="chain_length_45">鎖骨下方至胸前（最常見）</td></tr>
+          <tr><td>50 cm</td><td data-i18n="chain_length_50">胸前</td></tr>
+          <tr><td>55 cm</td><td data-i18n="chain_length_55">胸前偏下</td></tr>
+          <tr><td>60 cm</td><td data-i18n="chain_length_60">長項鍊／可雙圈</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <section class="guide-section hidden" id="chain-length-guide-bracelet">
+    <h3 class="guide-section-title" data-i18n="chain_length_guide_bracelet_title">手鍊長度</h3>
+    <p class="guide-section-text" data-i18n="chain_length_guide_bracelet_method">用軟尺繞手腕最細處一圈並記錄；手鍊通常比手圍長 1–2 cm 較舒適。</p>
+    <div class="ring-size-guide-scroll">
+      <table class="ring-size-guide-table chain-length-guide-table">
+        <thead>
+          <tr>
+            <th data-i18n="chain_length_col_cm">長度</th>
+            <th data-i18n="chain_length_col_position">配戴位置</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>15 cm</td><td data-i18n="bracelet_length_15">兒童／細腕</td></tr>
+          <tr><td>16 cm</td><td data-i18n="bracelet_length_16">一般女性（偏緊）</td></tr>
+          <tr><td>17 cm</td><td data-i18n="bracelet_length_17">一般女性</td></tr>
+          <tr><td>18 cm</td><td data-i18n="bracelet_length_18">標準女性（預設參考）</td></tr>
+          <tr><td>19 cm</td><td data-i18n="bracelet_length_19">一般男性／寬腕</td></tr>
+          <tr><td>20 cm</td><td data-i18n="bracelet_length_20">寬腕</td></tr>
+          <tr><td>21 cm</td><td data-i18n="bracelet_length_21">較寬腕圍</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <img id="chain-length-guide-image" class="guide-image hidden" alt="">
+</dialog>
+
+<div class="mobile-buy-bar hidden" id="mobile-buy-bar">
+  <button type="button" class="mobile-buy-price" id="mobile-price-toggle" aria-expanded="false" aria-controls="shop-price-panel">
+    <span class="mobile-buy-label" data-i18n="sum_total">總價</span>
+    <span class="mobile-buy-amount">NT$ <span id="sum-total-mobile">?</span></span>
+    <span class="mobile-buy-detail-hint" data-i18n="shop_price_breakdown">明細</span>
+  </button>
+  {% if shop_mode == 'order' %}
+  <div class="mobile-buy-actions">
+    {% if not edit_sub and not cart_edit_config %}
+    <button type="button" class="shop-cta shop-cta-compact shop-cta--secondary" id="cart-btn-mobile" disabled data-i18n="btn_add_cart">加入購物車</button>
+    {% endif %}
+    <button type="button" class="shop-cta shop-cta-compact" id="confirm-btn-mobile" disabled{% if not edit_sub and not cart_edit_config %} data-i18n="btn_add_order"{% endif %}>{% if cart_edit_config %}更新{% elif edit_sub %}更新{% else %}訂購{% endif %}</button>
+  </div>
+  {% elif shop_mode == 'guest' %}
+  <div class="mobile-buy-actions mobile-buy-actions--guest">
+    <button type="button" class="shop-cta shop-cta-compact shop-cta--login" id="confirm-btn-mobile" disabled data-i18n="shop_guest_login">登入下單</button>
+  </div>
+  {% endif %}
+</div>
+
+<dialog id="product-image-lightbox" class="product-image-lightbox" aria-label="放大圖片">
+  <button type="button" class="product-lightbox-close" id="product-lightbox-close" aria-label="關閉">&times;</button>
+  <button type="button" class="product-lightbox-nav product-lightbox-prev" id="product-lightbox-prev" aria-label="上一張" hidden>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M11.03 3.97a.75.75 0 010 1.06l-6.22 6.22H21a.75.75 0 010 1.5H4.81l6.22 6.22a.75.75 0 11-1.06 1.06l-7.5-7.5a.75.75 0 010-1.06l7.5-7.5a.75.75 0 011.06 0z"/></svg>
+  </button>
+  <button type="button" class="product-lightbox-nav product-lightbox-next" id="product-lightbox-next" aria-label="下一張" hidden>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22H3a.75.75 0 010-1.5h16.19l-6.22-6.22a.75.75 0 010-1.06z"/></svg>
+  </button>
+  <img id="product-lightbox-img" src="" alt="">
+</dialog>

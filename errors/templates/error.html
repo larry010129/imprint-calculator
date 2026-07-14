@@ -1,0 +1,11 @@
+{% extends "layout/base.html" %}
+{% block title %}{{ code }} - 鑽石戒指／項鍊{% endblock %}
+
+{% block content %}
+<div class="error-page">
+  <div class="error-page-code">{{ code }}</div>
+  <h2>{{ title }}</h2>
+  <p class="app-page-sub">{{ description }}</p>
+  <a href="{{ url_for('main.home') }}" class="error-page-link" data-i18n="error_back_home">回首頁</a>
+</div>
+{% endblock %}

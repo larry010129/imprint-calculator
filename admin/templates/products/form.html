@@ -1,0 +1,222 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ '編輯商品' if product else '新增商品' }} - 鑽石珠寶{% endblock %}
+{% block admin_page_class %} records-page ap-form-page{% endblock %}
+{% block admin_head %}
+<link rel="stylesheet" href="{{ module_static('admin', 'css/admin_products.css') }}?v=7">
+{% endblock %}
+{% block admin_content %}
+<header class="ap-editor-header">
+  <div class="ap-editor-header__main">
+    <a href="{{ url_for('main.admin_products') }}" class="ap-editor-back" aria-label="返回商品列表">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+    </a>
+    <div>
+      <p class="ap-editor-header__eyebrow">商品上架</p>
+      <h1 class="ap-editor-header__title">{{ '編輯商品' if product else '新增商品' }}</h1>
+      <p class="ap-editor-header__desc">設定商品資料、款式定價與展示照片。</p>
+    </div>
+  </div>
+  <span id="ap-editor-status" class="ap-editor-status{% if product and product.is_published %} ap-editor-status--live{% elif product %} ap-editor-status--draft{% else %} ap-editor-status--new{% endif %}">
+    <i aria-hidden="true"></i>
+    <span id="ap-editor-status-text">{{ '已上架' if product and product.is_published else ('未上架' if product else '新商品') }}</span>
+  </span>
+</header>
+
+<div class="ap-form-section is-open" id="ap-form-section">
+  <form method="post"
+        action="{{ url_for('main.admin_product_update', id=product.id) if product else url_for('main.admin_product_create') }}"
+        enctype="multipart/form-data" class="ap-form" id="ap-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="ap-form-errors" id="ap-form-errors" role="alert" hidden></div>
+
+    <div class="ap-editor-stack">
+      <section class="ap-editor-card" aria-labelledby="ap-basic-title">
+        <header class="ap-editor-card__header">
+          <span class="ap-editor-card__marker" aria-hidden="true">01</span>
+          <div>
+            <h2 class="ap-editor-card__title" id="ap-basic-title">基本資料</h2>
+            <p class="ap-editor-card__hint">建立顧客會看到的商品名稱與介紹。</p>
+          </div>
+        </header>
+        <div class="ap-editor-card__body">
+      <div class="ap-form-grid">
+        <label class="ap-field">
+          <span class="ap-field__label">品項分類 <em>必填</em></span>
+          <select name="category" id="ap-category-select" required>
+            <option value="">請選擇</option>
+            {% for c in categories %}
+            <option value="{{ c }}"{% if product and product.category == c %} selected{% endif %}>{{ c|label_category }}</option>
+            {% endfor %}
+          </select>
+          <small class="ap-field-error" data-error-for="category"></small>
+        </label>
+        <label class="ap-field">
+          <span class="ap-field__label">預設顏色 <em>必填</em></span>
+          <select name="default_color">
+            {% for c in colors %}
+            <option value="{{ c }}"{% if product and product.default_color == c %} selected{% endif %}>{{ c|label_color }}</option>
+            {% endfor %}
+          </select>
+          <span class="ap-field__help">預設顏色必須有對應照片。</span>
+          <small class="ap-field-error" data-error-for="default_color"></small>
+        </label>
+        <label class="ap-field">
+          <span class="ap-field__label">中文名稱 <em>必填</em></span>
+          <input type="text" name="name_zh" required maxlength="150" value="{{ product.name_zh if product else '' }}">
+          <small class="ap-field-error" data-error-for="name_zh"></small>
+        </label>
+        <label class="ap-field">
+          <span class="ap-field__label">英文名稱 <small>選填</small></span>
+          <input type="text" name="name_en" maxlength="150" value="{{ (product.name_en or '') if product else '' }}">
+        </label>
+        <label class="ap-field ap-field--wide">
+          <span class="ap-field__label">中文描述 <small>選填</small></span>
+          <textarea name="description_zh" rows="3">{{ (product.description_zh or '') if product else '' }}</textarea>
+          <small class="ap-field-error" data-error-for="description_zh"></small>
+        </label>
+        <label class="ap-field ap-field--wide">
+          <span class="ap-field__label">英文描述 <small>選填</small></span>
+          <textarea name="description_en" rows="3">{{ (product.description_en or '') if product else '' }}</textarea>
+        </label>
+        <input type="hidden" name="is_published" id="ap-is-published" value="{{ '1' if (not product) or product.is_published else '0' }}">
+        <label class="ap-publish-toggle">
+          <input type="checkbox" id="ap-draft-toggle"{% if product and not product.is_published %} checked{% endif %}>
+          <span class="ap-publish-toggle__control" aria-hidden="true"><i></i></span>
+          <span class="ap-publish-toggle__copy">
+            <strong>僅儲存草稿</strong>
+            <small id="ap-publish-help">{{ '關閉時提交後會直接上架。' if not product or product.is_published else '開啟時只儲存草稿，不會顯示於訂製頁面。' }}</small>
+          </span>
+        </label>
+      </div>
+        </div>
+      </section>
+
+      <section class="ap-editor-card" aria-labelledby="ap-variants-title">
+        <header class="ap-editor-card__header ap-editor-card__header--action">
+          <div class="ap-editor-card__heading">
+            <span class="ap-editor-card__marker" aria-hidden="true">02</span>
+            <div>
+              <h2 class="ap-editor-card__title" id="ap-variants-title">款式與定價</h2>
+              <p class="ap-editor-card__hint">至少建立一組款式；手動定價留空時使用系統試算。</p>
+            </div>
+          </div>
+          <button type="button" class="ap-btn ap-btn--secondary ap-btn--with-icon" id="ap-add-variant-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            新增款式
+          </button>
+        </header>
+        <div class="ap-editor-card__body">
+          <small class="ap-field-error ap-section-error" data-error-for="variants"></small>
+          <div class="ap-variant-grid" id="ap-variant-grid">
+            <div class="ap-variant-row ap-variant-row--head">
+              <span>金屬成色</span><span>克拉／分</span><span>金重（錢）</span><span>手動定價 NT$</span><span></span>
+            </div>
+            {% if product %}
+              {% for v in product.variants %}
+              <div class="ap-variant-row">
+                <select name="variant_gold" aria-label="金屬成色">
+                  {% for g in golds %}<option value="{{ g }}"{% if v.gold == g %} selected{% endif %}>{{ g|label_purity }}</option>{% endfor %}
+                </select>
+                <select name="variant_carat" class="ap-carat-select" aria-label="克拉／分">
+                  {% for c in (chain_carats if product.category == 'chain' else carats) %}
+                  <option value="{{ c }}"{% if v.carat == c %} selected{% endif %}>{{ c }}</option>
+                  {% endfor %}
+                </select>
+                <input type="number" name="variant_weight" step="0.0001" min="0.0001" value="{{ v.weight_chin }}" aria-label="金重（錢）">
+                <input type="number" name="variant_price" step="1" min="0" value="{{ v.manual_price_twd if v.manual_price_twd is not none else '' }}" placeholder="自動試算" aria-label="手動定價">
+                <button type="button" class="ap-remove-row-btn" title="移除" aria-label="移除此款式">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5"/></svg>
+                </button>
+              </div>
+              {% endfor %}
+            {% endif %}
+          </div>
+        </div>
+      </section>
+
+      <section class="ap-editor-card" aria-labelledby="ap-images-title">
+        <header class="ap-editor-card__header">
+          <span class="ap-editor-card__marker" aria-hidden="true">03</span>
+          <div>
+            <h2 class="ap-editor-card__title" id="ap-images-title">商品圖片</h2>
+            <p class="ap-editor-card__hint">至少上傳一張；使用箭頭調整順序，第一張將作為縮圖。</p>
+          </div>
+        </header>
+        <div class="ap-editor-card__body">
+          <small class="ap-field-error ap-section-error" data-error-for="images"></small>
+          <div class="ap-image-grid">
+            {% for c in colors %}
+            {% set existing_imgs = product.images | selectattr('color', 'equalto', c) | list if product else [] %}
+            <div class="ap-image-dropzone" data-color="{{ c }}">
+              <div class="ap-image-dropzone__header">
+                <span class="ap-image-label">{{ c|label_color }}</span>
+                <span class="ap-image-count">{{ existing_imgs|length }} 張圖片</span>
+              </div>
+              <div class="ap-image-gallery">
+                {% for img in existing_imgs %}
+                <div class="ap-image-existing" data-id="{{ img.id }}">
+                  <input type="hidden" name="image_order" value="{{ img.id }}">
+                  <div class="ap-image-preview-wrap ap-image-preview-wrap--thumb">
+                    <img class="ap-image-preview" src="{{ url_for('static', filename=img.file_path) }}" alt="">
+                  </div>
+                  <div class="ap-image-order-actions">
+                    <button type="button" class="ap-image-order-btn" data-direction="-1" aria-label="往前">←</button>
+                    <button type="button" class="ap-image-order-btn" data-direction="1" aria-label="往後">→</button>
+                  </div>
+                  <label class="ap-remove-image-label">
+                    <input type="checkbox" name="remove_image_id" value="{{ img.id }}" class="ap-remove-image-checkbox">移除
+                  </label>
+                </div>
+                {% endfor %}
+                <div class="ap-image-pending"></div>
+                {% if not existing_imgs %}
+                <span class="ap-image-empty">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+                  <span>尚無圖片</span>
+                </span>
+                {% endif %}
+              </div>
+              <label class="ap-image-input-label">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M20 15v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-4"/></svg>
+                選擇圖片
+                <input type="file" name="image_{{ c }}" accept="image/png,image/jpeg,image/webp" class="ap-image-input" multiple>
+              </label>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="ap-form-actions">
+      <div class="ap-form-actions__note" id="ap-submit-note">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        <span>{{ '提交後會直接上架並顯示於訂製頁面。' if not product or product.is_published else '目前為草稿模式，提交後不會上架。' }}</span>
+      </div>
+      <div class="ap-form-actions__buttons">
+        <a href="{{ url_for('main.admin_products') }}" class="ap-btn ap-btn--secondary">取消</a>
+        <button type="submit"
+                class="ap-btn ap-btn--primary"
+                id="ap-submit-btn"
+                data-mode="{{ 'edit' if product else 'create' }}"
+                data-initial-published="{{ 'true' if product and product.is_published else 'false' }}">
+          {{ '儲存變更' if product and product.is_published else ('儲存草稿' if product else '建立並上架') }}
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}
+{% block admin_foot %}
+<script nonce="{{ csp_nonce }}">
+window.AP_OPTIONS = {
+  golds: {{ golds|tojson }},
+  carats: {{ carats|tojson }},
+  chainCarats: {{ chain_carats|tojson }},
+  goldLabels: { {% for g in golds %}{{ g|tojson }}: {{ (g|label_purity)|tojson }}{{ ',' if not loop.last }}{% endfor %} },
+  editMode: true,
+  defaultCategory: {{ (product.category if product else request.args.get('category', categories[0]))|tojson }},
+};
+</script>
+<script src="{{ module_static('admin', 'js/admin_products.js') }}?v=5"></script>
+{% endblock %}

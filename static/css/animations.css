@@ -1,0 +1,395 @@
+/* ==========================================================================
+   Animation layer - reduced-motion aware.
+
+   Load order matters: this file must be included AFTER style.css so its
+   rules (and the reduced-motion override below) can win on equal specificity.
+
+   `html.js` is added by a tiny inline script at the top of <body> (see
+   base.html), before any other class hooks below are meaningful. Pages
+   render fully visible with no animation if JavaScript is unavailable.
+   ========================================================================== */
+
+/* Universal kill-switch: forces every animation/transition in the app
+   (this file and style.css alike) to be effectively instant for users who
+   have asked the OS for reduced motion. Keep this rule first. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Page reveal - whole-page content fades/slides in once per navigation.
+   Skipped when the browser handles cross-document View Transitions.
+   -------------------------------------------------------------------------- */
+@keyframes reveal-page {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+html.js.page-ready .main-content {
+  animation: reveal-page 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@supports (view-transition-name: root) {
+  html.js.page-ready .main-content {
+    animation: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Cross-document View Transitions (Chrome 126+ with same-origin meta tag).
+   -------------------------------------------------------------------------- */
+@view-transition {
+  navigation: auto;
+}
+
+@keyframes page-vt-fade-out {
+  to { opacity: 0; transform: translateY(-4px); }
+}
+
+@keyframes page-vt-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+::view-transition-old(root) {
+  animation: page-vt-fade-out 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+::view-transition-new(root) {
+  animation: page-vt-fade-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* --------------------------------------------------------------------------
+   JS fallback exit fade (page-transitions.js) for browsers without VT.
+   -------------------------------------------------------------------------- */
+html.page-leaving .app-nav-wrap,
+html.page-leaving .page-container,
+html.page-leaving .app-site-footer,
+html.page-leaving .landing-page > :not(script),
+html.page-leaving .auth-body > :not(script) {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------------------
+   Card / list-item staggered reveal. Pure CSS `animation` (not a
+   `transition`) so it fires automatically the moment an element is
+   inserted into the DOM - covers rows/cards already in the initial HTML
+   (history, admin, notifications) as well as ones the app JS builds later
+   (calculator style cards, the notification dropdown list). anim.js sets
+   the `--reveal-delay` custom property for staggering; it degrades to 0ms
+   (no stagger, but still a reveal) if that script hasn't run yet.
+   -------------------------------------------------------------------------- */
+@keyframes reveal-item {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+html.js .catalog-tile,
+html.js .type-card,
+html.js .records-table-wrap tbody tr,
+html.js .notifications-feed-item,
+html.js .notify-panel-item {
+  animation: reveal-item 0.45s ease both;
+  animation-delay: var(--reveal-delay, 0ms);
+}
+
+/* Table header/divider/empty rows aren't "cards" - keep them static so
+   sorting/filtering the admin table doesn't replay a distracting reveal. */
+html.js .records-table-wrap tbody tr.admin-section-divider,
+html.js .records-table-wrap tbody tr.admin-section-empty-row {
+  animation: none;
+}
+
+/* --------------------------------------------------------------------------
+   Smooth theme-toggle transition. anim.js adds `theme-transition` to <html>
+   for ~400ms around the dark-mode flip so color-related properties cross
+   fade instead of flashing; removed afterwards so it never fights the
+   app's other targeted transitions (button hover, etc).
+   -------------------------------------------------------------------------- */
+html.theme-transition,
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+  transition: background-color 0.35s ease, color 0.35s ease,
+    border-color 0.35s ease, box-shadow 0.35s ease, fill 0.35s ease !important;
+}
+
+/* --------------------------------------------------------------------------
+   Nav polish: active-item underline, dropdown slide, notification panel
+   slide-in, and a pulse on the unread badge when it gets a new count.
+   -------------------------------------------------------------------------- */
+.nav-item--active::after {
+  transform: scaleX(1);
+  transform-origin: bottom left;
+}
+
+.nav-dropdown-menu {
+  transform: translateY(6px) scaleY(0.96);
+  transform-origin: top;
+}
+
+.nav-dropdown:hover .nav-dropdown-menu,
+.nav-dropdown:focus-within .nav-dropdown-menu {
+  transform: translateY(0) scaleY(1);
+}
+
+.notify-panel {
+  transform: translateY(-8px) scale(0.98);
+  transform-origin: top right;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 0.2s;
+}
+
+.notify-panel.is-open,
+.nav-notify-wrap:hover .notify-panel,
+.nav-notify-wrap:focus-within .notify-panel {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+@keyframes badge-pulse {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.35); }
+  70% { transform: scale(0.92); }
+  100% { transform: scale(1); }
+}
+
+.nav-notify-badge.is-pulsing {
+  animation: badge-pulse 0.5s ease;
+}
+
+/* --------------------------------------------------------------------------
+   Button / input feedback: press feedback and a disabled->loading spinner.
+   -------------------------------------------------------------------------- */
+button,
+.nav-item,
+.nav-icon-btn,
+.nav-toggle-btn,
+.auth-submit,
+.shop-cta,
+.action-btn,
+.admin-bulk-action-btn,
+.admin-delete-btn,
+.cat-btn,
+.type-card,
+.carat-btn,
+.metal-btn,
+.color-btn {
+  transition: transform 0.12s ease, background 0.15s ease, border-color 0.15s ease,
+    box-shadow 0.15s ease, color 0.15s ease;
+}
+
+button:not(:disabled):active,
+.nav-icon-btn:active,
+.action-btn:active,
+.admin-bulk-action-btn:active,
+.admin-delete-btn:active,
+.auth-submit:active,
+.shop-cta:active,
+.cat-btn:active,
+.carat-btn:active,
+.metal-btn:active,
+.color-btn:active {
+  transform: scale(0.96);
+}
+
+/* .type-card already grows on hover; press should settle slightly below
+   that instead of fighting it back to 1. */
+.type-card:active {
+  transform: scale(0.99);
+}
+
+.auth-input,
+input[type="text"],
+input[type="password"],
+input[type="number"],
+select {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+@keyframes btn-spin {
+  to { transform: rotate(360deg); }
+}
+
+button.is-loading {
+  position: relative;
+  color: transparent !important;
+  pointer-events: none;
+}
+
+button.is-loading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: currentColor;
+  color: var(--color-text);
+  animation: btn-spin 0.6s linear infinite;
+}
+
+/* --------------------------------------------------------------------------
+   Flash-message toasts. Rendered once (server-side) into #toast-container
+   in base.html for every page; toast.js adds the slide-in class and wires
+   auto-dismiss + manual close.
+   -------------------------------------------------------------------------- */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: min(360px, calc(100vw - 40px));
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-text-muted);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  color: var(--color-text);
+  font-size: 13px;
+  line-height: 1.5;
+  opacity: 0;
+  transform: translateX(24px);
+  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.toast.is-visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.toast.is-dismissing {
+  opacity: 0;
+  transform: translateX(24px) scale(0.98);
+}
+
+.toast--success {
+  border-left-color: #2e8b57;
+}
+
+.toast--message,
+.toast--error {
+  border-left-color: #c0392b;
+}
+
+.toast-message {
+  flex: 1;
+  word-break: break-word;
+}
+
+.toast-close {
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  color: var(--color-text-muted);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.toast-close:hover {
+  color: var(--color-text);
+}
+
+@media (max-width: 600px) {
+  .toast-container {
+    left: 16px;
+    right: 16px;
+    top: 12px;
+    max-width: none;
+  }
+
+  .toast {
+    transform: translateY(-16px);
+  }
+
+  .toast.is-visible {
+    transform: translateY(0);
+  }
+
+  .toast.is-dismissing {
+    transform: translateY(-16px) scale(0.98);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Skeleton shimmer for in-flight price fetches (/api/prices on the
+   calculator, /api/gold/refresh's numbers). script.js toggles
+   `.is-loading-prices` on #shop-price-panel around the /api/prices call.
+   -------------------------------------------------------------------------- */
+@keyframes skeleton-shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.skeleton,
+.is-loading-prices .hero-price-amount,
+.is-loading-prices .breakdown-rows .val {
+  color: transparent !important;
+  border-radius: 4px;
+  background-image: linear-gradient(90deg,
+    var(--color-surface-alt) 25%, var(--color-border) 37%, var(--color-surface-alt) 63%);
+  background-size: 400% 100%;
+  animation: skeleton-shimmer 1.4s ease infinite;
+}
+
+/* --------------------------------------------------------------------------
+   Modal dialogs (<dialog>): fade+scale in on open, blurred backdrop, and a
+   brief JS-assisted fade+scale out on close - anim.js wraps
+   HTMLDialogElement.prototype.close so every dialog in the app gets this
+   for free, with no per-page wiring needed.
+   -------------------------------------------------------------------------- */
+dialog {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+dialog.is-closing {
+  opacity: 0;
+  transform: scale(0.94) translateY(8px);
+}
+
+@starting-style {
+  dialog[open] {
+    opacity: 0;
+    transform: scale(0.94) translateY(8px);
+  }
+}
+
+dialog::backdrop,
+.admin-delete-dialog::backdrop {
+  backdrop-filter: blur(3px);
+  transition: opacity 0.2s ease;
+}
+
+@starting-style {
+  dialog[open]::backdrop,
+  .admin-delete-dialog[open]::backdrop {
+    opacity: 0;
+  }
+}

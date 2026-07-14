@@ -1,0 +1,83 @@
+{# CMSFullForm-style admin sidebar #}
+{% set ep = request.endpoint or '' %}
+{% set nav_section = admin_section|default('') %}
+{% if not nav_section %}
+  {% if ep == 'main.admin_dashboard' %}
+    {% set nav_section = 'dashboard' %}
+  {% elif ep == 'main.admin' %}
+    {% set nav_section = 'orders' %}
+  {% elif ep in ('main.admin_products', 'main.admin_product_new', 'main.admin_product_edit') %}
+    {% set nav_section = 'products' %}
+  {% elif ep == 'main.admin_accounts' %}
+    {% set nav_section = 'accounts' %}
+  {% elif ep in ('main.admin_invites', 'main.admin_invite_create', 'main.admin_invite_revoke', 'main.admin_invite_delete') %}
+    {% set nav_section = 'invites' %}
+  {% endif %}
+{% endif %}
+
+<aside class="cms-admin-sidebar fixed inset-y-0 left-0 z-[60] flex flex-col bg-white dark:bg-[#0F0F12] border-r border-gray-200 dark:border-[#1F1F23] transition-all duration-300 ease-in-out w-[var(--cms-sidebar-width)]" id="cms-admin-sidebar" aria-label="管理後台導覽">
+  <div class="h-16 px-3 flex items-center border-b border-gray-200 dark:border-[#1F1F23] flex-shrink-0">
+    <a href="{{ url_for('main.admin_dashboard') }}" class="flex items-center gap-2.5 min-w-0 text-gray-900 dark:text-white no-underline">
+      <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gray-900 dark:bg-white text-white dark:text-gray-900 flex-shrink-0" aria-hidden="true">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      </span>
+      <span class="cms-sidebar-brand-text text-sm font-semibold truncate sidebar-menu-text" data-i18n="nav_admin">管理後台</span>
+    </a>
+  </div>
+
+  <nav class="flex-1 overflow-y-auto overflow-x-hidden py-4 px-2">
+    <div class="px-3 mb-2 flex items-center justify-between gap-2 min-w-0">
+      <span class="text-xs font-semibold uppercase tracking-wider sidebar-section-label cms-sidebar-section-label truncate" data-i18n="admin_ops_section">營運</span>
+      <a href="{{ url_for('main.calculator') }}" class="cms-sidebar-back-link inline-flex items-center gap-1 text-xs font-medium text-teal-700 dark:text-teal-300 hover:text-teal-900 dark:hover:text-teal-100 no-underline whitespace-nowrap flex-shrink-0" title="返回訂製">
+        <svg class="w-3 h-3 flex-shrink-0 cms-sidebar-link-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+        <span class="cms-sidebar-link-text" data-i18n="admin_back_to_calc">返回訂製</span>
+      </a>
+    </div>
+    <div class="space-y-1">
+      <a href="{{ url_for('main.admin_dashboard') }}"
+         class="sidebar-menu-item flex items-center gap-3 py-2 px-3 rounded-md text-sm font-medium no-underline{% if nav_section == 'dashboard' %} is-active{% endif %}"
+         {% if nav_section == 'dashboard' %}aria-current="page"{% endif %}>
+        <svg class="w-4 h-4 flex-shrink-0 sidebar-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <span class="cms-sidebar-link-text sidebar-menu-text truncate" data-i18n="admin_nav_dashboard">儀表板</span>
+      </a>
+
+      <a href="{{ url_for('main.admin') }}"
+         class="sidebar-menu-item flex items-center gap-3 py-2 px-3 rounded-md text-sm font-medium no-underline{% if nav_section == 'orders' %} is-active{% endif %}"
+         {% if nav_section == 'orders' %}aria-current="page"{% endif %}>
+        <svg class="w-4 h-4 flex-shrink-0 sidebar-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
+        <span class="cms-sidebar-link-text sidebar-menu-text truncate" data-i18n="admin_section_orders">訂單管理</span>
+      </a>
+
+      <a href="{{ url_for('main.admin_products') }}"
+         class="sidebar-menu-item flex items-center gap-3 py-2 px-3 rounded-md text-sm font-medium no-underline{% if nav_section == 'products' %} is-active{% endif %}"
+         {% if nav_section == 'products' %}aria-current="page"{% endif %}>
+        <svg class="w-4 h-4 flex-shrink-0 sidebar-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+        <span class="cms-sidebar-link-text sidebar-menu-text truncate" data-i18n="admin_section_products">商品上架</span>
+      </a>
+
+      <a href="{{ url_for('main.admin_accounts') }}"
+         class="sidebar-menu-item flex items-center gap-3 py-2 px-3 rounded-md text-sm font-medium no-underline{% if nav_section == 'accounts' %} is-active{% endif %}"
+         {% if nav_section == 'accounts' %}aria-current="page"{% endif %}>
+        <svg class="w-4 h-4 flex-shrink-0 sidebar-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        <span class="cms-sidebar-link-text sidebar-menu-text truncate" data-i18n="admin_section_accounts">帳戶管理</span>
+      </a>
+
+      <a href="{{ url_for('main.admin_invites') }}"
+         class="sidebar-menu-item flex items-center gap-3 py-2 px-3 rounded-md text-sm font-medium no-underline{% if nav_section == 'invites' %} is-active{% endif %}"
+         {% if nav_section == 'invites' %}aria-current="page"{% endif %}>
+        <svg class="w-4 h-4 flex-shrink-0 sidebar-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 5v2"/><path d="M5 5h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4V7a2 2 0 0 1 2-2z"/></svg>
+        <span class="cms-sidebar-link-text sidebar-menu-text truncate" data-i18n="admin_section_invites">邀請碼</span>
+      </a>
+    </div>
+  </nav>
+
+  <div class="px-2 py-3 border-t border-gray-200 dark:border-[#1F1F23] flex-shrink-0">
+    <button type="button" class="sidebar-menu-item flex items-center justify-center gap-2 w-full py-2 px-3 rounded-md text-sm border-0 bg-transparent cursor-pointer" id="cms-sidebar-collapse" aria-expanded="true">
+      <svg class="w-4 h-4 cms-collapse-icon-open sidebar-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+      <svg class="w-4 h-4 cms-collapse-icon-closed hidden sidebar-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+      <span class="cms-sidebar-link-text sidebar-menu-text text-sm" data-i18n="admin_sidebar_collapse">收合</span>
+    </button>
+  </div>
+</aside>
+
+<div class="cms-mobile-backdrop fixed inset-0 bg-black/50 z-[55] hidden" id="cms-mobile-backdrop" aria-hidden="true"></div>

@@ -1,0 +1,11 @@
+{% extends "layout/base.html" %}
+{% block title %}系統發生錯誤 - 鑽石戒指／項鍊{% endblock %}
+
+{% block content %}
+<div class="error-page">
+  <div class="error-page-code">500</div>
+  <h2 data-i18n="error_500_title">系統發生錯誤</h2>
+  <p class="app-page-sub" data-i18n="error_500_desc">請稍後再試。若問題持續發生，請聯絡系統管理員。</p>
+  <a href="{{ url_for('main.home') }}" class="error-page-link" data-i18n="error_back_home">回首頁</a>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+[Unit]
+Description=Diamond Calculator (Waitress WSGI server)
+After=network.target
+
+[Service]
+Type=simple
+User=diamond-calculator
+Group=diamond-calculator
+WorkingDirectory=/opt/diamond-calculator
+EnvironmentFile=/opt/diamond-calculator/.env
+ExecStartPre=/opt/diamond-calculator/venv/bin/flask db upgrade
+ExecStart=/opt/diamond-calculator/venv/bin/python /opt/diamond-calculator/app.py
+Restart=on-failure
+RestartSec=5
+
+# Hardening: least privilege for a service that only needs to read its own
+# directory tree and bind a local TCP port.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

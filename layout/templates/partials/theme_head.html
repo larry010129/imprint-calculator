@@ -1,0 +1,13 @@
+{# Early theme + background paint — prevents dark/light flash before CSS loads. #}
+<script nonce="{{ csp_nonce }}">
+document.documentElement.classList.add('js');
+(function () {
+  var light = localStorage.getItem('darkTheme') === 'false';
+  document.documentElement.setAttribute('data-theme', light ? 'light' : 'dark');
+})();
+</script>
+<style nonce="{{ csp_nonce }}">
+  html { background-color: #0f0f12; }
+  html[data-theme="light"] { background-color: #f7f6f2; }
+</style>
+<meta name="view-transition" content="same-origin">

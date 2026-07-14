@@ -1,0 +1,69 @@
+# Example nginx site config for the Diamond Calculator.
+# Copy to /etc/nginx/sites-available/diamond-calculator, edit the domain and
+# paths, symlink into sites-enabled, then run certbot (see README.md).
+#
+# This terminates TLS and reverse-proxies to Waitress on 127.0.0.1:8000.
+# Waitress itself should NOT be exposed directly to the internet.
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name your-domain.example;
+
+    # certbot uses this location for the HTTP-01 challenge, then adds the
+    # 301-to-HTTPS server block below automatically on first run.
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name your-domain.example;
+
+    # Managed by certbot after `certbot --nginx` (see README.md).
+    # ssl_certificate     /etc/letsencrypt/live/your-domain.example/fullchain.pem;
+    # ssl_certificate_key /etc/letsencrypt/live/your-domain.example/privkey.pem;
+
+    client_max_body_size 20m;
+
+    location /health {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        access_log off;
+    }
+
+    location /static/ {
+        alias /opt/diamond-calculator/static/;
+        expires 7d;
+        access_log off;
+    }
+
+    # The gold-price refresh drives a real headless-browser fetch (it has to
+    # clear Bank of Taiwan's bot challenge) and can take up to ~75s; give it
+    # a longer timeout than the rest of the app so nginx doesn't cut it off.
+    location /api/gold/refresh {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_read_timeout 90s;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        # Exactly one hop: matches TRUSTED_PROXY_COUNT=1 (the app's default).
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_read_timeout 30s;
+    }
+}

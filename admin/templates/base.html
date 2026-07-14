@@ -1,0 +1,24 @@
+{% extends "layout/base.html" %}
+{% block body_class %} cms-admin-page{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{{ module_static('admin', 'css/cmsfullform.css') }}?v=8">
+<link rel="stylesheet" href="{{ module_static('admin', 'css/admin-dashboard.css') }}?v=16">
+{% block admin_head %}{% endblock %}
+{% endblock %}
+{% block content %}
+<div class="cms-admin-layout cms-admin-shell flex" id="cms-admin-shell">
+  {% include 'admin/partials/cms-sidebar.html' %}
+  <div class="cms-admin-column flex flex-1 flex-col min-w-0 min-h-0 bg-white dark:bg-[#0F0F12]">
+    <header class="cms-admin-topnav h-16 flex-shrink-0 border-b border-gray-200 dark:border-[#1F1F23] bg-white dark:bg-[#0F0F12]">
+      {% include 'admin/partials/cms-topnav.html' %}
+    </header>
+    <main class="cms-admin-main flex-1 min-h-0 overflow-auto p-3 sm:p-6 bg-white dark:bg-[#0F0F12]">
+      <div class="adx-page{% block admin_page_class %}{% endblock %}">
+{% block admin_content %}{% endblock %}
+      </div>
+    </main>
+  </div>
+</div>
+{% block admin_foot %}{% endblock %}
+<script src="{{ module_static('admin', 'js/cmsfullform-sidebar.js') }}?v=1"></script>
+{% endblock %}

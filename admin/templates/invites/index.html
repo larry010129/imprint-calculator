@@ -1,0 +1,123 @@
+{% extends "admin/base.html" %}
+{% block title %}邀請碼 - 管理後台{% endblock %}
+{% block admin_page_class %} records-page{% endblock %}
+{% block admin_content %}
+<header class="adx-page-header">
+  <div class="adx-page-header__copy">
+    <p class="app-page-eyebrow"><span class="app-page-eyebrow-line"></span><span data-i18n="nav_admin">管理後台</span></p>
+    <h1 class="adx-page-header__title" data-i18n="admin_invites_title">邀請碼管理</h1>
+    <p class="adx-page-header__desc" data-i18n="admin_invites_subtitle">建立邀請碼並設定可使用次數；刪除邀請碼不影響已註冊帳戶</p>
+  </div>
+</header>
+
+<form method="POST" action="{{ url_for('main.admin_invite_create') }}" class="admin-invite-create">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label for="max_uses" data-i18n="admin_invites_max_uses">可使用次數</label>
+  <input type="number" name="max_uses" id="max_uses" value="1" min="1" max="100" class="admin-reset-input">
+  <button type="submit" class="admin-reset-btn" data-i18n="admin_invites_create">建立邀請碼</button>
+</form>
+
+<div class="records-table-wrap records-table-wrap--scroll">
+<table>
+  <thead>
+    <tr>
+      <th data-i18n="admin_invites_code">邀請碼</th>
+      <th data-i18n="admin_invites_uses">已使用 / 上限</th>
+      <th data-i18n="admin_invites_status">狀態</th>
+      <th data-i18n="admin_invites_created">建立時間</th>
+      <th data-i18n="table_actions">操作</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for inv in invites %}
+    <tr>
+      <td class="admin-invite-code-cell">
+        <code class="admin-invite-code">{{ inv.code }}</code>
+        <button type="button" class="admin-invite-copy-btn" data-copy="{{ inv.code }}"
+                aria-label="複製邀請碼" title="複製">
+          <span data-i18n="admin_invites_copy">複製</span>
+        </button>
+      </td>
+      <td>{{ inv.use_count }} / {{ inv.max_uses or '∞' }}</td>
+      <td>{% if inv.is_active %}<span data-i18n="admin_invites_active">有效</span>{% else %}<span data-i18n="admin_invites_revoked">已停用</span>{% endif %}</td>
+      <td>{{ inv.created_at|tz_taiwan if inv.created_at else '—' }}</td>
+      <td class="admin-invite-actions">
+        {% if inv.is_active %}
+        <form method="POST" action="{{ url_for('main.admin_invite_revoke', invite_id=inv.id) }}" class="admin-invite-action-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="admin-reset-btn" data-i18n="admin_invites_revoke_btn">停用</button>
+        </form>
+        {% endif %}
+        <form method="POST" action="{{ url_for('main.admin_invite_delete', invite_id=inv.id) }}" class="admin-invite-action-form admin-invite-delete-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="admin-reset-btn admin-reset-btn--danger" data-i18n="admin_invites_delete_btn">刪除</button>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5" style="text-align:center" data-i18n="admin_invites_empty">尚無邀請碼</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}
+{% block admin_foot %}
+<script nonce="{{ csp_nonce }}">
+document.querySelectorAll('.admin-invite-delete-form').forEach(function (form) {
+  form.addEventListener('submit', function (e) {
+    var msg = typeof window.t === 'function'
+      ? window.t('admin_invites_delete_confirm')
+      : '確定刪除此邀請碼？已註冊的帳戶不受影響。';
+    if (!confirm(msg)) e.preventDefault();
+  });
+});
+
+function copyInviteText(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    return navigator.clipboard.writeText(text);
+  }
+  return new Promise(function (resolve, reject) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand('copy') ? resolve() : reject(new Error('copy failed'));
+    } catch (err) {
+      reject(err);
+    } finally {
+      document.body.removeChild(ta);
+    }
+  });
+}
+
+document.querySelectorAll('.admin-invite-copy-btn').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    var text = btn.getAttribute('data-copy') || '';
+    if (!text) return;
+    copyInviteText(text).then(function () {
+      var done = typeof window.t === 'function'
+        ? window.t('admin_invites_copy_done')
+        : '已複製邀請碼';
+      if (typeof window.showToast === 'function') {
+        window.showToast(done, 'success');
+      }
+      btn.classList.add('is-copied');
+      window.setTimeout(function () { btn.classList.remove('is-copied'); }, 1500);
+    }).catch(function () {
+      var fail = typeof window.t === 'function'
+        ? window.t('admin_invites_copy_fail')
+        : '複製失敗，請手動選取邀請碼';
+      if (typeof window.showToast === 'function') {
+        window.showToast(fail, 'error');
+      } else {
+        alert(fail);
+      }
+    });
+  });
+});
+</script>
+{% endblock %}

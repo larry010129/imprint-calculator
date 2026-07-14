@@ -1,0 +1,1758 @@
+/* App shell — landing-inspired theme (light + dark) */
+
+body.app-shell {
+  --font-heading: "Instrument Serif", "Chiron Hei HK WS", Georgia, serif;
+  --font-body: "Instrument Sans", "Chiron Hei HK WS", system-ui, sans-serif;
+  --app-max: 1400px;
+  /* Sticky nav wrap padding-top + navbar min-height */
+  --app-nav-block-height: calc(1rem + 3.5rem);
+  --color-accent-ink: #1a1a1a;
+  background: var(--color-background);
+  color: var(--color-text);
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+/* ── Light theme (default when .dark-theme absent) ── */
+body.app-shell:not(.dark-theme) {
+  --color-background: #f7f6f2;
+  --color-surface: #ffffff;
+  --color-surface-alt: #efede8;
+  --color-bg: #f7f6f2;
+  --color-text: #1a1918;
+  --color-text-muted: #6d6a64;
+  --color-border: #ddd9d0;
+  --color-accent: #1aa8ad;
+  --color-brand: #1aa8ad;
+  --color-brand-hover: #26c4c9;
+  --color-on-brand: #ffffff;
+  --color-nav-bg: #ffffff;
+  --app-nav-bg: rgba(255, 255, 255, 0.92);
+  --app-nav-border: rgba(26, 25, 24, 0.08);
+  --app-nav-shadow: 0 8px 28px rgba(26, 25, 24, 0.08);
+  --app-nav-link: rgba(26, 25, 24, 0.68);
+  --app-nav-link-hover: #1a1918;
+  --app-nav-muted: rgba(26, 25, 24, 0.55);
+  --app-brand-gradient: linear-gradient(135deg, #1aa8ad 0%, #26c4c9 100%);
+  --app-hover-row: rgba(26, 168, 173, 0.06);
+  --app-hover-accent: rgba(26, 168, 173, 0.1);
+  --app-focus-ring: rgba(26, 168, 173, 0.55);
+  --app-btn-shadow: 0 4px 16px rgba(26, 168, 173, 0.22);
+  --app-card-glow: rgba(26, 168, 173, 0.08);
+  --app-overlay: rgba(26, 25, 24, 0.45);
+  --app-mobile-bar-bg: rgba(255, 255, 255, 0.94);
+}
+
+/* ── Dark theme ── */
+body.app-shell.dark-theme {
+  --color-background: #0f0f12;
+  --color-surface: #14141a;
+  --color-surface-alt: #1a1a26;
+  --color-bg: #0f0f12;
+  --color-text: #efefec;
+  --color-text-muted: rgba(239, 239, 236, 0.55);
+  --color-border: rgba(239, 239, 236, 0.12);
+  --color-accent: #8eedf0;
+  --color-brand: #8eedf0;
+  --color-brand-hover: #a5f2f4;
+  --color-on-brand: #1a1a1a;
+  --color-nav-bg: #0f0f16;
+  --app-nav-bg: rgba(15, 15, 18, 0.85);
+  --app-nav-border: rgba(239, 239, 236, 0.12);
+  --app-nav-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+  --app-nav-link: rgba(239, 239, 236, 0.75);
+  --app-nav-link-hover: #efefec;
+  --app-nav-muted: rgba(239, 239, 236, 0.55);
+  --app-brand-gradient: linear-gradient(135deg, #8eedf0 0%, #67e8f9 100%);
+  --app-hover-row: rgba(142, 237, 240, 0.04);
+  --app-hover-accent: rgba(142, 237, 240, 0.08);
+  --app-focus-ring: rgba(142, 237, 240, 0.6);
+  --app-btn-shadow: 0 4px 20px rgba(142, 237, 240, 0.2);
+  --app-card-glow: rgba(142, 237, 240, 0.06);
+  --app-overlay: rgba(0, 0, 0, 0.75);
+  --app-mobile-bar-bg: rgba(15, 15, 18, 0.92);
+}
+
+/* ── App navbar (matches landing floating pill bar) ── */
+body.app-shell .app-nav-wrap {
+  --nav-link-gap: 1.25rem;
+  --nav-link-size: 0.875rem;
+  display: flex;
+  justify-content: center;
+  position: sticky;
+  top: 0;
+  z-index: 400;
+  padding: 1rem 1rem 0;
+  transition: padding 0.4s ease;
+}
+
+body.app-shell .app-nav-wrap.is-scrolled {
+  padding: 0.65rem 1rem 0;
+}
+
+body.app-shell .premium-navbar.app-navbar {
+  width: max-content;
+  max-width: calc(100vw - 2rem);
+  margin: 0 auto;
+  min-height: 3.5rem;
+  background: var(--app-nav-bg);
+  background-color: var(--app-nav-bg);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--app-nav-border);
+  border-bottom: 1px solid var(--app-nav-border);
+  border-radius: 1rem;
+  box-shadow: var(--app-nav-shadow);
+  padding: 0 1.75rem;
+  margin-bottom: 0;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+body.app-shell .nav-container {
+  width: max-content;
+  max-width: 100%;
+  min-height: 3.5rem;
+  height: auto;
+  gap: clamp(1.25rem, 2.5vw, 2.5rem);
+  align-items: center;
+  flex-wrap: nowrap;
+  box-sizing: border-box;
+}
+
+body.app-shell .app-nav-brand {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+  text-decoration: none;
+  flex: 0 0 auto;
+  margin-right: 0.5rem;
+}
+
+body.app-shell .app-nav-brand-mark {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.65rem;
+  opacity: 0.5;
+  margin-top: 0.15rem;
+}
+
+body.app-shell .app-nav-brand-text {
+  background: none;
+  -webkit-background-clip: unset;
+  background-clip: unset;
+  color: inherit;
+}
+
+/* Every nav title slot shares one alignment model; bar width follows content */
+body.app-shell .nav-links {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--nav-link-gap);
+  height: auto;
+  overflow: visible;
+}
+
+body.app-shell .nav-links > * {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  height: auto;
+}
+
+body.app-shell .nav-dropdown,
+body.app-shell .nav-notify-wrap {
+  position: relative;
+  align-items: center;
+}
+
+body.app-shell .nav-dropdown-trigger,
+body.app-shell .nav-notify {
+  display: inline-flex;
+  align-items: center;
+  height: auto;
+}
+
+body.app-shell .nav-item {
+  height: auto;
+  padding: 0;
+  font-size: var(--nav-link-size);
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--app-nav-muted);
+  line-height: 1.2;
+}
+
+body.app-shell .nav-item:hover,
+body.app-shell .nav-item.nav-item--active {
+  color: var(--color-text);
+}
+
+body.app-shell .nav-item::after {
+  left: 0;
+  bottom: -0.25rem;
+  width: 0;
+  height: 1px;
+  background: var(--color-text);
+  transform: none;
+  transition: width 0.3s ease;
+}
+
+body.app-shell .nav-item:hover::after,
+body.app-shell .nav-item.nav-item--active::after {
+  width: 100%;
+  transform: none;
+}
+
+body.app-shell .nav-user {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: clamp(0.5rem, 1vw, 1rem);
+}
+
+body.app-shell .nav-user > *,
+body.app-shell .nav-user .logout-form,
+body.app-shell .nav-user .logout-btn {
+  flex-shrink: 0;
+}
+
+body.app-shell .nav-icon-btn {
+  background: none !important;
+  border: 1px solid var(--app-nav-border);
+  border-radius: 999px;
+  padding: 0.35rem 0.65rem;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--app-nav-muted);
+  margin-right: 0;
+}
+
+body.app-shell .nav-icon-btn:hover {
+  background: none !important;
+  color: var(--color-text);
+}
+
+body.app-shell .nav-icon-btn--theme {
+  font-size: 0.875rem;
+}
+
+body.app-shell .nav-gold-ticker {
+  background: none;
+  border: 1px solid var(--app-nav-border);
+  padding: 0.35rem 0.75rem;
+  color: var(--color-text);
+}
+
+body.app-shell .nav-gold-ticker:hover {
+  border-color: color-mix(in srgb, var(--color-brand) 35%, var(--color-border));
+  box-shadow: none;
+}
+
+body.app-shell .app-nav-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem 1rem;
+  height: 2rem;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 999px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.3s ease, filter 0.3s ease;
+}
+
+body.app-shell.dark-theme .app-nav-cta {
+  background: var(--color-brand);
+  color: var(--color-on-brand);
+}
+
+body.app-shell.dark-theme .app-nav-cta:hover {
+  filter: brightness(1.05);
+}
+
+body.app-shell:not(.dark-theme) .app-nav-cta {
+  background: var(--color-brand);
+  color: var(--color-on-brand);
+}
+
+body.app-shell:not(.dark-theme) .app-nav-cta:hover {
+  filter: brightness(1.05);
+}
+
+body.app-shell .logout-form {
+  display: inline-flex;
+  margin: 0;
+  padding: 0;
+}
+
+body.app-shell .logout-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0 !important;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--app-nav-muted) !important;
+  background: none !important;
+  border: none !important;
+  border-radius: 0;
+  box-shadow: none !important;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+body.app-shell .logout-btn:hover {
+  color: var(--color-text) !important;
+  background: none !important;
+  border-color: transparent !important;
+  filter: none;
+}
+
+body.app-shell .logout-btn:focus-visible {
+  outline: 2px solid var(--app-focus-ring);
+  outline-offset: 2px;
+}
+
+body.app-shell .nav-gold-value {
+  color: var(--color-brand);
+}
+
+body.app-shell .user-greeting {
+  color: var(--app-nav-muted);
+  font-size: 0.75rem;
+}
+
+@media (max-width: 1100px) {
+  body.app-shell .nav-user-name {
+    display: none;
+  }
+
+  body.app-shell .nav-user-trigger {
+    max-width: none;
+    padding-right: 0.45rem;
+  }
+}
+
+body.app-shell .nav-toggle-bar {
+  background: var(--color-text);
+}
+
+body.app-shell .nav-toggle-btn {
+  border: none;
+  background: none;
+  color: var(--color-text);
+}
+
+body.app-shell .nav-toggle-btn:hover {
+  background: none;
+}
+
+body.app-shell .nav-dropdown-menu {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  border-radius: 0.75rem;
+  padding: 0.35rem;
+  min-width: 11rem;
+}
+
+body.app-shell .nav-dropdown-trigger,
+body.app-shell .nav-user-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: none;
+  background: none;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+body.app-shell .nav-dropdown-trigger {
+  cursor: pointer;
+}
+
+body.app-shell .nav-user-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+body.app-shell .nav-user-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  color: inherit;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+
+body.app-shell .nav-chevron {
+  flex-shrink: 0;
+  opacity: 0.55;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+body.app-shell .nav-dropdown:hover .nav-chevron,
+body.app-shell .nav-dropdown:focus-within .nav-chevron,
+body.app-shell .nav-dropdown.is-open .nav-chevron,
+body.app-shell .nav-user-dropdown:hover .nav-chevron,
+body.app-shell .nav-user-dropdown:focus-within .nav-chevron,
+body.app-shell .nav-user-dropdown.is-open .nav-chevron {
+  opacity: 0.9;
+  transform: rotate(180deg);
+}
+
+body.app-shell .nav-dropdown::after,
+body.app-shell .nav-user-dropdown::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 0.5rem;
+  pointer-events: auto;
+}
+
+/* Desktop: one dropdown at a time — hover opens menus; mouse-click focus must not
+   stick a menu open via :focus-within (that caused two menus visible at once). */
+@media (min-width: 901px) {
+  body.app-shell .nav-dropdown .nav-dropdown-menu,
+  body.app-shell .nav-user-dropdown .nav-dropdown-menu {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(6px);
+    pointer-events: none;
+  }
+
+  body.app-shell .nav-dropdown:hover .nav-dropdown-menu,
+  body.app-shell .nav-user-dropdown:hover .nav-dropdown-menu,
+  body.app-shell .nav-dropdown:focus-within:has(.nav-dropdown-trigger:focus-visible) .nav-dropdown-menu,
+  body.app-shell .nav-user-dropdown:focus-within:has(.nav-user-menu-btn:focus-visible) .nav-dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  body.app-shell .nav-dropdown:hover .nav-chevron,
+  body.app-shell .nav-user-dropdown:hover .nav-chevron,
+  body.app-shell .nav-dropdown:focus-within:has(.nav-dropdown-trigger:focus-visible) .nav-chevron,
+  body.app-shell .nav-user-dropdown:focus-within:has(.nav-user-menu-btn:focus-visible) .nav-chevron {
+    opacity: 0.9;
+    transform: rotate(180deg);
+  }
+}
+
+body.app-shell .nav-dropdown-menu--end {
+  left: auto;
+  right: 0;
+}
+
+body.app-shell .nav-dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+  letter-spacing: 0;
+}
+
+body.app-shell .nav-dropdown-item--action {
+  width: 100%;
+  border: none !important;
+  background: none !important;
+  box-shadow: none !important;
+  cursor: pointer;
+  font-family: inherit;
+  font-weight: inherit;
+  text-align: left;
+  color: inherit;
+  border-radius: 0.5rem;
+}
+
+body.app-shell .nav-user-logout-form .nav-dropdown-item--action {
+  display: flex;
+}
+
+body.app-shell .nav-dropdown-divider {
+  height: 1px;
+  margin: 0.25rem 0.35rem;
+  background: var(--color-border);
+}
+
+body.app-shell .nav-user-menu-meta {
+  margin: 0;
+  padding: 0.45rem 0.75rem 0.35rem;
+  font-size: 0.6875rem;
+  color: var(--app-nav-muted);
+  line-height: 1.4;
+}
+
+body.app-shell .nav-user-dropdown {
+  position: relative;
+}
+
+body.app-shell .nav-user-trigger {
+  max-width: 10rem;
+  padding: 0.25rem 0.55rem 0.25rem 0.3rem;
+  border: 1px solid var(--app-nav-border);
+  border-radius: 999px;
+  color: var(--color-text);
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+body.app-shell .nav-user-trigger:hover,
+body.app-shell .nav-user-trigger--active {
+  border-color: color-mix(in srgb, var(--color-brand) 35%, var(--app-nav-border));
+  background: var(--app-hover-accent);
+}
+
+body.app-shell .nav-user-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  background: var(--app-brand-gradient);
+  color: var(--color-on-brand);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+body.app-shell .nav-user-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+body.app-shell .nav-notify-wrap {
+  height: auto;
+}
+
+body.app-shell .nav-cart-wrap {
+  position: relative;
+  height: auto;
+}
+
+body.app-shell .nav-cart-wrap::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 10px;
+  pointer-events: auto;
+}
+
+body.app-shell .cart-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: min(380px, calc(100vw - 24px));
+  max-height: 480px;
+  display: flex;
+  visibility: hidden;
+  pointer-events: none;
+  flex-direction: column;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
+  z-index: 1200;
+  overflow: hidden;
+}
+
+body.app-shell .cart-panel.is-open,
+body.app-shell .nav-cart-wrap:hover .cart-panel,
+body.app-shell .nav-cart-wrap:focus-within .cart-panel {
+  visibility: visible;
+  pointer-events: auto;
+}
+
+body.app-shell .cart-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+body.app-shell .cart-panel-heading {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+body.app-shell .cart-panel-view-all {
+  font-size: 0.8125rem;
+  color: var(--color-brand);
+  text-decoration: none;
+}
+
+body.app-shell .cart-panel-view-all:hover {
+  text-decoration: underline;
+}
+
+body.app-shell .cart-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+body.app-shell .cart-panel-loading,
+body.app-shell .cart-panel-empty {
+  margin: 0;
+  padding: 1.25rem 1rem;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+body.app-shell .cart-panel-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+body.app-shell .cart-panel-item {
+  border-bottom: 1px solid var(--color-border);
+}
+
+body.app-shell .cart-panel-item:last-child {
+  border-bottom: none;
+}
+
+body.app-shell .cart-panel-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem 0.35rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+body.app-shell .cart-panel-link:hover {
+  background: var(--app-hover-accent);
+}
+
+body.app-shell .cart-panel-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--color-bg);
+}
+
+body.app-shell .cart-panel-thumb--empty {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+body.app-shell .cart-panel-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+body.app-shell .cart-panel-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body.app-shell .cart-panel-meta {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+body.app-shell .cart-panel-price {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-brand);
+}
+
+body.app-shell .cart-panel-actions {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0 1rem 0.65rem 4.75rem;
+}
+
+body.app-shell .cart-panel-action {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  text-decoration: none;
+}
+
+body.app-shell .cart-panel-action:hover {
+  color: var(--color-brand);
+}
+
+body.app-shell .cart-panel-footer {
+  border-top: 1px solid var(--color-border);
+  padding: 0.65rem 1rem;
+  text-align: center;
+}
+
+body.app-shell .cart-panel-footer-link {
+  font-size: 0.8125rem;
+  color: var(--color-brand);
+  text-decoration: none;
+}
+
+body.app-shell .cart-panel-footer-link:hover {
+  text-decoration: underline;
+}
+
+body.app-shell .nav-notify-btn {
+  position: relative;
+  width: 2rem;
+  height: 2rem;
+  padding: 0 !important;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: inherit;
+}
+
+body.app-shell .nav-notify-btn .nav-notify-icon {
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+body.app-shell .nav-notify-btn:hover .nav-notify-icon,
+body.app-shell .nav-notify-btn--active .nav-notify-icon {
+  opacity: 1;
+}
+
+body.app-shell .nav-notify-btn .nav-notify-badge {
+  top: -2px;
+  right: -2px;
+  background: var(--color-brand);
+  color: var(--color-on-brand);
+}
+
+body.app-shell .nav-notify-btn--active {
+  border-color: color-mix(in srgb, var(--color-brand) 45%, var(--app-nav-border));
+  color: var(--color-brand);
+}
+
+body.app-shell .nav-cart-link {
+  position: relative;
+  width: 2rem;
+  height: 2rem;
+  padding: 0 !important;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+body.app-shell .nav-cart-link:hover,
+body.app-shell .nav-cart-link--active {
+  border-color: color-mix(in srgb, var(--color-brand) 45%, var(--app-nav-border));
+  color: var(--color-brand);
+}
+
+body.app-shell .nav-cart-icon {
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+body.app-shell .nav-cart-link:hover .nav-cart-icon,
+body.app-shell .nav-cart-link--active .nav-cart-icon {
+  opacity: 1;
+}
+
+body.app-shell .nav-cart-label {
+  display: none;
+  font-size: 0.875rem;
+  line-height: 1;
+}
+
+body.app-shell .nav-cart-link .nav-cart-badge {
+  position: absolute;
+  top: -5px;
+  right: -7px;
+  margin: 0;
+  min-width: auto;
+  height: auto;
+  padding: 0;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  background: none;
+  color: var(--color-brand);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+body.app-shell .nav-cart-link .nav-cart-badge:empty,
+body.app-shell .nav-cart-link .nav-cart-badge[hidden] {
+  display: none;
+}
+
+body.app-shell .nav-user-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: clamp(0.35rem, 0.75vw, 0.5rem);
+  margin-left: 0.15rem;
+  padding-left: 0;
+  border-left: none;
+}
+
+body.app-shell .nav-dropdown-item:hover,
+body.app-shell .nav-dropdown-item.is-active,
+body.app-shell .nav-dropdown-item--action:hover {
+  background: var(--app-hover-accent);
+  color: var(--color-brand);
+  filter: none;
+}
+
+body.app-shell .nav-user-logout-form {
+  margin: 0;
+  padding: 0;
+}
+
+body.app-shell .notify-panel {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.5);
+}
+
+body.app-shell .notify-panel-item--unread {
+  background: var(--app-hover-accent);
+}
+
+@container app-nav (max-width: 1080px) {
+  body.app-shell .nav-gold-ticker .nav-gold-label {
+    display: none;
+  }
+}
+
+@container app-nav (max-width: 960px) {
+  body.app-shell .nav-gold-ticker {
+    padding: 0.35rem 0.55rem;
+  }
+
+  body.app-shell .nav-gold-value {
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 900px) {
+  body.app-shell .app-nav-wrap {
+    padding: 0.75rem 0.75rem 0;
+  }
+
+  body.app-shell .premium-navbar.app-navbar {
+    width: 100%;
+    max-width: none;
+    padding: 0 0.85rem;
+    border-radius: 0.85rem;
+  }
+
+  body.app-shell .nav-container {
+    width: 100%;
+    max-width: 100%;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    min-height: 3.25rem;
+  }
+
+  body.app-shell .app-nav-brand {
+    font-size: 1.05rem;
+    margin-right: auto;
+    min-width: 0;
+  }
+
+  body.app-shell .nav-toggle-btn {
+    display: flex;
+    order: 2;
+  }
+
+  /* Collapse desktop nav into the hamburger panel.
+     Must beat body.app-shell .nav-links / .nav-user { display: flex }. */
+  body.app-shell .nav-links,
+  body.app-shell .nav-user {
+    display: none;
+    flex: 1 1 100%;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    height: auto;
+    gap: 0.25rem;
+  }
+
+  body.app-shell .premium-navbar.nav-open .nav-links,
+  body.app-shell .premium-navbar.nav-open .nav-user {
+    display: flex;
+  }
+
+  body.app-shell .nav-links {
+    order: 3;
+    padding: 0.5rem 0 0.25rem;
+    border-top: 1px solid var(--color-border);
+  }
+
+  body.app-shell .nav-user {
+    order: 4;
+    padding: 0.5rem 0 0.75rem;
+    border-top: 1px solid var(--color-border);
+    flex-wrap: wrap;
+  }
+
+  /* Theme / language / gold sit in one compact row inside the open menu */
+  body.app-shell .nav-user > .nav-gold-ticker,
+  body.app-shell .nav-user > .nav-icon-btn--theme,
+  body.app-shell .nav-user > .nav-icon-btn--lang {
+    flex: 1 1 auto;
+  }
+
+  body.app-shell .nav-user > .nav-gold-ticker {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+
+  body.app-shell .nav-item {
+    width: 100%;
+    padding: 0.7rem 0.75rem;
+  }
+
+  body.app-shell .nav-dropdown-trigger {
+    width: 100%;
+    justify-content: space-between;
+    padding: 0.65rem 0.75rem;
+  }
+
+  body.app-shell .nav-gold-ticker .nav-gold-label {
+    display: none;
+  }
+
+  body.app-shell .app-nav-cta {
+    width: 100%;
+    height: 2.5rem;
+    justify-content: center;
+  }
+
+  body.app-shell .nav-icon-btn--theme,
+  body.app-shell .nav-icon-btn--lang {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  body.app-shell .nav-cart-wrap {
+    width: 100%;
+  }
+
+  body.app-shell .nav-cart-trigger {
+    width: 100%;
+    height: auto;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    padding: 0.65rem 0.75rem !important;
+  }
+
+  body.app-shell .nav-cart-label {
+    display: inline;
+  }
+
+  body.app-shell .nav-cart-wrap .nav-cart-badge {
+    position: static;
+    margin-left: auto;
+  }
+
+  body.app-shell .cart-panel {
+    position: static;
+    width: 100%;
+    max-height: none;
+    margin-top: 0.35rem;
+    visibility: visible;
+    pointer-events: auto;
+    display: none;
+  }
+
+  body.app-shell .cart-panel.is-open {
+    display: flex;
+  }
+
+  body.app-shell .nav-cart-link {
+    width: 100%;
+    height: auto;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    padding: 0.65rem 0.75rem !important;
+  }
+
+  body.app-shell .nav-cart-label {
+    display: inline;
+  }
+
+  body.app-shell .nav-cart-link .nav-cart-badge {
+    position: static;
+    margin-left: auto;
+  }
+
+  body.app-shell .nav-user-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    margin-left: 0;
+    padding-left: 0;
+    border-left: none;
+    border-top: 1px solid var(--color-border);
+    padding-top: 0.5rem;
+    margin-top: 0.25rem;
+  }
+
+  body.app-shell .nav-user-name {
+    max-width: none;
+  }
+
+  body.app-shell .nav-user-trigger {
+    max-width: none;
+    width: 100%;
+    justify-content: space-between;
+    padding: 0.65rem 0.75rem;
+  }
+
+  body.app-shell .nav-notify-wrap {
+    width: 100%;
+  }
+
+  body.app-shell .nav-notify-btn {
+    width: 100%;
+    height: auto;
+    padding: 0.65rem 0.75rem !important;
+    justify-content: flex-start;
+    gap: 0.5rem;
+  }
+
+  body.app-shell .nav-notify-btn::after {
+    content: attr(aria-label);
+    font-size: 0.875rem;
+    font-family: var(--font-body);
+  }
+
+  body.app-shell .nav-dropdown-menu--end {
+    left: 0;
+    right: auto;
+  }
+
+  body.app-shell .nav-dropdown:not(.is-open) .nav-dropdown-menu {
+    display: none;
+  }
+
+  body.app-shell .nav-dropdown.is-open .nav-dropdown-menu {
+    display: block;
+  }
+
+  /* Submenus expand inline (accordion), not as floating desktop popups */
+  body.app-shell .nav-dropdown {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  body.app-shell .nav-dropdown-menu {
+    position: static;
+    width: 100%;
+    min-width: 0;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    pointer-events: auto;
+    background: transparent;
+    border: none;
+    border-left: 2px solid var(--color-border);
+    border-radius: 0;
+    box-shadow: none;
+    margin: 0 0 0.25rem 0.9rem;
+    padding: 0.15rem 0 0.15rem 0.35rem;
+  }
+
+  body.app-shell .nav-dropdown-item {
+    padding: 0.6rem 0.75rem;
+    font-size: 0.875rem;
+  }
+
+  /* Kill the desktop hover-bridge strip below triggers */
+  body.app-shell .nav-dropdown::after,
+  body.app-shell .nav-user-dropdown::after {
+    display: none;
+  }
+
+  /* Notifications panel behaves like the cart panel: inline, full width */
+  body.app-shell .nav-notify-wrap {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  body.app-shell .notify-panel {
+    position: static;
+    width: 100%;
+    max-height: none;
+    margin-top: 0.35rem;
+    visibility: visible;
+    pointer-events: auto;
+    display: none;
+    box-shadow: none;
+  }
+
+  body.app-shell .notify-panel.is-open {
+    display: flex;
+  }
+
+  body.app-shell .cart-panel {
+    box-shadow: none;
+  }
+
+  body.app-shell .app-nav-cta {
+    width: 100%;
+    justify-content: center;
+    height: auto;
+    padding: 0.65rem 1rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* ── Layout ── */
+body.cms-admin-page .app-nav-wrap {
+  display: none;
+}
+
+body.cms-admin-page .page-container {
+  max-width: none;
+  padding: 0;
+}
+
+body.cms-admin-page .main-content {
+  padding: 0;
+}
+
+body.app-shell .page-container {
+  max-width: var(--app-max);
+  padding: 2rem 1.25rem 4rem;
+}
+
+/* CMS admin must beat .app-shell page-container (same specificity, later source order) */
+body.app-shell.cms-admin-page .page-container,
+body.app-shell.cms-admin-page .main-content {
+  max-width: none;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+body.app-shell h1,
+body.app-shell .records-title,
+body.app-shell .shop-page-title {
+  font-family: var(--font-heading);
+  letter-spacing: -0.02em;
+}
+
+body.app-shell .app-page-header {
+  margin-bottom: 2rem;
+}
+
+body.app-shell .app-page-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-bottom: 0.75rem;
+}
+
+body.app-shell .app-page-eyebrow-line {
+  width: 2rem;
+  height: 1px;
+  background: color-mix(in srgb, var(--color-text) 20%, transparent);
+}
+
+body.app-shell .app-page-title {
+  font-family: var(--font-heading);
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-weight: 700;
+  margin: 0 0 0.35rem;
+  letter-spacing: -0.02em;
+}
+
+body.app-shell .app-page-sub {
+  color: var(--color-text-muted);
+  margin: 0;
+  font-size: 0.9375rem;
+}
+
+/* ── Cards & surfaces ── */
+body.app-shell .profile-card,
+body.app-shell .gold-price-card,
+body.app-shell .admin-security-note,
+body.app-shell .success-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+}
+
+body.app-shell .gold-price-card--live {
+  border-color: color-mix(in srgb, var(--color-brand) 30%, var(--color-border));
+  background: linear-gradient(135deg, var(--app-card-glow) 0%, var(--color-surface) 55%);
+}
+
+body.app-shell .source-pill--bot {
+  background: var(--app-hover-accent);
+  color: var(--color-brand);
+}
+
+body.app-shell .gold-price-value {
+  color: var(--color-brand);
+}
+body.app-shell .records-table-wrap {
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+body.app-shell .records-table-wrap--scroll,
+body.app-shell .records-table-wrap--compact,
+body.app-shell .records-table-wrap--accounts {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+body.app-shell .records-table th {
+  background: var(--color-surface-alt);
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--color-border);
+}
+
+body.app-shell .records-table td {
+  border-bottom: 1px solid var(--color-border);
+}
+
+body.app-shell .records-table tbody tr:hover {
+  background: var(--app-hover-row);
+}
+
+body.app-shell .records-title,
+body.app-shell .records-subtitle {
+  text-align: left;
+}
+
+body.app-shell .profile-page a {
+  color: var(--color-brand);
+}
+
+/* ── Forms & inputs ── */
+body.app-shell input[type="text"],
+body.app-shell input[type="password"],
+body.app-shell input[type="email"],
+body.app-shell input[type="number"],
+body.app-shell select,
+body.app-shell textarea,
+body.app-shell .auth-input,
+body.app-shell .profile-input {
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  border-radius: 0.75rem;
+}
+
+body.app-shell input:focus,
+body.app-shell select:focus,
+body.app-shell textarea:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--color-brand) 45%, var(--color-border));
+  box-shadow: 0 0 0 1px var(--app-hover-accent);
+}
+
+body.app-shell:not(.dark-theme) button[type="submit"]:not(.logout-btn):not(.nav-dropdown-item--action),
+body.app-shell:not(.dark-theme) .btn-primary,
+body.app-shell:not(.dark-theme) .gold-refresh-btn,
+body.app-shell:not(.dark-theme) .shop-cta:not(.shop-cta--secondary),
+body.app-shell:not(.dark-theme) .ap-btn--primary {
+  background: var(--color-brand) !important;
+  color: var(--color-on-brand) !important;
+  border-color: var(--color-brand) !important;
+}
+
+body.app-shell button[type="submit"]:not(.logout-btn):not(.nav-dropdown-item--action),
+body.app-shell .btn-primary,
+body.app-shell .gold-refresh-btn,
+body.app-shell .shop-cta:not(.shop-cta--secondary):not(.shop-cta--login),
+body.app-shell .ap-btn--primary {
+  background: var(--color-brand) !important;
+  border-color: var(--color-brand) !important;
+  border-radius: 999px;
+  font-weight: 600;
+  box-shadow: var(--app-btn-shadow);
+  color: var(--color-on-brand) !important;
+}
+
+body.app-shell .shop-action-row .shop-cta,
+body.app-shell .mobile-buy-actions .shop-cta-compact {
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+body.app-shell.dark-theme button[type="submit"]:not(.logout-btn):not(.nav-dropdown-item--action),
+body.app-shell.dark-theme .btn-primary,
+body.app-shell.dark-theme .gold-refresh-btn,
+body.app-shell.dark-theme .shop-cta:not(.shop-cta--secondary):not(.shop-cta--login),
+body.app-shell.dark-theme .ap-btn--primary {
+  color: var(--color-on-brand) !important;
+}
+
+body.app-shell button[type="submit"]:not(.logout-btn):not(.nav-dropdown-item--action):hover,
+body.app-shell .btn-primary:hover,
+body.app-shell .gold-refresh-btn:hover,
+body.app-shell .shop-cta:not(.shop-cta--secondary):not(.shop-cta--login):hover,
+body.app-shell .ap-btn--primary:hover {
+  filter: brightness(1.05);
+}
+
+body.app-shell .ap-btn--secondary {
+  background: var(--color-surface-alt);
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+  border-radius: 999px;
+}
+
+/* ── Admin tabs ── */
+body.app-shell .admin-tab-btn {
+  color: var(--color-text-muted);
+}
+
+body.app-shell .admin-tab-btn.is-active {
+  color: var(--color-text);
+}
+
+body.app-shell .admin-tab-btn.is-active::after {
+  background: var(--color-brand);
+}
+
+body.app-shell .admin-tab-count {
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+}
+
+body.app-shell .admin-tab-btn.is-active .admin-tab-count {
+  background: var(--app-hover-accent);
+  border-color: color-mix(in srgb, var(--color-brand) 30%, var(--color-border));
+  color: var(--color-brand);
+}
+
+body.app-shell .admin-bulk-bar {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+}
+
+body.app-shell .status-select {
+  background: var(--color-surface-alt);
+  border-color: var(--color-border);
+  color: var(--color-text);
+  border-radius: 0.5rem;
+}
+
+body.app-shell .admin-invite-create {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+body.app-shell .admin-invite-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+body.app-shell .admin-invite-action-form {
+  display: inline-flex;
+  margin: 0;
+}
+
+body.app-shell .admin-invite-code-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+body.app-shell .admin-invite-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8125rem;
+  letter-spacing: 0.04em;
+  word-break: break-all;
+}
+
+body.app-shell .admin-invite-copy-btn {
+  flex: 0 0 auto;
+  border: 1px solid var(--color-border);
+  border-radius: 0.375rem;
+  padding: 0.25rem 0.5rem;
+  background: var(--color-surface-alt);
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+body.app-shell .admin-invite-copy-btn:hover {
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+}
+
+body.app-shell .admin-invite-copy-btn.is-copied {
+  border-color: color-mix(in srgb, #27ae60 50%, var(--color-border));
+  color: #27ae60;
+  background: color-mix(in srgb, #27ae60 10%, var(--color-surface-alt));
+}
+
+body.app-shell .admin-reset-btn--danger {
+  border-color: color-mix(in srgb, #c0392b 55%, var(--color-border));
+  background: color-mix(in srgb, #c0392b 12%, var(--color-surface-alt));
+  color: #c0392b;
+  font-weight: 600;
+}
+
+body.app-shell .admin-reset-btn--danger:hover {
+  border-color: #c0392b;
+  background: color-mix(in srgb, #c0392b 18%, var(--color-surface-alt));
+  color: #a93226;
+}
+
+/* ── Shop / calculator ── */
+body.app-shell .shop-page {
+  max-width: var(--app-max);
+}
+
+body.app-shell .shop-breadcrumb-link:hover,
+body.app-shell .shop-breadcrumb-list li.is-current {
+  color: var(--color-brand);
+}
+
+body.app-shell .catalog-card,
+body.app-shell .style-card,
+body.app-shell .product-sidebar,
+body.app-shell .product-main,
+body.app-shell .product-tabs,
+body.app-shell .shop-summary-card {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  border-radius: 1rem;
+}
+
+body.app-shell .catalog-card:hover,
+body.app-shell .style-card:hover {
+  border-color: color-mix(in srgb, var(--color-brand) 35%, var(--color-border));
+  box-shadow: 0 8px 28px color-mix(in srgb, var(--color-text) 12%, transparent);
+}
+
+body.app-shell .shop-mobile-bar {
+  background: var(--app-mobile-bar-bg);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--color-border);
+}
+
+body.app-shell .variant-chip.is-selected,
+body.app-shell .color-swatch.is-selected {
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 1px var(--color-brand);
+}
+
+body.app-shell .product-tab-btn.is-active {
+  color: var(--color-brand);
+  border-color: var(--color-brand);
+}
+
+body.app-shell .shop-hero-price,
+body.app-shell .sidebar-price-value {
+  color: var(--color-brand);
+}
+
+body.app-shell .product-lightbox-close,
+body.app-shell .product-lightbox-nav,
+body.app-shell .product-gallery-nav {
+  background: var(--color-surface-alt);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+body.app-shell .ring-size-guide-table th,
+body.app-shell .chain-length-guide-table th {
+  background: var(--color-surface-alt);
+}
+
+/* ── Notifications page ── */
+body.app-shell .product-lightbox-backdrop {
+  background: var(--app-overlay);
+}
+
+body.app-shell .notifications-feed-item {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  border-radius: 0.75rem;
+}
+
+body.app-shell .notifications-feed-item--unread {
+  border-color: color-mix(in srgb, var(--color-brand) 25%, var(--color-border));
+  background: var(--app-hover-accent);
+}
+body.app-shell .toast {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  border-radius: 0.75rem;
+  box-shadow: 0 12px 32px color-mix(in srgb, var(--color-text) 15%, transparent);
+}
+
+/* ── Error / success pages ── */
+body.app-shell .error-page,
+body.app-shell .success-page {
+  text-align: center;
+  padding: 4rem 1rem;
+  max-width: 32rem;
+  margin: 0 auto;
+}
+
+body.app-shell .error-page-code {
+  font-family: var(--font-heading);
+  font-size: 4rem;
+  color: var(--color-text-muted);
+  opacity: 0.35;
+  margin-bottom: 0.5rem;
+}
+
+body.app-shell .error-page-link,
+body.app-shell .success-page-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.75rem;
+  background: var(--color-brand);
+  color: var(--color-on-brand);
+  font-weight: 600;
+  border-radius: 999px;
+  text-decoration: none;
+  margin-top: 1.5rem;
+  box-shadow: var(--app-btn-shadow);
+}
+
+body.app-shell.dark-theme .error-page-link,
+body.app-shell.dark-theme .success-page-link {
+  color: var(--color-on-brand);
+}
+
+body.app-shell .error-page-link:hover,
+body.app-shell .success-page-link:hover {
+  filter: brightness(1.05);
+}
+
+/* ── Focus rings ── */
+body.app-shell a:focus-visible,
+body.app-shell button:focus-visible,
+body.app-shell input:focus-visible,
+body.app-shell select:focus-visible,
+body.app-shell textarea:focus-visible {
+  outline: 2px solid var(--app-focus-ring);
+  outline-offset: 2px;
+}
+
+/* ── Gold unit switch ── */
+body.app-shell .gold-unit-btn.is-active {
+  background: var(--color-brand);
+  color: var(--color-on-brand);
+  border-color: var(--color-brand);
+}
+
+body.app-shell .gold-unit-btn {
+  background: var(--color-surface-alt);
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+}
+
+/* ── Profile ── */
+body.app-shell .profile-page h1 {
+  font-size: clamp(2rem, 4vw, 2.5rem);
+  margin-bottom: 1.5rem;
+}
+
+body.app-shell .profile-card h2 {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  margin-top: 0;
+}
+
+body.app-shell .profile-dl dt {
+  color: var(--color-text-muted);
+}
+
+body.app-shell .notifications-header-title {
+  font-family: var(--font-heading);
+}
+
+body.app-shell .notifications-unread-pill {
+  background: var(--app-hover-accent);
+  border: 1px solid color-mix(in srgb, var(--color-brand) 25%, var(--color-border));
+  color: var(--color-brand);
+  border-radius: 999px;
+}
+
+body.app-shell .success-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+body.app-shell .success-page-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  border-radius: 999px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: filter 0.2s;
+}
+
+body.app-shell .success-page-btn--secondary {
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+body.app-shell .success-page-btn--primary {
+  background: var(--color-brand);
+  color: var(--color-on-brand);
+  box-shadow: var(--app-btn-shadow);
+}
+
+body.app-shell.dark-theme .success-page-btn--primary {
+  color: var(--color-on-brand);
+}
+
+body.app-shell .success-page-icon {
+  font-size: 4rem;
+  color: var(--color-brand);
+  margin-bottom: 1rem;
+}
+
+/* ── Dialogs ── */
+body.app-shell .admin-delete-dialog,
+body.app-shell .style-preview-overlay {
+  background: var(--app-overlay);
+  backdrop-filter: blur(4px);
+}
+
+body.app-shell .admin-delete-dialog-box,
+body.app-shell .style-preview-box {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+}
+
+@media (max-width: 899px) {
+  body.app-shell .nav-links.is-open {
+    background: var(--color-surface);
+    border-color: var(--color-border);
+  }
+}
+
+/* ── Studio credit ── */
+body.app-shell .app-site-footer {
+  max-width: var(--app-max);
+  margin: 0 auto;
+  padding: 0 1.25rem 1.25rem;
+}
+
+body.app-shell:has(.shop-fit) .app-site-footer {
+  display: none;
+}
+
+.studio-credit {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.studio-credit-powered,
+.studio-credit-copy {
+  margin: 0;
+}
+
+.studio-credit-copy {
+  font-size: 0.6875rem;
+  opacity: 0.85;
+}
+
+.studio-credit--auth {
+  margin-top: 1rem;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.studio-credit--panel {
+  margin-top: 0.625rem;
+  font-size: 0.625rem;
+  line-height: 1.35;
+  text-align: center;
+  flex-shrink: 0;
+}

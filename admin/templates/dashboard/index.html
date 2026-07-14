@@ -1,0 +1,230 @@
+{% extends "admin/base.html" %}
+{% block title %}營運儀表板 - 鑽石珠寶{% endblock %}
+{% block admin_page_class %} adx-page--ops{% endblock %}
+{% block admin_head %}
+<script src="{{ module_static('admin', 'js/chart.umd.min.js') }}?v=4.4.0"></script>
+{% endblock %}
+{% block admin_content %}
+<div class="space-y-4 sm:space-y-6 w-full min-w-0">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white" data-i18n="admin_dashboard_title">營運儀表板</h1>
+      <p class="text-sm text-gray-600 dark:text-gray-400 mt-1 flex items-center gap-2">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span>{{ dashboard.period_label }}</span>
+      </p>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      <div class="inline-flex rounded-lg border border-gray-200 dark:border-[#1F1F23] overflow-hidden" role="group" aria-label="區間單位">
+        {% for g, label, i18n_key in [
+          ('day', '日', 'admin_dashboard_granularity_day'),
+          ('week', '週', 'admin_dashboard_granularity_week'),
+          ('month', '月', 'admin_dashboard_granularity_month')
+        ] %}
+        <a href="{{ url_for('main.admin_dashboard', granularity=g) }}"
+           class="px-3 py-2 text-sm font-medium no-underline{% if dashboard.granularity == g %} bg-gray-900 text-white dark:bg-white dark:text-gray-900{% else %} bg-white dark:bg-[#14141a] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1F1F23]{% endif %}"
+           data-i18n="{{ i18n_key }}"
+           {% if dashboard.granularity == g %}aria-current="true"{% endif %}>{{ label }}</a>
+        {% endfor %}
+      </div>
+
+      <form id="dashboard-range-form" method="get" action="{{ url_for('main.admin_dashboard') }}" class="flex flex-wrap items-center gap-2">
+        <input type="hidden" name="granularity" value="{{ dashboard.granularity }}">
+        {% if dashboard.granularity == 'month' %}
+        <label class="visually-hidden" for="cms-period-month" data-i18n="admin_dashboard_month_label">月份</label>
+        <select id="cms-period-month" name="period" class="text-sm border border-gray-200 dark:border-[#1F1F23] rounded-lg px-3 py-2 bg-white dark:bg-[#14141a] text-gray-900 dark:text-white">
+          {% for option in dashboard.month_options %}
+          <option value="{{ option.value }}"{% if option.value == dashboard.period %} selected{% endif %}>{{ option.label }}</option>
+          {% endfor %}
+        </select>
+        {% elif dashboard.granularity == 'week' %}
+        <label class="visually-hidden" for="cms-period-week" data-i18n="admin_dashboard_week_label">週次</label>
+        <select id="cms-period-week" name="period" class="text-sm border border-gray-200 dark:border-[#1F1F23] rounded-lg px-3 py-2 bg-white dark:bg-[#14141a] text-gray-900 dark:text-white">
+          {% for option in dashboard.week_options %}
+          <option value="{{ option.value }}"{% if option.value == dashboard.period %} selected{% endif %}>{{ option.label }}</option>
+          {% endfor %}
+        </select>
+        {% else %}
+        <label class="visually-hidden" for="cms-period-day-start" data-i18n="admin_dashboard_start_label">開始日期</label>
+        <input type="date" id="cms-period-day-start" name="start" value="{{ dashboard.start }}" class="text-sm border border-gray-200 dark:border-[#1F1F23] rounded-lg px-3 py-2 bg-white dark:bg-[#14141a] text-gray-900 dark:text-white">
+        <span class="text-sm text-gray-500 dark:text-gray-400" aria-hidden="true">–</span>
+        <label class="visually-hidden" for="cms-period-day-end" data-i18n="admin_dashboard_end_label">結束日期</label>
+        <input type="date" id="cms-period-day-end" name="end" value="{{ dashboard.end }}" class="text-sm border border-gray-200 dark:border-[#1F1F23] rounded-lg px-3 py-2 bg-white dark:bg-[#14141a] text-gray-900 dark:text-white">
+        {% endif %}
+      </form>
+      <a href="{{ url_for('main.admin_dashboard_export', granularity=dashboard.granularity, period=dashboard.period or none, start=dashboard.start if dashboard.granularity == 'day' else none, end=dashboard.end if dashboard.granularity == 'day' else none) }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 dark:border-[#1F1F23] text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-[#1F1F23] no-underline">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span data-i18n="admin_dashboard_export">匯出 CSV</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4" aria-label="本月摘要">
+    <article class="cms-stat-card">
+      <div class="flex items-center justify-between pb-2">
+        <h3 class="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 truncate" data-i18n="{{ dashboard.kpi_revenue_key }}">完成營收</h3>
+        <svg class="w-4 h-4 text-gray-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      </div>
+      <div class="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">NT$ {{ "{:,.0f}".format(dashboard.month_revenue) }}</div>
+      {% if dashboard.revenue_change_pct is not none %}
+      <div class="flex items-center text-xs mt-1">
+        {% if dashboard.revenue_change_pct >= 0 %}
+        <svg class="w-3 h-3 text-green-500 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>
+        <span class="font-medium text-green-600">{{ "{:+.1f}".format(dashboard.revenue_change_pct) }}%</span>
+        {% else %}
+        <svg class="w-3 h-3 text-red-500 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/></svg>
+        <span class="font-medium text-red-600">{{ "{:+.1f}".format(dashboard.revenue_change_pct) }}%</span>
+        {% endif %}
+        <span class="text-gray-500 dark:text-gray-400 ml-1 hidden sm:inline" data-i18n="{{ dashboard.compare_label_key }}">vs 上期</span>
+      </div>
+      {% endif %}
+    </article>
+
+    <article class="cms-stat-card">
+      <div class="flex items-center justify-between pb-2">
+        <h3 class="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 truncate" data-i18n="{{ dashboard.kpi_orders_key }}">訂單數</h3>
+        <svg class="w-4 h-4 text-gray-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
+      </div>
+      <div class="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">{{ dashboard.month_orders }}</div>
+      {% if dashboard.order_change_pct is not none %}
+      <div class="flex items-center text-xs mt-1">
+        {% if dashboard.order_change_pct >= 0 %}
+        <span class="font-medium text-green-600">{{ "{:+.1f}".format(dashboard.order_change_pct) }}%</span>
+        {% else %}
+        <span class="font-medium text-red-600">{{ "{:+.1f}".format(dashboard.order_change_pct) }}%</span>
+        {% endif %}
+        <span class="text-gray-500 dark:text-gray-400 ml-1 hidden sm:inline" data-i18n="{{ dashboard.compare_label_key }}">vs 上期</span>
+      </div>
+      {% endif %}
+    </article>
+
+    <article class="cms-stat-card">
+      <div class="flex items-center justify-between pb-2">
+        <h3 class="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 truncate" data-i18n="admin_dashboard_avg_order">平均完成訂單</h3>
+        <svg class="w-4 h-4 text-gray-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>
+      </div>
+      <div class="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">NT$ {{ "{:,.0f}".format(dashboard.average_order) }}</div>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1" data-i18n="admin_dashboard_all_completed">全部完成訂單</p>
+    </article>
+
+    <article class="cms-stat-card">
+      <div class="flex items-center justify-between pb-2">
+        <h3 class="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 truncate" data-i18n="admin_dashboard_pending">待處理</h3>
+        <svg class="w-4 h-4 text-gray-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </div>
+      <div class="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">{{ dashboard.status_counts.pending }}</div>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+        <span data-i18n="admin_dashboard_total_prefix">共</span> {{ dashboard.total_orders }} <span data-i18n="admin_dashboard_orders_unit">筆</span>
+      </p>
+    </article>
+  </div>
+
+  <div class="grid gap-4 sm:gap-6 grid-cols-1 xl:grid-cols-2">
+    <section class="cms-panel">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
+        <div>
+          <h2 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white" data-i18n="admin_dashboard_trends">營收趨勢</h2>
+          <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400" data-i18n="{{ dashboard.trends_sub_key }}">訂單與完成營收趨勢</p>
+        </div>
+        <div class="flex items-center gap-2 flex-shrink-0 flex-wrap">
+          <div class="inline-flex rounded-lg border border-gray-200 dark:border-[#1F1F23] overflow-hidden" role="group" aria-label="圖表數值類型" id="cms-trend-metric-toggle">
+            <button type="button" data-trend-metric="amount" class="px-3 py-1.5 text-xs font-medium border-0 cursor-pointer bg-gray-900 text-white dark:bg-white dark:text-gray-900" data-i18n="admin_dashboard_metric_amount" aria-pressed="true">訂單金額</button>
+            <button type="button" data-trend-metric="count" class="px-3 py-1.5 text-xs font-medium border-0 cursor-pointer bg-white dark:bg-[#14141a] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1F1F23]" data-i18n="admin_dashboard_metric_count" aria-pressed="false">訂單數量</button>
+          </div>
+          <div class="inline-flex rounded-lg border border-gray-200 dark:border-[#1F1F23] overflow-hidden" role="group" aria-label="圖表顯示模式" id="cms-trend-view-toggle">
+            <button type="button" data-trend-view="period" class="px-3 py-1.5 text-xs font-medium border-0 cursor-pointer bg-gray-900 text-white dark:bg-white dark:text-gray-900" data-i18n="admin_dashboard_view_period" aria-pressed="true">本期</button>
+            <button type="button" data-trend-view="cumulative" class="px-3 py-1.5 text-xs font-medium border-0 cursor-pointer bg-white dark:bg-[#14141a] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#1F1F23]" data-i18n="admin_dashboard_view_cumulative" aria-pressed="false">累計</button>
+          </div>
+        </div>
+      </div>
+      <div class="h-64 sm:h-80 w-full">
+        <canvas id="cms-trends-chart" data-i18n-aria="admin_dashboard_trends_chart" aria-label="近十二個月訂單與營收趨勢"></canvas>
+      </div>
+    </section>
+
+    <section class="cms-panel">
+      <div class="mb-4">
+        <h2 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white" data-i18n="admin_dashboard_status">訂單狀態</h2>
+        <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400" data-i18n="admin_dashboard_status_sub">依狀態分布</p>
+      </div>
+      <div class="space-y-3">
+        {% set pipeline_colors = ['#3b82f6', '#22a858', '#d97706', '#dc2626', '#6d6a64', '#c45c5c'] %}
+        {% for row in dashboard.status_rows %}
+        {% if row.count > 0 %}
+        <div>
+          <div class="flex items-center justify-between text-sm mb-1">
+            <span class="text-gray-900 dark:text-white" data-i18n="status_{{ row.code }}">{{ row.label }}</span>
+            <span class="text-gray-500 dark:text-gray-400">{{ row.count }} · {{ "{:.0f}".format(row.percent) }}%</span>
+          </div>
+          <div class="h-2 rounded-full bg-gray-100 dark:bg-[#1F1F23] overflow-hidden">
+            <span class="block h-full rounded-full" style="width: {{ row.percent }}%; background: {{ pipeline_colors[loop.index0 % pipeline_colors|length] }}"></span>
+          </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+      </div>
+      <footer class="flex items-center justify-between mt-6 pt-4 border-t border-gray-200 dark:border-[#1F1F23] text-sm">
+        <span class="text-gray-600 dark:text-gray-400" data-i18n="admin_dashboard_cumulative">累計完成營收</span>
+        <strong class="text-gray-900 dark:text-white">NT$ {{ "{:,.0f}".format(dashboard.month_revenue) }}</strong>
+      </footer>
+    </section>
+  </div>
+
+  <div class="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
+    <section class="cms-panel">
+      <header class="mb-4">
+        <h2 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white" data-i18n="admin_dashboard_top_products">熱門款式</h2>
+        <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400" data-i18n="admin_dashboard_top_products_sub">累計訂單排行</p>
+      </header>
+      <div class="space-y-3">
+        {% for item in dashboard.top_products %}
+        <div class="flex items-center justify-between gap-3 py-2 border-b border-gray-100 dark:border-[#1F1F23] last:border-0">
+          <div class="flex items-center gap-3 min-w-0">
+            <span class="inline-flex items-center justify-center w-9 h-9 rounded-full bg-gray-100 dark:bg-[#1F1F23] text-sm font-semibold text-gray-700 dark:text-gray-200 flex-shrink-0">{{ item.name[:1] }}</span>
+            <div class="min-w-0">
+              <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ item.name }}</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400" data-i18n="admin_dashboard_lifetime_orders">累計訂單</p>
+            </div>
+          </div>
+          <span class="text-sm font-semibold text-gray-900 dark:text-white flex-shrink-0">{{ item.orders }} <span data-i18n="admin_dashboard_orders_unit">筆</span></span>
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="admin_dashboard_no_orders">尚無訂單</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="cms-panel">
+      <header class="mb-4">
+        <h2 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white" data-i18n="admin_dashboard_stores">店家排行</h2>
+        <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400" data-i18n="admin_dashboard_stores_sub">完成營收統計</p>
+      </header>
+      <div class="space-y-3">
+        {% for store in dashboard.stores %}
+        <div class="flex items-center justify-between gap-3 py-2 border-b border-gray-100 dark:border-[#1F1F23] last:border-0">
+          <div class="flex items-center gap-3 min-w-0">
+            <span class="relative inline-flex items-center justify-center w-9 h-9 rounded-full bg-teal-500/10 text-sm font-semibold text-teal-700 dark:text-teal-300 flex-shrink-0">
+              {{ store.name[:1] }}
+              {% if loop.index <= 3 %}<em class="absolute -top-1 -right-1 text-[10px] not-italic bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full w-4 h-4 flex items-center justify-center">{{ loop.index }}</em>{% endif %}
+            </span>
+            <div class="min-w-0">
+              <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ store.name }}</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400">{{ store.orders }} <span data-i18n="admin_dashboard_store_orders">筆訂單</span></p>
+            </div>
+          </div>
+          <span class="text-sm font-semibold text-gray-900 dark:text-white flex-shrink-0">NT$ {{ "{:,.0f}".format(store.revenue) }}</span>
+        </div>
+        {% else %}
+        <p class="text-sm text-gray-500 dark:text-gray-400" data-i18n="admin_dashboard_no_data">尚無資料</p>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+</div>
+
+<script type="application/json" id="dashboard-chart-data">{{ dashboard.trends | tojson }}</script>
+<script type="application/json" id="dashboard-chart-active">{{ dashboard.active_trend_key | tojson }}</script>
+{% endblock %}
+{% block admin_foot %}
+<script src="{{ module_static('admin', 'js/admin-dashboard.js') }}?v=10"></script>
+{% endblock %}

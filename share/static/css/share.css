@@ -1,0 +1,157 @@
+:root {
+  color-scheme: light;
+  --ink: #172326;
+  --muted: #687579;
+  --line: #dce4e5;
+  --brand: #91d6d9;
+  --paper: #ffffff;
+  --page: #f2f6f6;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font-family: "Instrument Sans", system-ui, sans-serif;
+}
+
+.share-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.share-card,
+.quote-sheet {
+  width: min(100%, 720px);
+  margin: auto;
+  padding: clamp(22px, 5vw, 46px);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--paper);
+  box-shadow: 0 18px 50px rgba(20, 42, 45, 0.1);
+}
+
+.share-brand {
+  margin: 0 0 18px;
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.quote-sheet-footnote {
+  margin: 10px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  color: color-mix(in srgb, var(--muted) 55%, transparent);
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  text-align: right;
+  opacity: 0.7;
+}
+
+.share-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+  border-radius: 12px;
+  background: #f8fafa;
+}
+
+.share-category { margin: 22px 0 5px; color: var(--muted); }
+h1, h2 { margin: 0; }
+
+.share-specs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  margin: 24px 0;
+  border-top: 1px solid var(--line);
+}
+
+.share-specs div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.share-specs div:nth-child(odd) { padding-right: 18px; }
+.share-specs div:nth-child(even) { padding-left: 18px; border-left: 1px solid var(--line); }
+.share-specs dt { color: var(--muted); }
+.share-specs dd { margin: 0; font-weight: 600; }
+
+.share-total,
+.quote-total {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: baseline;
+  padding: 18px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--brand) 18%, white);
+}
+
+.share-total strong,
+.quote-total strong { font-size: 1.5rem; }
+.share-note, .quote-disclaimer { color: var(--muted); font-size: 13px; line-height: 1.6; }
+
+.share-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.share-actions a,
+.share-actions button,
+.quote-sheet footer button {
+  flex: 1;
+  padding: 11px 15px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--brand);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.quote-sheet-body { padding: 28px; }
+.quote-sheet { max-width: 900px; }
+.quote-sheet-header, .share-product {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: center;
+}
+.quote-sheet-header { padding-bottom: 22px; border-bottom: 2px solid var(--ink); }
+.quote-sheet-meta { display: grid; gap: 5px; text-align: right; color: var(--muted); }
+.share-product { margin: 28px 0; justify-content: flex-start; }
+.share-product img { width: 180px; height: 140px; object-fit: contain; background: #f8fafa; border-radius: 10px; }
+.quote-breakdown { margin-top: 24px; }
+.quote-breakdown p { display: flex; justify-content: space-between; padding: 8px 0; margin: 0; }
+.quote-sheet footer { display: flex; justify-content: flex-end; margin-top: 26px; }
+.quote-sheet footer button { flex: none; }
+
+@media (max-width: 640px) {
+  .share-specs { grid-template-columns: 1fr; }
+  .share-specs div:nth-child(n) { padding-inline: 0; border-left: 0; }
+  .share-actions, .share-product, .quote-sheet-header { flex-direction: column; align-items: stretch; }
+  .quote-sheet-meta { text-align: left; }
+  .quote-sheet-body { padding: 16px; }
+  .share-product img { width: 100%; max-width: 260px; margin: 0 auto; }
+}
+
+@media print {
+  body { background: white; }
+  .quote-sheet { width: 100%; max-width: none; border: 0; box-shadow: none; padding: 0; }
+  .quote-sheet footer { display: none; }
+}

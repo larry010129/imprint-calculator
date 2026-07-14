@@ -1,0 +1,247 @@
+{% extends "admin/base.html" %}
+{% block title %}商品上架管理 - 鑽石珠寶{% endblock %}
+{% block admin_page_class %} records-page{% endblock %}
+{% block admin_head %}
+<link rel="stylesheet" href="{{ module_static('admin', 'css/admin_products.css') }}?v=7">
+{% endblock %}
+{% block admin_content %}
+<header class="adx-page-header">
+  <div class="adx-page-header__copy">
+    <p class="app-page-eyebrow"><span class="app-page-eyebrow-line"></span><span data-i18n="nav_admin">管理後台</span></p>
+    <h1 class="adx-page-header__title" data-i18n="ap_title">商品上架管理</h1>
+    <p class="adx-page-header__desc" data-i18n="ap_subtitle">管理商品款式、金屬選項與照片（僅限管理員）</p>
+  </div>
+</header>
+
+<div class="ap-toolbar">
+  <a href="{{ url_for('main.admin_product_new') }}" class="ap-btn ap-btn--primary" id="ap-new-btn" data-i18n="ap_new_product">+ 新增商品</a>
+</div>
+
+{# ── Category tabs ── #}
+<div class="admin-tabs ap-category-tabs" role="tablist">
+  {% for cat in categories %}
+  {% set cat_count = products | selectattr('category', 'equalto', cat) | list | length %}
+  <button type="button"
+          class="admin-tab-btn{% if (product and product.category == cat) or (not product and loop.first) %} is-active{% endif %}"
+          data-tab="cat-{{ cat }}"
+          role="tab"
+          aria-selected="{{ 'true' if (product and product.category == cat) or (not product and loop.first) else 'false' }}"
+          aria-controls="panel-cat-{{ cat }}">
+    <span>{{ cat|label_category }}</span>
+    <span class="admin-tab-count" id="ap-tabcount-{{ cat }}">{{ cat_count }}</span>
+  </button>
+  {% endfor %}
+</div>
+
+{% macro render_product_row(p) %}
+{% set readiness = publish_readiness[p.id] %}
+<tr data-id="{{ p.id }}" data-category="{{ p.category }}" draggable="true">
+  <td><button type="button" class="ap-drag-handle" title="拖曳排序" aria-label="拖曳排序">⋮⋮</button></td>
+  {% set thumb = p.image_map().get(p.default_color) or (p.images[0].file_path if p.images else none) %}
+  <td>
+    {% if thumb %}
+    <img class="ap-thumb" src="{{ url_for('static', filename=thumb) }}" alt="">
+    {% else %}
+    <span class="ap-thumb ap-thumb--empty">-</span>
+    {% endif %}
+  </td>
+  <td>{{ p.category|label_category }}</td>
+  <td>
+    {{ p.name_zh }}
+    {% if p.name_en %}<br><span class="ap-name-en">{{ p.name_en }}</span>{% endif %}
+  </td>
+  <td>
+    <span class="ap-status-badge {{ 'ap-status-badge--live' if p.is_published else ('ap-status-badge--offline' if p.first_published_at else 'ap-status-badge--draft') }}">
+      {{ '已上架' if p.is_published else ('已下架' if p.first_published_at else '草稿') }}
+    </span>
+  </td>
+  <td class="ap-actions">
+    <a href="{{ url_for('main.admin_product_edit', id=p.id) }}" class="ap-action-btn" data-i18n="ap_edit">編輯</a>
+    <a href="{{ url_for('main.calculator', preview=1, category=p.category, product=p.id) }}" class="ap-action-btn">預覽</a>
+    {% if p.is_published %}
+    <button type="button" class="ap-action-btn ap-toggle-btn" data-id="{{ p.id }}" data-action="unpublish" data-i18n="ap_unpublish">下架</button>
+    {% else %}
+    <button type="button" class="ap-action-btn ap-action-btn--primary ap-toggle-btn" data-id="{{ p.id }}" data-action="publish" data-i18n="ap_publish"{% if not readiness[0] %} disabled title="{{ readiness[1] }}"{% endif %}>上架</button>
+    {% endif %}
+    <form method="POST" action="{{ url_for('main.admin_product_duplicate', id=p.id) }}" style="display:inline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="ap-action-btn" data-i18n="ap_duplicate">複製</button>
+    </form>
+    <button type="button" class="ap-action-btn ap-action-btn--danger ap-delete-btn" data-id="{{ p.id }}" data-name="{{ p.name_zh }}" data-i18n="ap_delete">刪除</button>
+  </td>
+</tr>
+{% endmacro %}
+
+{% for cat in categories %}
+{% set cat_products = products | selectattr('category', 'equalto', cat) | list %}
+{% set is_active_tab = (product and product.category == cat) or (not product and loop.first) %}
+<div class="admin-tab-panel ap-tab-panel" id="panel-cat-{{ cat }}" data-tab-panel="cat-{{ cat }}" role="tabpanel"{% if not is_active_tab %} hidden{% endif %}>
+  <div class="records-table-wrap">
+    <table class="admin-table ap-table">
+      <thead>
+        <tr>
+          <th aria-label="排序"></th>
+          <th data-i18n="ap_col_thumb">縮圖</th>
+          <th data-i18n="ap_col_category">品項</th>
+          <th data-i18n="ap_col_name">名稱</th>
+          <th data-i18n="ap_col_status">狀態</th>
+          <th data-i18n="ap_col_actions">操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in cat_products %}
+        {{ render_product_row(p) }}
+        {% else %}
+        <tr class="ap-empty-row">
+          <td colspan="6" style="text-align:center;padding:14px 0;color:var(--color-text-muted);" data-i18n="ap_empty_category">此品項尚無商品。</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endfor %}
+
+{% if edit_mode %}
+<div class="ap-form-section{{ ' is-open' if edit_mode else '' }}" id="ap-form-section">
+  <div class="ap-form-header">
+    <h2 class="ap-form-title">{{ '編輯商品' if product else '新增商品' }}</h2>
+    <button type="button" class="ap-form-close-btn" id="ap-form-close-btn" aria-label="關閉">✕</button>
+  </div>
+
+  <form method="post"
+        action="{{ url_for('main.admin_product_update', id=product.id) if product else url_for('main.admin_product_create') }}"
+        enctype="multipart/form-data" class="ap-form" id="ap-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="ap-form-grid">
+      <label class="ap-field">
+        <span>品項分類</span>
+        <select name="category" id="ap-category-select" required>
+          <option value="">請選擇</option>
+          {% for c in categories %}
+          <option value="{{ c }}"{% if product and product.category == c %} selected{% endif %}>{{ c|label_category }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="ap-field">
+        <span>預設顏色（無顏色選項金屬使用的預覽色）</span>
+        <select name="default_color">
+          {% for c in colors %}
+          <option value="{{ c }}"{% if product and product.default_color == c %} selected{% endif %}>{{ c|label_color }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="ap-field">
+        <span>中文名稱</span>
+        <input type="text" name="name_zh" required maxlength="150" value="{{ product.name_zh if product else '' }}">
+      </label>
+      <label class="ap-field">
+        <span>英文名稱（選填）</span>
+        <input type="text" name="name_en" maxlength="150" value="{{ (product.name_en or '') if product else '' }}">
+      </label>
+      <label class="ap-field ap-field--wide">
+        <span>中文描述（選填）</span>
+        <textarea name="description_zh" rows="3">{{ (product.description_zh or '') if product else '' }}</textarea>
+      </label>
+      <label class="ap-field ap-field--wide">
+        <span>英文描述（選填）</span>
+        <textarea name="description_en" rows="3">{{ (product.description_en or '') if product else '' }}</textarea>
+      </label>
+      <label class="ap-field ap-checkbox-field">
+        <input type="checkbox" name="is_published" value="1"{% if product and product.is_published %} checked{% endif %}>
+        <span>立即上架（顧客可在商店中看到此商品）</span>
+      </label>
+    </div>
+
+    <h3 class="ap-section-heading">款式選項（金屬 × 克拉／分）</h3>
+    <p class="ap-hint">為此商品新增至少一種金屬與克拉組合，並填寫金重（錢）。若填寫「手動定價」，將取代自動試算價格。</p>
+    <div class="ap-variant-grid" id="ap-variant-grid">
+      <div class="ap-variant-row ap-variant-row--head">
+        <span>金屬成色</span><span>克拉／分</span><span>金重（錢）</span><span>手動定價 NT$（選填）</span><span></span>
+      </div>
+      {% if product %}
+        {% for v in product.variants %}
+        <div class="ap-variant-row">
+          <select name="variant_gold">
+            {% for g in golds %}<option value="{{ g }}"{% if v.gold == g %} selected{% endif %}>{{ g|label_purity }}</option>{% endfor %}
+          </select>
+          <select name="variant_carat">
+            {% for c in (chain_carats if product.category == 'chain' else carats) %}
+            <option value="{{ c }}"{% if v.carat == c %} selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+          </select>
+          <input type="number" name="variant_weight" step="0.0001" min="0.0001" value="{{ v.weight_chin }}">
+          <input type="number" name="variant_price" step="1" min="0" value="{{ v.manual_price_twd if v.manual_price_twd is not none else '' }}" placeholder="自動試算">
+          <button type="button" class="ap-remove-row-btn" title="移除">✕</button>
+        </div>
+        {% endfor %}
+      {% endif %}
+    </div>
+    <button type="button" class="ap-btn ap-btn--secondary" id="ap-add-variant-btn">+ 新增款式選項</button>
+
+    <h3 class="ap-section-heading">商品照片（依顏色）</h3>
+    <p class="ap-hint">至少上傳一張照片；PNG／JPG／JPEG／WEBP，單張 5MB 以內。每個顏色區塊可上傳多張，顧客選擇對應顏色時會顯示這些圖片。</p>
+    <div class="ap-image-grid">
+      {% for c in colors %}
+      {% set existing_imgs = product.images | selectattr('color', 'equalto', c) | list if product else [] %}
+      <div class="ap-image-dropzone" data-color="{{ c }}">
+        <span class="ap-image-label">{{ c|label_color }}</span>
+        <div class="ap-image-gallery">
+          {% for img in existing_imgs %}
+          <div class="ap-image-existing" data-id="{{ img.id }}">
+            <div class="ap-image-preview-wrap ap-image-preview-wrap--thumb">
+              <img class="ap-image-preview" src="{{ url_for('static', filename=img.file_path) }}" alt="">
+            </div>
+            <label class="ap-remove-image-label">
+              <input type="checkbox" name="remove_image_id" value="{{ img.id }}" class="ap-remove-image-checkbox">
+              移除
+            </label>
+          </div>
+          {% endfor %}
+          <div class="ap-image-pending"></div>
+          {% if not existing_imgs %}
+          <span class="ap-image-empty">尚無圖片</span>
+          {% endif %}
+        </div>
+        <label class="ap-image-input-label">
+          選擇圖片
+          <input type="file" name="image_{{ c }}" accept="image/png,image/jpeg,image/webp" class="ap-image-input" multiple>
+        </label>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="ap-form-actions">
+      <button type="submit" class="ap-btn ap-btn--primary">{{ '儲存變更' if product else '建立商品' }}</button>
+      <a href="{{ url_for('main.admin_products') }}" class="ap-btn ap-btn--secondary">取消</a>
+    </div>
+  </form>
+</div>
+{% endif %}
+
+<dialog id="ap-delete-dialog" class="admin-delete-dialog">
+  <form method="dialog" id="ap-delete-form">
+    <h3 class="admin-delete-title">刪除商品</h3>
+    <p class="admin-delete-target" id="ap-delete-target"></p>
+    <p class="ap-hint">若此商品已有訂單紀錄，系統將自動改為「下架」而非刪除，以維持歷史訂單顯示正常。</p>
+    <div class="admin-delete-actions">
+      <button type="button" class="admin-delete-cancel" id="ap-delete-cancel">取消</button>
+      <button type="submit" class="admin-delete-confirm">確認刪除</button>
+    </div>
+  </form>
+</dialog>
+{% endblock %}
+{% block admin_foot %}
+<script nonce="{{ csp_nonce }}">
+window.AP_OPTIONS = {
+  golds: {{ golds|tojson }},
+  carats: {{ carats|tojson }},
+  chainCarats: {{ chain_carats|tojson }},
+  goldLabels: { {% for g in golds %}{{ g|tojson }}: {{ (g|label_purity)|tojson }}{{ ',' if not loop.last }}{% endfor %} },
+  editMode: {{ edit_mode|tojson }},
+  defaultCategory: {{ (product.category if product else categories[0])|tojson }},
+};
+</script>
+<script src="{{ module_static('admin', 'js/admin_products.js') }}?v=4"></script>
+{% endblock %}

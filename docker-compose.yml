@@ -1,0 +1,51 @@
+services:
+  web:
+    build: .
+    ports:
+      - "${PORT:-8000}:8000"
+    env_file:
+      - .env
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8000
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-diamond}:${POSTGRES_PASSWORD:-diamond}@db:5432/${POSTGRES_DB:-diamond_calculator}
+      RATELIMIT_STORAGE_URI: redis://redis:6379
+      DISABLE_BOT_SCRAPER: ${DISABLE_BOT_SCRAPER:-1}
+      TRUSTED_PROXY_COUNT: ${TRUSTED_PROXY_COUNT:-0}
+    volumes:
+      - app_instance:/app/instance
+      - app_uploads:/app/static/uploads/products
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-diamond}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-diamond}
+      POSTGRES_DB: ${POSTGRES_DB:-diamond_calculator}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-diamond} -d ${POSTGRES_DB:-diamond_calculator}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+volumes:
+  pg_data:
+  redis_data:
+  app_instance:
+  app_uploads:

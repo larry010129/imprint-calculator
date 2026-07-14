@@ -1,0 +1,75 @@
+{% extends "layout/base.html" %}
+
+{% block title %}<span data-i18n="profile_title">帳戶設定</span>{% endblock %}
+
+{% block content %}
+<div class="profile-page">
+  <header class="app-page-header">
+    <p class="app-page-eyebrow"><span class="app-page-eyebrow-line"></span><span data-i18n="nav_profile">帳戶</span></p>
+    <h1 class="app-page-title" data-i18n="profile_title">帳戶設定</h1>
+  </header>
+
+  <div class="profile-card">
+    <h2 data-i18n="profile_info">帳戶資訊</h2>
+    <dl class="profile-dl">
+      <dt data-i18n="profile_store">店家名稱</dt>
+      <dd>{{ current_user.store_name or '-' }}</dd>
+      <dt data-i18n="profile_username">登入帳號</dt>
+      <dd>{{ current_user.username }}</dd>
+      <dt data-i18n="profile_role">角色</dt>
+      <dd>
+        {% if current_user.role == 'admin' %}
+        <span data-i18n="profile_role_admin">管理員</span>
+        {% else %}
+        <span data-i18n="profile_role_store">店家</span>
+        {% endif %}
+      </dd>
+    </dl>
+  </div>
+
+  <div class="profile-card">
+    <h2 data-i18n="profile_stats">訂單統計</h2>
+    <dl class="profile-dl">
+      <dt data-i18n="profile_stat_total">總訂單數</dt>
+      <dd>{{ stats.total }}</dd>
+      <dt data-i18n="profile_stat_pending">待處理</dt>
+      <dd>{{ stats.pending }}</dd>
+    </dl>
+    <p><a href="{{ url_for('main.history') }}" data-i18n="profile_view_history">查看完整歷史紀錄 →</a></p>
+  </div>
+
+  <div class="profile-card">
+    <h2 data-i18n="profile_edit_store">更新店家名稱</h2>
+    <form method="POST" action="{{ url_for('main.profile') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="action" value="update_store">
+      <label>
+        <span data-i18n="profile_store">店家名稱</span>
+        <input type="text" name="store_name" value="{{ current_user.store_name or '' }}" required>
+      </label>
+      <button type="submit" data-i18n="profile_save_store">儲存店家名稱</button>
+    </form>
+  </div>
+
+  <div class="profile-card">
+    <h2 data-i18n="profile_change_password">變更密碼</h2>
+    <form method="POST" action="{{ url_for('main.profile') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="action" value="change_password">
+      <label>
+        <span data-i18n="profile_current_pw">目前密碼</span>
+        <input type="password" name="current_password" required autocomplete="current-password">
+      </label>
+      <label>
+        <span data-i18n="profile_new_pw">新密碼</span>
+        <input type="password" name="new_password" required autocomplete="new-password">
+      </label>
+      <label>
+        <span data-i18n="profile_confirm_pw">確認新密碼</span>
+        <input type="password" name="confirm_password" required autocomplete="new-password">
+      </label>
+      <button type="submit" data-i18n="profile_save_password">更新密碼</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
