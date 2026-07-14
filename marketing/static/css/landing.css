@@ -301,16 +301,72 @@ body.landing-page:not(.dark-theme) .landing-nav-cta:hover {
 
 .landing-nav-menu-btn {
   display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-left: auto;
   padding: 0.5rem;
   background: none;
   border: none;
   color: #fff;
   cursor: pointer;
+  line-height: 0;
+}
+
+.landing-nav-menu-btn svg {
+  display: block;
+  width: 1.5rem;
+  height: 1.5rem;
+  flex-shrink: 0;
+}
+
+/* Only one menu glyph at a time — [hidden] on SVG <path> is unreliable on mobile WebKit */
+.landing-nav-menu-btn .menu-icon-open {
+  display: block;
+}
+
+.landing-nav-menu-btn .menu-icon-close {
+  display: none;
+}
+
+.landing-nav-wrap.is-menu-open .landing-nav-menu-btn .menu-icon-open {
+  display: none;
+}
+
+.landing-nav-wrap.is-menu-open .landing-nav-menu-btn .menu-icon-close {
+  display: block;
 }
 
 .landing-nav-wrap.is-scrolled .landing-nav-menu-btn,
 .landing-nav-wrap.is-menu-open .landing-nav-menu-btn {
   color: var(--landing-fg);
+}
+
+@media (max-width: 900px) {
+  .landing-nav {
+    width: 100%;
+    gap: 0.75rem;
+    padding: 0 1rem;
+  }
+
+  .landing-nav-wrap.is-scrolled .landing-nav,
+  .landing-nav-wrap.is-menu-open .landing-nav {
+    width: 100%;
+    max-width: calc(100vw - 2rem);
+  }
+
+  .landing-logo {
+    min-width: 0;
+    font-size: 1.125rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .landing-nav-wrap.is-scrolled .landing-logo,
+  .landing-nav-wrap.is-menu-open .landing-logo {
+    font-size: 1rem;
+  }
 }
 
 @media (min-width: 901px) {

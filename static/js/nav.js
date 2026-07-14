@@ -36,19 +36,33 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function dropdownTrigger(dropdown) {
+    // Account: whole row toggles on mobile (avatar/name + chevron), not just the tiny button.
     if (dropdown.classList.contains('nav-user-dropdown')) {
-      return dropdown.querySelector('.nav-user-menu-btn');
+      return dropdown.querySelector('.nav-user-trigger')
+        || dropdown.querySelector('.nav-user-menu-btn');
     }
     return dropdown.querySelector('.nav-dropdown-trigger');
+  }
+
+  function setTriggerExpanded(dropdown, expanded) {
+    const trigger = dropdownTrigger(dropdown);
+    if (trigger) trigger.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    const menuBtn = dropdown.querySelector('.nav-user-menu-btn');
+    if (menuBtn) menuBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
   }
 
   function closeAllDropdowns(except) {
     dropdowns.forEach((dropdown) => {
       if (dropdown === except) return;
       dropdown.classList.remove('is-open');
-      const trigger = dropdownTrigger(dropdown);
-      if (trigger) trigger.setAttribute('aria-expanded', 'false');
+      setTriggerExpanded(dropdown, false);
     });
+  }
+
+  function setDropdownOpen(dropdown, open) {
+    closeAllDropdowns(open ? dropdown : null);
+    dropdown.classList.toggle('is-open', open);
+    setTriggerExpanded(dropdown, open);
   }
 
   dropdowns.forEach((dropdown) => {
@@ -73,17 +87,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     trigger.addEventListener('click', (e) => {
       if (!isMobile()) return;
+      // Re-pressing the same account/shop/admin tab retracts its list.
       e.preventDefault();
       e.stopPropagation();
-      const willOpen = !dropdown.classList.contains('is-open');
-      closeAllDropdowns(willOpen ? dropdown : null);
-      dropdown.classList.toggle('is-open', willOpen);
-      trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+      setDropdownOpen(dropdown, !dropdown.classList.contains('is-open'));
     });
   });
 
   if (toggle) {
-    toggle.addEventListener('click', toggleMenu);
+    toggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleMenu();
+    });
   }
 
   navbar.querySelectorAll('.nav-links > a, .nav-dropdown-item[href], .nav-user a.nav-cart-link').forEach((el) => {
@@ -93,6 +108,17 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.addEventListener('click', (e) => {
+    if (!isMobile()) {
+      if (!e.target.closest('[data-nav-dropdown]')) {
+        closeAllDropdowns();
+      }
+      return;
+    }
+    // Phone: tap outside the open panel closes hamburger + any accordion lists.
+    if (navbar.classList.contains('nav-open') && !navbar.contains(e.target)) {
+      closeMenu();
+      return;
+    }
     if (!e.target.closest('[data-nav-dropdown]')) {
       closeAllDropdowns();
     }

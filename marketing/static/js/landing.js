@@ -53,13 +53,7 @@
 
   if (menuBtn) {
     menuBtn.addEventListener("click", function () {
-      var open = !mobileMenu.classList.contains("is-open");
-      setMenuOpen(open);
-      var paths = menuBtn.querySelectorAll("path");
-      if (paths.length >= 2) {
-        paths[0].hidden = open;
-        paths[1].hidden = !open;
-      }
+      setMenuOpen(!mobileMenu.classList.contains("is-open"));
     });
   }
 

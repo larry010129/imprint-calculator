@@ -1079,12 +1079,30 @@ body.app-shell .notify-panel-item--unread {
     right: auto;
   }
 
-  body.app-shell .nav-dropdown:not(.is-open) .nav-dropdown-menu {
-    display: none;
+  body.app-shell .nav-dropdown:not(.is-open) .nav-dropdown-menu,
+  body.app-shell .nav-user-dropdown:not(.is-open) .nav-dropdown-menu {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
   }
 
-  body.app-shell .nav-dropdown.is-open .nav-dropdown-menu {
-    display: block;
+  body.app-shell .nav-dropdown.is-open .nav-dropdown-menu,
+  body.app-shell .nav-user-dropdown.is-open .nav-dropdown-menu {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+  }
+
+  /* Bigger tap target for account accordion row */
+  body.app-shell .nav-user-trigger {
+    cursor: pointer;
+  }
+
+  body.app-shell .nav-user-menu-btn {
+    padding: 0.35rem;
+    margin: -0.35rem -0.35rem -0.35rem 0;
   }
 
   /* Submenus expand inline (accordion), not as floating desktop popups */

@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#91d6d9">
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chiron-hei-hk-webfont@2.6.9/css/vf.css">
-<link rel="stylesheet" href="{{ module_static('marketing', 'css/landing.css') }}?v=13">
+<link rel="stylesheet" href="{{ module_static('marketing', 'css/landing.css') }}?v=14">
 <meta name="csrf-token" content="{{ csrf_token() }}">
 {% block extra_head %}{% endblock %}
 </head>
@@ -39,6 +39,6 @@ if ('serviceWorker' in navigator) {
 <script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
 <script src="{{ url_for('static', filename='js/anim.js') }}"></script>
 <script src="{{ url_for('static', filename='js/toast.js') }}"></script>
-<script src="{{ module_static('marketing', 'js/landing.js') }}?v=4"></script>
+<script src="{{ module_static('marketing', 'js/landing.js') }}?v=5"></script>
 </body>
 </html>
