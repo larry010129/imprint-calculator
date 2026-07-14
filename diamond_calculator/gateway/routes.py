@@ -20,6 +20,7 @@ from diamond_calculator.application.auth import (
 )
 from diamond_calculator.application.invites import (
     consume_invite_code, generate_invite_code, invite_required, validate_invite_code,
+    role_for_invite_code,
 )
 from diamond_calculator.application.order_pricing import (
     apply_pricing_to_submission, compute_order_pricing,
@@ -39,6 +40,7 @@ from diamond_calculator.application.shared_config import decode_config
 from diamond_calculator.application.ring_sizes import RING_SIZE_MEASURE_CHART, RING_SIZE_REFERENCE
 from diamond_calculator.application.bot_metal_feed import (
     fetch_taiwan_bank_prices, get_bot_gold_display, get_price_metadata,
+    schedule_login_gold_fetch,
 )
 from diamond_calculator.application.uploads import (
     UploadError, copy_product_image, delete_product_image, save_product_image,
@@ -300,7 +302,14 @@ def api_catalog():
             'draft': not p.is_published,
         })
 
-    return jsonify({'categories': categories})
+    return jsonify({
+        'categories': categories,
+        'categoryOrder': [
+            cat for cat in CATEGORY_DISPLAY_ORDER if cat in categories
+        ] + [
+            cat for cat in categories if cat not in CATEGORY_DISPLAY_ORDER
+        ],
+    })
 
 
 @bp.route('/gold-price')
@@ -327,7 +336,7 @@ def _gold_quote_payload():
         for gold in ('9k', '14k', '18k')
     }
     return {
-        'success': quote['available'] and quote['source'] != 'fallback',
+        'success': quote['available'],
         'quote': quote,
         'alloyRates': alloy_rates,
     }
@@ -337,27 +346,20 @@ def _gold_quote_payload():
 @login_required
 @limiter.limit('5 per minute')
 def refresh_gold_prices():
-    refreshed = fetch_taiwan_bank_prices()
+    try:
+        fetch_taiwan_bank_prices()
+    except Exception:
+        current_app.logger.exception('Manual gold refresh failed; returning cached quote')
     payload = _gold_quote_payload()
     quote = payload['quote']
-    payload['refreshed'] = refreshed and quote['source'] == 'bot'
-
+    # Soft success: if we still have a price (fresh or last-known), never
+    # surface a fetch failure to the client.
+    payload['refreshed'] = bool(quote['available'])
     if not quote['available']:
         return jsonify({
             **payload,
             'message': 'could not fetch latest BOT quote; no price available',
         }), 502
-
-    if quote['source'] == 'manual':
-        payload['refreshed'] = True
-        return jsonify(payload)
-
-    if not payload['refreshed'] and quote['source'] in ('bot', 'cached'):
-        return jsonify({
-            **payload,
-            'message': 'could not fetch latest BOT quote; showing last known prices',
-        })
-
     return jsonify(payload)
 
 
@@ -680,6 +682,8 @@ def login():
             login_user(user)
             user.last_login_at = datetime.now(timezone.utc).replace(tzinfo=None)
             db.session.commit()
+            # Fire-and-forget BOT refresh during 08–22 Taipei; never blocks login.
+            schedule_login_gold_fetch(current_app._get_current_object())
             next_page = request.args.get('next')
             if next_page and next_page.startswith('/') and not next_page.startswith('//'):
                 return redirect(next_page)
@@ -732,7 +736,7 @@ def register():
         new_user = User(
             username=username,
             password_hash=generate_password_hash(password),
-            role='provider',
+            role=role_for_invite_code(invite_code),
             store_name=store_name
         )
         db.session.add(new_user)
@@ -1087,17 +1091,34 @@ def admin_invite_create():
         return jsonify({'success': False, 'message': 'Unauthorized'}), 403
     max_uses = request.form.get('max_uses', type=int) or 1
     max_uses = max(1, min(max_uses, 100))
+    grants_admin = request.form.get('grants_admin') in ('1', 'on', 'true', 'yes')
+    if grants_admin:
+        confirm_password = request.form.get('confirm_password') or ''
+        if not confirm_password:
+            flash('建立管理員邀請碼需輸入管理員密碼。 (Admin password required.)', 'error')
+            return redirect(url_for('main.admin_invites'))
+        if not check_password_hash(current_user.password_hash, confirm_password):
+            flash('管理員密碼不正確，請輸入目前登入帳號的密碼。 (Wrong password for your logged-in account.)', 'error')
+            return redirect(url_for('main.admin_invites'))
+        # Admin invites are typically single-use for safety.
+        max_uses = 1
     code = generate_invite_code()
     invite = InviteCode(
         code=code,
         created_by_id=current_user.id,
         max_uses=max_uses,
         is_active=True,
+        grants_admin=grants_admin,
     )
     db.session.add(invite)
     db.session.commit()
-    log_admin_action('create_invite', code=code, max_uses=max_uses)
-    flash(f'已建立邀請碼：{code}', 'success')
+    log_admin_action(
+        'create_invite', code=code, max_uses=max_uses, grants_admin=grants_admin
+    )
+    if grants_admin:
+        flash(f'已建立管理員邀請碼：{code}（僅限使用 1 次）', 'success')
+    else:
+        flash(f'已建立邀請碼：{code}', 'success')
     return redirect(url_for('main.admin_invites'))
 
 

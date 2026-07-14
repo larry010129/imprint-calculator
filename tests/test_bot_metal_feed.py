@@ -164,7 +164,34 @@ PASSBOOK_ONLY = """
 sell, stamp = _find_gold_bar_prices(BeautifulSoup(PASSBOOK_ONLY, "html.parser"))
 assert sell is None, "passbook-only HTML must not be used"
 
-# --- Scrape-fail keeps cached BOT data when GOLD_XAU_PER_GRAM is set ---
+# --- Hourly sync window (08:00–22:00 Taipei, on the hour) ---
+from datetime import datetime
+from diamond_calculator.application.bot_metal_feed import (
+    seconds_until_next_gold_sync,
+    TAIPEI,
+)
+
+def _taipei(y, m, d, hh, mm=0, ss=0):
+    return datetime(y, m, d, hh, mm, ss, tzinfo=TAIPEI)
+
+# 10:15 → next is 11:00
+assert abs(seconds_until_next_gold_sync(_taipei(2026, 7, 14, 10, 15)) - (45 * 60)) < 1
+# 22:00:30 → next is tomorrow 08:00
+gap = seconds_until_next_gold_sync(_taipei(2026, 7, 14, 22, 0, 30))
+assert abs(gap - (9 * 3600 + 59 * 60 + 30)) < 2, f"unexpected overnight gap {gap}"
+# 07:30 → next is 08:00
+assert abs(seconds_until_next_gold_sync(_taipei(2026, 7, 14, 7, 30)) - (30 * 60)) < 1
+# 21:00:01 → next is 22:00
+assert abs(seconds_until_next_gold_sync(_taipei(2026, 7, 14, 21, 0, 1)) - (3599)) < 2
+
+from diamond_calculator.application.bot_metal_feed import is_within_gold_sync_hours
+assert is_within_gold_sync_hours(_taipei(2026, 7, 14, 8, 0)) is True
+assert is_within_gold_sync_hours(_taipei(2026, 7, 14, 19, 30)) is True
+assert is_within_gold_sync_hours(_taipei(2026, 7, 14, 22, 59)) is True
+assert is_within_gold_sync_hours(_taipei(2026, 7, 14, 23, 0)) is False
+assert is_within_gold_sync_hours(_taipei(2026, 7, 14, 7, 59)) is False
+
+# --- Scrape-fail keeps cached BOT data; display softens to bot ---
 os.environ['GOLD_XAU_PER_GRAM'] = '4306'
 os.environ.pop('DISABLE_BOT_SCRAPER', None)
 importlib.reload(feed)
@@ -190,6 +217,74 @@ assert feed._price_cache['source'] == 'cached', f"expected cached, got {feed._pr
 assert feed._price_cache['bot_posted_at'] == '2026/07/13 13:14'
 assert feed._price_cache['prices']['XAU'] == 4251.832
 
+display = feed.get_bot_gold_display()
+assert display['source'] == 'bot', 'users must not see cached/fail state'
+assert display['is_stale'] is False
+assert display['sell'] == 4251.832
+assert display['available'] is True
+
+# --- None fetched_at must not crash age check / refresh ---
+feed._price_cache['fetched_at'] = None
+feed._price_cache['source'] = 'bot'
+assert feed._safe_fetched_at(None) == 0.0
+feed._download_bot_html = _fail_download
+assert feed.fetch_taiwan_bank_prices() is False
+feed._download_bot_html = orig_download
+assert feed._price_cache['prices']['XAU'] == 4251.832
+assert feed.get_bot_gold_display()['available'] is True
+
+# --- force=True bypasses min-refresh debounce ---
+feed._price_cache.update(
+    prices={'XAU': 4251.832, 'XPT': 1050, 'XAG': 30},
+    fetched_at=feed.time.time(),
+    source='bot',
+    bot_posted_at='2026/07/13 13:14',
+    bank_sell=4251.832,
+    price_kind='gold_bar',
+)
+called = {'n': 0}
+def _count_download():
+    called['n'] += 1
+    raise RuntimeError('counted')
+feed._download_bot_html = _count_download
+assert feed.fetch_taiwan_bank_prices(force=False) is True  # debounce hits
+assert called['n'] == 0
+assert feed.fetch_taiwan_bank_prices(force=True) is False  # forced through
+assert called['n'] == 1
+feed._download_bot_html = orig_download
+
+# --- Off-hours login fetch does not start a thread scrape ---
+import threading as _threading
+started = {'n': 0}
+real_thread = _threading.Thread
+def _fake_thread(*args, **kwargs):
+    started['n'] += 1
+    class _Dummy:
+        def start(self):
+            return None
+    return _Dummy()
+feed._last_login_fetch_at = 0.0
+_threading.Thread = _fake_thread
+orig_within = feed.is_within_gold_sync_hours
+try:
+    class _App:
+        def app_context(self):
+            from contextlib import nullcontext
+            return nullcontext()
+    feed.is_within_gold_sync_hours = lambda now=None: False
+    feed.schedule_login_gold_fetch(_App())
+    assert started['n'] == 0, 'off-hours must not spawn fetch thread'
+    feed.is_within_gold_sync_hours = lambda now=None: True
+    feed._last_login_fetch_at = 0.0
+    feed.schedule_login_gold_fetch(_App())
+    assert started['n'] == 1, 'on-hours should spawn one background fetch'
+    # Cooldown: second login soon after should not spawn again
+    feed.schedule_login_gold_fetch(_App())
+    assert started['n'] == 1, 'cooldown must suppress rapid login fetches'
+finally:
+    _threading.Thread = real_thread
+    feed.is_within_gold_sync_hours = orig_within
+
 # --- Manual-only mode when scraper disabled ---
 os.environ['DISABLE_BOT_SCRAPER'] = '1'
 importlib.reload(feed)
@@ -212,5 +307,10 @@ importlib.reload(feed)
 assert feed._price_cache['source'] == 'cached'
 assert feed._price_cache['prices']['XAU'] == 4200.0
 assert feed._price_cache['bot_posted_at'] == '2026/07/10 09:00'
+# Public APIs still hide "cached"
+prices, public_source = feed.get_cached_metal_prices()
+assert public_source == 'bot'
+assert prices['XAU'] == 4200.0
+assert feed.get_bot_gold_display()['source'] == 'bot'
 
 print("bot metal feed parser tests passed")

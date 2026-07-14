@@ -10,12 +10,30 @@
   </div>
 </header>
 
-<form method="POST" action="{{ url_for('main.admin_invite_create') }}" class="admin-invite-create">
+<form method="POST" action="{{ url_for('main.admin_invite_create') }}" class="admin-invite-create" id="admin-invite-create-form">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="confirm_password" id="invite-confirm-password" value="">
   <label for="max_uses" data-i18n="admin_invites_max_uses">可使用次數</label>
   <input type="number" name="max_uses" id="max_uses" value="1" min="1" max="100" class="admin-reset-input">
+  <label class="admin-invite-admin-opt" for="grants_admin">
+    <input type="checkbox" name="grants_admin" id="grants_admin" value="1">
+    <span data-i18n="admin_invites_grants_admin">以此碼註冊為管理員帳號</span>
+  </label>
+  <p class="admin-invite-admin-hint" data-i18n="admin_invites_grants_admin_hint">勾選後建立時需輸入管理員密碼；管理員邀請碼僅限使用 1 次。</p>
   <button type="submit" class="admin-reset-btn" data-i18n="admin_invites_create">建立邀請碼</button>
 </form>
+
+<dialog id="invite-admin-password-dialog" class="admin-invite-password-dialog">
+  <div class="admin-invite-password-form">
+    <h2 class="admin-invite-password-title" data-i18n="admin_invites_password_prompt">建立管理員邀請碼：請輸入您目前登入帳號的密碼</h2>
+    <label for="invite-admin-password-input" class="visually-hidden" data-i18n="admin_invites_password_label">管理員密碼</label>
+    <input type="password" id="invite-admin-password-input" class="admin-reset-input" autocomplete="current-password">
+    <div class="admin-invite-password-actions">
+      <button type="button" id="invite-admin-password-ok" class="admin-reset-btn" data-i18n="admin_invites_password_confirm">確認</button>
+      <button type="button" id="invite-admin-password-cancel" class="admin-reset-btn" data-i18n="admin_invites_password_cancel">取消</button>
+    </div>
+  </div>
+</dialog>
 
 <div class="records-table-wrap records-table-wrap--scroll">
 <table>
@@ -23,6 +41,7 @@
     <tr>
       <th data-i18n="admin_invites_code">邀請碼</th>
       <th data-i18n="admin_invites_uses">已使用 / 上限</th>
+      <th data-i18n="admin_invites_role">權限</th>
       <th data-i18n="admin_invites_status">狀態</th>
       <th data-i18n="admin_invites_created">建立時間</th>
       <th data-i18n="table_actions">操作</th>
@@ -39,6 +58,13 @@
         </button>
       </td>
       <td>{{ inv.use_count }} / {{ inv.max_uses or '∞' }}</td>
+      <td>
+        {% if inv.grants_admin %}
+        <span class="admin-invite-role admin-invite-role--admin" data-i18n="admin_invites_role_admin">管理員</span>
+        {% else %}
+        <span data-i18n="admin_invites_role_provider">一般店家</span>
+        {% endif %}
+      </td>
       <td>{% if inv.is_active %}<span data-i18n="admin_invites_active">有效</span>{% else %}<span data-i18n="admin_invites_revoked">已停用</span>{% endif %}</td>
       <td>{{ inv.created_at|tz_taiwan if inv.created_at else '—' }}</td>
       <td class="admin-invite-actions">
@@ -55,7 +81,7 @@
       </td>
     </tr>
     {% else %}
-    <tr><td colspan="5" style="text-align:center" data-i18n="admin_invites_empty">尚無邀請碼</td></tr>
+    <tr><td colspan="6" style="text-align:center" data-i18n="admin_invites_empty">尚無邀請碼</td></tr>
     {% endfor %}
   </tbody>
 </table>
@@ -71,6 +97,105 @@ document.querySelectorAll('.admin-invite-delete-form').forEach(function (form) {
     if (!confirm(msg)) e.preventDefault();
   });
 });
+
+(function () {
+  var form = document.getElementById('admin-invite-create-form');
+  var grants = document.getElementById('grants_admin');
+  var pwField = document.getElementById('invite-confirm-password');
+  var maxUses = document.getElementById('max_uses');
+  var dialog = document.getElementById('invite-admin-password-dialog');
+  var pwInput = document.getElementById('invite-admin-password-input');
+  var btnOk = document.getElementById('invite-admin-password-ok');
+  var btnCancel = document.getElementById('invite-admin-password-cancel');
+  if (!form || !grants || !pwField) return;
+
+  // Holds the password across the gated re-submit (must not clear it).
+  var pendingAdminPassword = null;
+
+  function syncMaxUses() {
+    if (!maxUses) return;
+    if (grants.checked) {
+      maxUses.value = '1';
+      maxUses.readOnly = true;
+    } else {
+      maxUses.readOnly = false;
+    }
+  }
+  grants.addEventListener('change', syncMaxUses);
+  syncMaxUses();
+
+  function failEmpty() {
+    var need = typeof window.t === 'function'
+      ? window.t('admin_invites_password_required')
+      : '需輸入管理員密碼才能建立管理員邀請碼。';
+    if (typeof window.showToast === 'function') window.showToast(need, 'error');
+    else alert(need);
+  }
+
+  function continueCreate(password) {
+    if (!password) {
+      failEmpty();
+      return;
+    }
+    pendingAdminPassword = password;
+    pwField.value = password;
+    // requestSubmit re-enters the submit handler with pendingAdminPassword set.
+    if (typeof form.requestSubmit === 'function') form.requestSubmit();
+    else form.submit();
+  }
+
+  function openPasswordDialog() {
+    if (dialog && typeof dialog.showModal === 'function' && pwInput) {
+      pwInput.value = '';
+      dialog.showModal();
+      window.setTimeout(function () { pwInput.focus(); }, 0);
+      return;
+    }
+    var promptMsg = typeof window.t === 'function'
+      ? window.t('admin_invites_password_prompt')
+      : '建立管理員邀請碼：請輸入您的管理員密碼';
+    var entered = window.prompt(promptMsg, '');
+    if (entered === null) return;
+    continueCreate(entered);
+  }
+
+  if (btnOk && pwInput) {
+    btnOk.addEventListener('click', function () {
+      var entered = pwInput.value || '';
+      if (dialog && dialog.open) dialog.close();
+      continueCreate(entered);
+    });
+  }
+  if (btnCancel) {
+    btnCancel.addEventListener('click', function () {
+      if (dialog && dialog.open) dialog.close();
+    });
+  }
+  if (pwInput) {
+    pwInput.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter') {
+        ev.preventDefault();
+        if (btnOk) btnOk.click();
+      }
+    });
+  }
+
+  form.addEventListener('submit', function (e) {
+    if (!grants.checked) {
+      pendingAdminPassword = null;
+      pwField.value = '';
+      return;
+    }
+    if (pendingAdminPassword !== null) {
+      pwField.value = pendingAdminPassword;
+      pendingAdminPassword = null;
+      return; // allow the real POST through
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    openPasswordDialog();
+  });
+})();
 
 function copyInviteText(text) {
   if (navigator.clipboard && window.isSecureContext) {

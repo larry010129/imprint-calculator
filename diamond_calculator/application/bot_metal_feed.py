@@ -19,6 +19,7 @@ import urllib.error
 import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from bs4 import BeautifulSoup
 
@@ -59,6 +60,97 @@ BAR_DERIVED_GRAM_MAX = 5500
 CHALLENGE_MAX_WAIT_SECONDS = 75
 CHALLENGE_POLL_INTERVAL_SECONDS = 5
 MIN_REFRESH_INTERVAL_SECONDS = 60
+LOGIN_GOLD_FETCH_COOLDOWN_SECONDS = 60
+
+# Auto-scrape at :00 each hour during this Taipei window (inclusive).
+TAIPEI = ZoneInfo("Asia/Taipei")
+GOLD_SYNC_START_HOUR = 8
+GOLD_SYNC_END_HOUR = 22
+
+_login_fetch_lock = threading.Lock()
+_last_login_fetch_at = 0.0
+
+
+def seconds_until_next_gold_sync(now: datetime | None = None) -> float:
+    """Seconds until the next on-the-hour sync in [08:00, 22:00] Taipei."""
+    try:
+        if now is None:
+            now = datetime.now(TAIPEI)
+        elif now.tzinfo is None:
+            now = now.replace(tzinfo=TAIPEI)
+        else:
+            now = now.astimezone(TAIPEI)
+    except Exception:
+        # Windows without tzdata / odd clocks: keep the loop alive hourly.
+        log.warning('Taipei timezone unavailable; defaulting next gold sync to 1h', exc_info=True)
+        return 3600.0
+
+    nxt = now.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+    for _ in range(48):
+        if GOLD_SYNC_START_HOUR <= nxt.hour <= GOLD_SYNC_END_HOUR:
+            return max(1.0, (nxt - now).total_seconds())
+        nxt += timedelta(hours=1)
+    return 3600.0
+
+
+def is_within_gold_sync_hours(now: datetime | None = None) -> bool:
+    """True during Taipei 08:00–22:59 (aligned with scheduled hourly sync)."""
+    try:
+        if now is None:
+            now = datetime.now(TAIPEI)
+        elif now.tzinfo is None:
+            now = now.replace(tzinfo=TAIPEI)
+        else:
+            now = now.astimezone(TAIPEI)
+    except Exception:
+        return True  # Prefer attempting a fetch over silent skip if TZ broken.
+    return GOLD_SYNC_START_HOUR <= now.hour <= GOLD_SYNC_END_HOUR
+
+
+def schedule_login_gold_fetch(app) -> None:
+    """Background force-fetch on login during sync hours; no-op overnight.
+
+    Does not block the login request. Failures keep the last cached quote.
+    """
+    global _last_login_fetch_at
+
+    if not is_within_gold_sync_hours():
+        log.debug('Login gold fetch skipped (outside %02d–%02d Taipei)',
+                  GOLD_SYNC_START_HOUR, GOLD_SYNC_END_HOUR)
+        return
+
+    with _login_fetch_lock:
+        now = time.time()
+        if now - _last_login_fetch_at < LOGIN_GOLD_FETCH_COOLDOWN_SECONDS:
+            log.debug('Login gold fetch skipped (cooldown)')
+            return
+        _last_login_fetch_at = now
+
+    def _run():
+        try:
+            with app.app_context():
+                fetch_taiwan_bank_prices(force=True)
+        except Exception:
+            log.exception('Login background gold fetch failed')
+
+    threading.Thread(target=_run, daemon=True, name='login-gold-fetch').start()
+
+
+def _safe_fetched_at(value) -> float:
+    """Coerce cache timestamps; never return None (avoids TypeError on age math)."""
+    try:
+        if value is None:
+            return 0.0
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _public_price_source(source: str | None) -> str:
+    """Map internal cache/fail states to a user-facing source label."""
+    if source in ('cached', 'fallback', None, ''):
+        return 'bot'
+    return source
 
 
 def _env_gold_price() -> float | None:
@@ -138,7 +230,7 @@ def _cache_from_persisted(persisted: dict) -> dict:
     bot_posted_at = persisted.get("bot_posted_at") or persisted.get("last_updated")
     return {
         "prices": persisted["prices"],
-        "fetched_at": persisted.get("fetched_at", 0),
+        "fetched_at": _safe_fetched_at(persisted.get("fetched_at")),
         "source": "cached",
         "bot_posted_at": bot_posted_at if _is_bot_stamp(bot_posted_at) else None,
         "bank_sell": persisted.get("bank_sell"),
@@ -530,19 +622,30 @@ def _download_bot_html():
     raise last_error or RuntimeError('黃金條塊 sell price not found on BOT pages')
 
 
-def fetch_taiwan_bank_prices():
-    """Refresh BOT 黃金條塊 sell (TWD/gram). Keeps prior cache on failure."""
+def fetch_taiwan_bank_prices(force: bool = False):
+    """Refresh BOT 黃金條塊 sell (TWD/gram). Keeps prior cache on failure.
+
+    ``force=True`` skips the short post-success debounce (used by login fetch).
+    """
     global _price_cache
     with _fetch_lock:
-        manual = _env_gold_price()
-        if manual is not None and not _bot_scraper_enabled():
-            _apply_manual_price(manual)
-            return True
+        try:
+            manual = _env_gold_price()
+            if manual is not None and not _bot_scraper_enabled():
+                _apply_manual_price(manual)
+                return True
 
-        age = time.time() - _price_cache.get('fetched_at', 0)
-        if _price_cache.get('source') == 'bot' and age < MIN_REFRESH_INTERVAL_SECONDS:
-            return True
-        return _fetch_and_update_cache()
+            if not force:
+                age = time.time() - _safe_fetched_at(_price_cache.get('fetched_at'))
+                if _price_cache.get('source') == 'bot' and age < MIN_REFRESH_INTERVAL_SECONDS:
+                    return True
+            return _fetch_and_update_cache()
+        except Exception as exc:
+            # Last-resort guard: never let a sync crash the scheduler / request.
+            log.warning('BOT price sync crashed; keeping prior cache: %s', exc)
+            if _has_bot_price_data():
+                _price_cache['source'] = 'cached'
+            return False
 
 
 def _apply_manual_price(manual: float) -> None:
@@ -612,12 +715,17 @@ def _fetch_and_update_cache():
         if manual is not None and not _price_cache.get('prices'):
             _apply_manual_price(manual)
             return True
+        # Prefer keeping whatever sell we already have over wiping to constants.
+        existing = (_price_cache.get('prices') or {}).get('XAU')
+        if existing is not None:
+            _price_cache['source'] = 'cached'
+            return False
         _price_cache.update(
             prices=dict(FALLBACK_TWD_PER_GRAM),
             fetched_at=time.time(),
             source="fallback",
             bot_posted_at=None,
-            bank_sell=None,
+            bank_sell=FALLBACK_TWD_PER_GRAM['XAU'],
             price_kind="gold_bar",
         )
         return False
@@ -627,9 +735,8 @@ def get_cached_metal_prices():
     """TWD per gram for XAU/XPT/XAG from in-memory cache. Never raises."""
     cached = _price_cache
     if cached["prices"]:
-        return cached["prices"], cached["source"]
-    prices = dict(FALLBACK_TWD_PER_GRAM)
-    return prices, "fallback"
+        return cached["prices"], _public_price_source(cached["source"])
+    return dict(FALLBACK_TWD_PER_GRAM), "bot"
 
 
 def get_price_metadata():
@@ -638,25 +745,36 @@ def get_price_metadata():
         legacy = _price_cache.get("last_updated")
         if _is_bot_stamp(legacy):
             bot_posted_at = legacy
+    bank_sell = _price_cache.get("bank_sell")
+    if bank_sell is None and _price_cache.get("prices"):
+        bank_sell = _price_cache["prices"].get("XAU")
     return {
         "bot_posted_at": bot_posted_at,
-        "bank_sell": _price_cache.get("bank_sell"),
-        "fetched_at": _price_cache.get("fetched_at"),
+        "bank_sell": bank_sell,
+        "fetched_at": _safe_fetched_at(_price_cache.get("fetched_at")) or None,
         "price_kind": _price_cache.get("price_kind", "gold_bar"),
     }
 
 
 def get_bot_gold_display():
-    """Summary for templates: BOT 黃金條塊 sell (TWD/gram) and cache status."""
+    """Summary for templates: BOT 黃金條塊 sell (TWD/gram) and cache status.
+
+    Fetch failures and overnight holds keep the last known price. The public
+    ``source`` is softened so users never see a "could not fetch" state while
+    a usable quote is still available.
+    """
     prices, source = get_cached_metal_prices()
     meta = get_price_metadata()
     fetched_at = meta.get("fetched_at")
     age_seconds = max(0, time.time() - fetched_at) if fetched_at else None
     fetched_at_display = None
     if fetched_at:
-        fetched_at_display = (
-            datetime.fromtimestamp(fetched_at, timezone.utc) + timedelta(hours=8)
-        ).strftime('%Y-%m-%d %H:%M')
+        try:
+            fetched_at_display = (
+                datetime.fromtimestamp(fetched_at, timezone.utc) + timedelta(hours=8)
+            ).strftime('%Y-%m-%d %H:%M')
+        except (OverflowError, OSError, ValueError):
+            fetched_at_display = None
     sell = meta.get("bank_sell")
     if sell is None:
         sell = prices.get("XAU")
@@ -668,13 +786,8 @@ def get_bot_gold_display():
         "fetched_at": fetched_at,
         "fetched_at_display": fetched_at_display,
         "age_seconds": age_seconds,
-        "is_stale": (
-            source == 'fallback'
-            or (source == 'cached' and (
-                age_seconds is None or age_seconds > 24 * 60 * 60
-            ))
-        ),
-        "source": source,
+        "is_stale": False,
+        "source": _public_price_source(source),
         "source_url": BOT_PUBLIC_URL,
         "price_kind": meta.get("price_kind", "gold_bar"),
         "available": sell is not None,

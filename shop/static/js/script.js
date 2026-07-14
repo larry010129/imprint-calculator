@@ -73,6 +73,7 @@ function sortGolds(golds) {
 const CATEGORY_CARAT_UNIT = {
   pendant: 'ct', ring: 'ct', earring: 'ct', bracelet: 'ct', chain: 'fen',
 };
+const CATEGORY_DISPLAY_ORDER = ['pendant', 'ring', 'earring', 'bracelet', 'chain'];
 
 // ── Live catalog data (from /api/catalog) — replaces the old hardcoded
 //    CATEGORY_STYLES / STYLE_NAMES / CATEGORY_METALS / WEIGHT_TABLE. ───────
@@ -81,6 +82,15 @@ let catalogLoaded = false;
 
 function productsFor(category) {
   return catalog[category] || [];
+}
+
+function catalogCategories() {
+  const present = Object.keys(catalog).filter(cat => productsFor(cat).length > 0);
+  const preferred = (window._catalogCategoryOrder && window._catalogCategoryOrder.length)
+    ? window._catalogCategoryOrder
+    : CATEGORY_DISPLAY_ORDER;
+  const ordered = preferred.filter(cat => present.includes(cat));
+  return ordered.concat(present.filter(cat => !ordered.includes(cat)));
 }
 
 function getProduct(category, typeId) {
@@ -208,15 +218,20 @@ async function loadCatalog() {
     if (!res.ok) throw new Error(`API ${res.status}`);
     const data = await res.json();
     catalog = data.categories || {};
+    window._catalogCategoryOrder = data.categoryOrder || null;
     catalogLoaded = true;
     grid?.classList.remove('is-loading');
     grid?.setAttribute('aria-busy', 'false');
     if (errEl) errEl.remove();
+    renderCatalogTiles();
   } catch (err) {
     catalogLoaded = false;
+    catalog = {};
+    window._catalogCategoryOrder = null;
     grid?.classList.remove('is-loading');
     grid?.setAttribute('aria-busy', 'false');
     console.error('failed to load catalog', err);
+    renderCatalogTiles();
     if (grid && !errEl) {
       errEl = document.createElement('div');
       errEl.id = 'catalog-error';
@@ -225,19 +240,40 @@ async function loadCatalog() {
       grid.parentElement?.insertBefore(errEl, grid);
       errEl.querySelector('#catalog-retry')?.addEventListener('click', () => {
         errEl.remove();
-        loadCatalog().then(() => { updateCatalogTileImages(); if (state.category) renderTypeCards(); });
+        loadCatalog().then(() => { if (state.category) renderTypeCards(); });
       });
     }
   }
 }
 
-function updateCatalogTileImages() {
-  document.querySelectorAll('.cat-btn').forEach(btn => {
-    const products = productsFor(btn.dataset.cat);
-    if (!products.length) return;
-    const img = btn.querySelector('img');
-    const url = productImageUrl(products[0], products[0].defaultColor);
-    if (img && url) img.src = url;
+function renderCatalogTiles() {
+  const grid = document.querySelector('.catalog-grid');
+  const empty = document.getElementById('catalog-empty');
+  if (!grid) return;
+  grid.innerHTML = '';
+  const cats = catalogLoaded ? catalogCategories() : [];
+  empty?.classList.toggle('hidden', cats.length > 0);
+  cats.forEach(cat => {
+    const products = productsFor(cat);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'catalog-tile cat-btn';
+    btn.dataset.cat = cat;
+    if (state.category === cat) btn.classList.add('active');
+
+    const img = document.createElement('img');
+    img.loading = 'lazy';
+    img.alt = '';
+    const thumb = products[0];
+    img.src = thumb ? productImageUrl(thumb, thumb.defaultColor) : '';
+
+    const label = document.createElement('span');
+    label.textContent = tr('cat_' + cat);
+
+    btn.appendChild(img);
+    btn.appendChild(label);
+    btn.addEventListener('click', () => selectCategory(cat));
+    grid.appendChild(btn);
   });
 }
 
@@ -1566,9 +1602,6 @@ function selectCarat(carat) {
 
 // ── Event wiring ──────────────────────────────────────────────────────────
 
-document.querySelectorAll(".cat-btn").forEach(btn =>
-  btn.addEventListener("click", () => selectCategory(btn.dataset.cat)));
-
 document.querySelectorAll(".carat-btn").forEach(btn =>
   btn.addEventListener("click", () => selectCarat(btn.dataset.carat)));
 
@@ -1995,6 +2028,7 @@ document.addEventListener('langchange', () => {
   updateMetalButtons();
   updateColorStep();
   updateChainOptions();
+  renderCatalogTiles();
   const titleEl = document.getElementById("shop-category-title");
   if (titleEl && state.category) titleEl.textContent = tr('cat_' + state.category);
   updateSummary();
@@ -2008,7 +2042,6 @@ document.addEventListener('langchange', () => {
 
 async function init() {
   await loadCatalog();
-  updateCatalogTileImages();
   initProductImageLightbox();
   initProductTabs();
 

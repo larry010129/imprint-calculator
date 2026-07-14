@@ -3,9 +3,8 @@ import os
 import secrets
 import threading
 import time
-from datetime import datetime, timedelta
+from datetime import timedelta
 from pathlib import Path
-from zoneinfo import ZoneInfo
 
 from flask import Flask, flash, g, jsonify, redirect, render_template, request, url_for
 from flask_login import LoginManager, current_user
@@ -16,7 +15,11 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import generate_password_hash
 
-from diamond_calculator.application.bot_metal_feed import fetch_taiwan_bank_prices, get_bot_gold_display
+from diamond_calculator.application.bot_metal_feed import (
+    fetch_taiwan_bank_prices,
+    get_bot_gold_display,
+    seconds_until_next_gold_sync,
+)
 from diamond_calculator.application.rate_limit import limiter
 from diamond_calculator.module_assets import (
     build_template_loader,
@@ -28,7 +31,6 @@ from diamond_calculator.gateway.routes import bp as main_bp
 from diamond_calculator.repository.models import CartItem, User, UserNotification, db
 
 ROOT = Path(__file__).resolve().parent.parent
-TAIPEI = ZoneInfo('Asia/Taipei')
 _price_sync_started = False
 migrate = Migrate()
 
@@ -56,19 +58,11 @@ def _configure_logging(app):
 
 
 def _should_run_background_jobs(app):
-    if os.environ.get('DISABLE_PRICE_SCHEDULER'):
+    if os.environ.get('DISABLE_PRICE_SCHEDULER', '').strip().lower() in ('1', 'true', 'yes'):
         return False
     if not app.debug:
         return True
     return os.environ.get('WERKZEUG_RUN_MAIN') == 'true'
-
-
-def _seconds_until_next_taipei_sync(hour=3, minute=0):
-    now = datetime.now(TAIPEI)
-    nxt = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
-    if nxt <= now:
-        nxt += timedelta(days=1)
-    return (nxt - now).total_seconds()
 
 
 def _init_price_scheduler(app):
@@ -77,19 +71,24 @@ def _init_price_scheduler(app):
     if _price_sync_started:
         return
 
-    def daily_sync_loop():
-        # The very first sync also happens on this background thread (not
-        # inline in create_app()): it clears a real bot challenge via a
-        # headless browser and can take up to ~75s, which would otherwise
-        # delay the whole app from starting to serve requests.
-        with app.app_context():
-            fetch_taiwan_bank_prices()
+    def gold_sync_loop():
+        # First sync on this background thread (not inline in create_app()):
+        # clearing a BOT challenge via Playwright can take up to ~75s.
         while True:
-            time.sleep(_seconds_until_next_taipei_sync())
-            with app.app_context():
-                fetch_taiwan_bank_prices()
+            try:
+                with app.app_context():
+                    fetch_taiwan_bank_prices()
+            except Exception:
+                # Never let one failed scrape kill the hourly loop.
+                app.logger.exception('Background gold price sync failed; will retry next slot')
+            try:
+                delay = seconds_until_next_gold_sync()
+            except Exception:
+                app.logger.exception('Gold sync schedule failed; sleeping 1 hour')
+                delay = 3600.0
+            time.sleep(delay)
 
-    threading.Thread(target=daily_sync_loop, daemon=True, name='bot-price-sync').start()
+    threading.Thread(target=gold_sync_loop, daemon=True, name='bot-price-sync').start()
     _price_sync_started = True
 
 
@@ -329,7 +328,34 @@ def create_app():
         # are tracked and reviewable rather than silently applied.
         if app.config['SQLALCHEMY_DATABASE_URI'].startswith('sqlite'):
             db.create_all()
-        from diamond_calculator.application.catalog_seed import sync_bracelet_variants
+            # create_all does not ALTER existing tables — backfill new columns.
+            try:
+                from sqlalchemy import text as _sql_text
+                with db.engine.begin() as conn:
+                    cols = {
+                        row[1]
+                        for row in conn.execute(_sql_text('PRAGMA table_info(invite_code)'))
+                    }
+                    if cols and 'grants_admin' not in cols:
+                        conn.execute(_sql_text(
+                            'ALTER TABLE invite_code '
+                            'ADD COLUMN grants_admin BOOLEAN NOT NULL DEFAULT 0'
+                        ))
+            except Exception:
+                app.logger.exception('Failed to ensure invite_code.grants_admin column')
+        from diamond_calculator.application.catalog_seed import (
+            seed_legacy_products,
+            sync_bracelet_variants,
+        )
+        try:
+            # Local / fresh DB recovery: empty catalog looks broken (category
+            # tiles used to be hardcoded). Seed the legacy published styles once.
+            seeded = seed_legacy_products()
+            if seeded:
+                app.logger.info('Seeded %s catalog products into empty database', seeded)
+        except Exception as exc:
+            db.session.rollback()
+            app.logger.exception('seed_legacy_products failed on startup: %s', exc)
         try:
             sync_bracelet_variants()
         except Exception as exc:

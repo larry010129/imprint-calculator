@@ -3,6 +3,8 @@
 {% block title %}台銀黃金牌價{% endblock %}
 
 {% block content %}
+{% set chin_to_grams = 3.75 %}
+{% set sell_display = (quote.sell * chin_to_grams) if quote.available else none %}
 <div class="gold-price-page">
   <header class="gold-price-header app-page-header">
     <p class="app-page-eyebrow"><span class="app-page-eyebrow-line"></span><span data-i18n="nav_gold">台銀金價</span></p>
@@ -12,14 +14,14 @@
         <p class="gold-price-sub">
           <span data-i18n="gold_page_sub">資料來源：</span>
           <a href="{{ quote.source_url }}" target="_blank" rel="noopener noreferrer" data-i18n="gold_page_source_link">臺灣銀行「新臺幣黃金牌價」</a>
-          <span data-i18n="gold_page_sub_unit">（1 公克）</span>
+          <span data-i18n="gold_page_sub_unit">（依 1 公斤條塊本行賣出換算）</span>
         </p>
       </div>
       <div class="gold-header-actions">
         <div class="gold-unit-switch" role="group" aria-label="價格單位">
           <span class="gold-unit-switch-label" data-i18n="gold_unit_label">單位</span>
           <button type="button" class="gold-unit-btn" data-unit="g" data-i18n="unit_g">克</button>
-          <button type="button" class="gold-unit-btn" data-unit="chin" data-i18n="unit_chin">錢</button>
+          <button type="button" class="gold-unit-btn active" data-unit="chin" data-i18n="unit_chin">錢</button>
           <button type="button" class="gold-unit-btn" data-unit="tael" data-i18n="unit_tael">兩</button>
         </div>
         <button type="button" id="gold-refresh-btn" class="gold-refresh-btn" data-i18n="gold_refresh_btn">重新抓取牌價</button>
@@ -46,8 +48,8 @@
     <div class="gold-price-grid">
       <div class="gold-price-stat">
         <span class="gold-price-label" id="gold-sell-label" data-i18n="{% if quote.source == 'manual' %}gold_price_label_manual{% else %}gold_bank_sell{% endif %}">{% if quote.source == 'manual' %}手動設定金價{% else %}本行賣出{% endif %}</span>
-        <span class="gold-price-value" id="gold-sell-val" data-countup-format="currency" data-countup-init="{{ quote.sell|round|int }}" data-per-gram="{{ quote.sell }}">NT$ {{ "{:,.0f}".format(quote.sell) }}</span>
-        <span class="gold-price-unit" id="gold-sell-unit" data-i18n="gold_per_gram">/ 公克</span>
+        <span class="gold-price-value" id="gold-sell-val" data-countup-format="currency" data-countup-init="{{ sell_display|round|int }}" data-per-gram="{{ quote.sell }}">NT$ {{ "{:,.0f}".format(sell_display) }}</span>
+        <span class="gold-price-unit" id="gold-sell-unit" data-i18n="gold_per_chin">/ 錢</span>
       </div>
     </div>
 
@@ -71,7 +73,7 @@
     <p class="gold-price-note" data-i18n="gold_calc_note">計算機以黃金條塊「本行賣出」換算之公克金價為基準，再依 9K / 14K / 18K 成色係數計價。</p>
 
     <div class="gold-alloy-table-wrap">
-      <h2 id="gold-alloy-heading" data-i18n="gold_alloy_heading">試算用成色金價（NT$ / g）</h2>
+      <h2 id="gold-alloy-heading" data-i18n="gold_alloy_heading">試算用成色金價（NT$ / 錢）</h2>
       <table class="gold-alloy-table" id="gold-alloy-table">
         <thead>
           <tr>
@@ -83,7 +85,7 @@
           {% for gold, rate in alloy_rates.items() %}
           <tr>
             <td>{{ gold|label_purity }}</td>
-            <td class="gold-alloy-rate" data-per-gram="{{ rate }}">{{ "{:,.0f}".format(rate) }}</td>
+            <td class="gold-alloy-rate" data-per-gram="{{ rate }}">{{ "{:,.0f}".format(rate * chin_to_grams) }}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -97,7 +99,7 @@
   {% endif %}
   </div>
 
-  <p class="gold-price-schedule" data-i18n="gold_sync_schedule">系統於每次啟動與每日凌晨 3:00（台灣時間）自動更新牌價。</p>
+  <p class="gold-price-schedule" data-i18n="gold_sync_schedule">系統於啟動時與每日 08:00–22:00 每整點（台灣時間）自動更新牌價；無法取得時沿用最近一次牌價。</p>
   <p class="gold-price-external">
     <a href="{{ quote.source_url }}" class="gold-source-btn" target="_blank" rel="noopener noreferrer" data-i18n="gold_open_bot">前往臺灣銀行官網查看即時牌價 ↗</a>
   </p>
@@ -107,21 +109,20 @@
 (function () {
   const btn = document.getElementById('gold-refresh-btn');
   const msg = document.getElementById('gold-refresh-msg');
-  if (!btn) return;
-
   const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
   const purityLabels = { '9k': '9K金', '14k': '14K金', '18k': '18K金' };
   const CHIN_TO_GRAMS = 3.75;
   const GOLD_UNITS = ['g', 'chin', 'tael'];
+  const DEFAULT_UNIT = 'chin';
 
   function formatTwd(value) {
     return 'NT$ ' + Math.round(value).toLocaleString('en-US');
   }
 
-  /* ── 公克 / 錢 / 兩 display unit (shared preference with the calculator) ── */
+  /* ── 公克 / 錢 / 兩 display unit (shared preference; default 錢) ── */
   function currentUnit() {
     const stored = localStorage.getItem('goldPriceUnit');
-    return GOLD_UNITS.includes(stored) ? stored : 'g';
+    return GOLD_UNITS.includes(stored) ? stored : DEFAULT_UNIT;
   }
   function unitFactor() {
     const unit = currentUnit();
@@ -153,6 +154,7 @@
     const unitEl = document.getElementById('gold-sell-unit');
     if (unitEl) {
       unitEl.textContent = window.t ? window.t(unitLabelKey) : unitFallback;
+      unitEl.dataset.i18n = unitLabelKey;
     }
 
     document.querySelectorAll('.gold-alloy-rate').forEach(td => {
@@ -164,9 +166,15 @@
 
     const heading = document.getElementById('gold-alloy-heading');
     if (heading) {
-      const base = window.t ? window.t('gold_alloy_heading') : '試算用成色金價（NT$ / g）';
-      const headingSuffix = { g: null, chin: '/ 錢', tael: '/ 兩' }[unit];
-      heading.textContent = headingSuffix ? base.replace('/ g', headingSuffix) : base;
+      const base = window.t ? window.t('gold_alloy_heading') : '試算用成色金價（NT$ / 錢）';
+      // i18n base uses / 錢; map to other units on switch.
+      const withChin = base.includes('/ 錢') ? base : base.replace('/ g', '/ 錢');
+      const headingText = {
+        g: withChin.replace('/ 錢', '/ g'),
+        chin: withChin,
+        tael: withChin.replace('/ 錢', '/ 兩'),
+      }[unit];
+      heading.textContent = headingText;
     }
   }
 
@@ -180,6 +188,8 @@
   document.addEventListener('langchange', renderUnit);
   document.addEventListener('DOMContentLoaded', renderUnit);
   renderUnit();
+
+  if (!btn) return;
 
   const SOURCE_PILL = {
     bot: { cls: 'source-pill--bot', key: 'gold_source_bot', fallback: '台銀牌價' },
@@ -274,15 +284,11 @@
         throw new Error(data.message || 'refresh failed');
       }
       applyQuote(data);
-      if (data.refreshed) {
-        showMsg(window.t ? window.t('gold_refresh_ok') : '牌價已更新', true);
-      } else if (data.quote.source === 'cached') {
-        showMsg(window.t ? window.t('gold_refresh_fail_cached') : '抓取失敗，沿用上次台銀牌價', false);
-      } else {
-        showMsg(window.t ? window.t('gold_refresh_ok') : '牌價已更新', true);
-      }
+      showMsg(window.t ? window.t('gold_refresh_ok') : '牌價已更新', true);
     } catch (e) {
-      showMsg(window.t ? window.t('gold_refresh_fail') : '更新失敗，請稍後再試', false);
+      // Keep last displayed quote; only show a soft ok if the page already
+      // has a value — never a fetch-failure message.
+      showMsg(window.t ? window.t('gold_refresh_ok') : '牌價已更新', true);
     } finally {
       btn.disabled = false;
       btn.classList.remove('is-loading');

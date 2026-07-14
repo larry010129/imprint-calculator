@@ -405,6 +405,12 @@ textarea:focus-visible,
   white-space: nowrap;
 }
 
+.nav-gold-unit {
+  margin-left: 0.25em;
+  font-weight: 500;
+  opacity: 0.75;
+}
+
 /* Home gold banner */
 .home-gold-banner {
   display: flex;

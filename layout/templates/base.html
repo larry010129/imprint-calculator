@@ -84,11 +84,12 @@
     </div>
     <div class="nav-user">
       {% if bot_gold and bot_gold.available %}
+      {% set gold_chin = bot_gold.sell * 3.75 %}
       <a href="{{ url_for('main.gold_price') }}" class="nav-gold-ticker" title="台銀黃金條塊牌價">
         <span class="nav-gold-icon" aria-hidden="true">●</span>
         <span class="nav-gold-text">
           <span class="nav-gold-label" data-i18n="nav_gold_ticker">台銀賣出</span>
-          <span class="nav-gold-value">NT$ <span class="countup" data-countup-init="{{ bot_gold.sell|round|int }}">{{ "{:,.0f}".format(bot_gold.sell) }}</span></span>
+          <span class="nav-gold-value">NT$ <span class="countup" data-countup-init="{{ gold_chin|round|int }}">{{ "{:,.0f}".format(gold_chin) }}</span><span class="nav-gold-unit" data-i18n="gold_per_chin">/ 錢</span></span>
         </span>
       </a>
       {% endif %}

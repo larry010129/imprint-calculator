@@ -37,27 +37,9 @@
 
       <section id="shop-catalog" class="shop-section">
         <h2 class="shop-section-title" data-i18n="step_category">選擇品項</h2>
-        <div class="catalog-grid is-loading" aria-busy="true">
-          <button type="button" class="catalog-tile cat-btn" data-cat="pendant">
-            <img loading="lazy" src="{{ url_for('static', filename='images/white/pendant-A.png') }}" alt="">
-            <span data-i18n="cat_pendant">項墜</span>
-          </button>
-          <button type="button" class="catalog-tile cat-btn" data-cat="ring">
-            <img loading="lazy" src="{{ url_for('static', filename='images/white/ring-A.png') }}" alt="">
-            <span data-i18n="cat_ring">戒指</span>
-          </button>
-          <button type="button" class="catalog-tile cat-btn" data-cat="earring">
-            <img loading="lazy" src="{{ url_for('static', filename='images/white/earring-A.png') }}" alt="">
-            <span data-i18n="cat_earring">耳飾</span>
-          </button>
-          <button type="button" class="catalog-tile cat-btn" data-cat="bracelet">
-            <img loading="lazy" src="{{ url_for('static', filename='images/white/bracelet-A.png') }}" alt="">
-            <span data-i18n="cat_bracelet">手鍊</span>
-          </button>
-          <button type="button" class="catalog-tile cat-btn" data-cat="chain">
-            <img loading="lazy" src="{{ url_for('static', filename='images/white/chain-A.png') }}" alt="">
-            <span data-i18n="cat_chain">鍊條</span>
-          </button>
+        <div class="catalog-grid is-loading" aria-busy="true" id="catalog-grid"></div>
+        <div class="catalog-filter-empty hidden" id="catalog-empty">
+          <p data-i18n="catalog_empty">目前沒有上架商品。</p>
         </div>
       </section>
 

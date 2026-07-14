@@ -57,5 +57,19 @@ def consume_invite_code(code: str, user_id: int) -> None:
         invite.is_active = False
 
 
+def role_for_invite_code(code: str) -> str:
+    """Role to assign on registration. Env invites never grant admin."""
+    code = (code or '').strip()
+    if not code:
+        return 'provider'
+    env_code = (os.environ.get('REGISTRATION_INVITE_CODE') or '').strip()
+    if env_code and secrets.compare_digest(code, env_code):
+        return 'provider'
+    invite = InviteCode.query.filter_by(code=code).first()
+    if invite is not None and bool(getattr(invite, 'grants_admin', False)):
+        return 'admin'
+    return 'provider'
+
+
 def generate_invite_code() -> str:
     return secrets.token_urlsafe(9)[:12].upper()

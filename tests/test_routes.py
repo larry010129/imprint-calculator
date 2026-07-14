@@ -613,8 +613,63 @@ assert res.status_code == 200
 with app.app_context():
     new_user = User.query.filter_by(username='invite_store').first()
     assert new_user is not None
+    assert new_user.role == 'provider'
     invite = db.session.get(InviteCode, invite_id)
     assert invite.use_count == 1
+
+# Admin invite requires password and grants admin role
+with app.app_context():
+    before_admin_invites = InviteCode.query.filter_by(grants_admin=True).count()
+
+res = client.post('/admin/invites/create', data={
+    'csrf_token': _csrf(client),
+    'max_uses': '5',
+    'grants_admin': '1',
+}, follow_redirects=True)
+assert res.status_code == 200
+with app.app_context():
+    assert InviteCode.query.filter_by(grants_admin=True).count() == before_admin_invites
+
+res = client.post('/admin/invites/create', data={
+    'csrf_token': _csrf(client),
+    'max_uses': '5',
+    'grants_admin': '1',
+    'confirm_password': 'wrong-password',
+}, follow_redirects=True)
+assert res.status_code == 200
+with app.app_context():
+    assert InviteCode.query.filter_by(grants_admin=True).count() == before_admin_invites
+
+res = client.post('/admin/invites/create', data={
+    'csrf_token': _csrf(client),
+    'max_uses': '5',
+    'grants_admin': '1',
+    'confirm_password': 'adminpass',
+}, follow_redirects=True)
+assert res.status_code == 200
+with app.app_context():
+    admin_invite = InviteCode.query.filter_by(grants_admin=True).order_by(InviteCode.id.desc()).first()
+    assert admin_invite is not None
+    assert admin_invite.max_uses == 1  # forced single-use
+    admin_invite_code = admin_invite.code
+    admin_invite_id = admin_invite.id
+
+client_admin_reg = app.test_client()
+res = client_admin_reg.post('/register', data={
+    'csrf_token': _csrf(client_admin_reg),
+    'username': 'invite_admin',
+    'store_name': 'Admin Via Invite',
+    'password': 'pass_admin_invite',
+    'invite_code': admin_invite_code,
+}, follow_redirects=True)
+assert res.status_code == 200
+with app.app_context():
+    admin_via = User.query.filter_by(username='invite_admin').first()
+    assert admin_via is not None
+    assert admin_via.role == 'admin'
+    used = db.session.get(InviteCode, admin_invite_id)
+    assert used.use_count == 1
+    assert used.is_active is False
 
 res = client.post(f'/admin/invites/{invite_id}/delete', data={
     'csrf_token': _csrf(client),

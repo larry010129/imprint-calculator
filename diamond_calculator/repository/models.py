@@ -151,6 +151,8 @@ class InviteCode(db.Model):
     use_count = db.Column(db.Integer, nullable=False, default=0)
     max_uses = db.Column(db.Integer, nullable=True)
     is_active = db.Column(db.Boolean, nullable=False, default=True)
+    # When true, accounts registered with this code get role=admin.
+    grants_admin = db.Column(db.Boolean, nullable=False, default=False)
     expires_at = db.Column(db.DateTime, nullable=True)
     used_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))

@@ -208,6 +208,7 @@
   </section>
 
   {% if bot_gold and bot_gold.available %}
+  {% set gold_chin = bot_gold.sell * 3.75 %}
   <section class="landing-section landing-gold" id="gold">
     <div class="landing-container landing-reveal">
       <span class="landing-section-label">
@@ -220,8 +221,8 @@
             <span data-i18n="home_gold_title">今日黃金牌價（台銀黃金條塊賣出價）</span>
           </h2>
           <p class="landing-gold-price">
-            NT$ <span class="countup" data-countup-init="{{ bot_gold.sell|round|int }}">{{ "{:,.0f}".format(bot_gold.sell) }}</span>
-            <span class="landing-gold-meta" data-i18n="gold_per_gram">/ 公克</span>
+            NT$ <span class="countup" data-countup-init="{{ gold_chin|round|int }}">{{ "{:,.0f}".format(gold_chin) }}</span>
+            <span class="landing-gold-meta" data-i18n="gold_per_chin">/ 錢</span>
           </p>
           <p class="landing-gold-meta" data-i18n="gold_calc_note">計算機以黃金條塊「本行賣出」換算之公克金價為基準，再依 9K / 14K / 18K 成色係數計價</p>
           <a href="{{ url_for('main.gold_price') if current_user.is_authenticated else bot_gold.source_url }}" class="landing-gold-link" {% if not current_user.is_authenticated %}target="_blank" rel="noopener noreferrer"{% endif %} data-i18n="home_gold_detail">查看完整牌價 →</a>

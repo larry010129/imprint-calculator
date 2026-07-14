@@ -32,9 +32,10 @@
 
   <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
     {% if bot_gold and bot_gold.available %}
+    {% set gold_chin = bot_gold.sell * 3.75 %}
     <a href="{{ url_for('main.gold_price') }}" class="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#1F1F23] no-underline" title="台銀金價">
       <span class="text-emerald-500">●</span>
-      NT$ {{ "{:,.0f}".format(bot_gold.sell) }}
+      NT$ {{ "{:,.0f}".format(gold_chin) }} <span data-i18n="gold_per_chin">/ 錢</span>
     </a>
     {% endif %}
     <button id="theme-toggle" type="button" class="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-gray-100 dark:hover:bg-[#1F1F23] border-0 bg-transparent cursor-pointer text-base" aria-label="切換深色模式">☀️</button>
